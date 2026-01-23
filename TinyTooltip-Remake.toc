@@ -1,0 +1,28 @@
+## Interface: 120000 ,110002
+## Title: TinyTooltip-Remake
+## Notes: TinyTooltip-Remake
+## Author: 星野绫-罗宁 CN
+## Version: 0.9.0
+## SavedVariables: TinyTooltipRemakeDB 
+## SavedVariablesPerCharacter: TinyTooltipRemakeCharacterDB
+
+libs\lib.xml
+About.xml
+Core.lua
+Config.lua
+General.lua
+Anchor.lua
+Target.lua
+Unit.lua
+Model.lua
+Item.lua
+Spell.lua
+Quest.lua
+LinkID.lua
+Mount.lua
+SkinFrames.lua
+
+
+libs\Template.xml
+locales\locales.xml
+Options.lua
