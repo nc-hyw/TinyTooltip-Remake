@@ -1,5 +1,8 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## [v0.9.3] - 2026-01-25
+### Fixed
+- Fix errors when mouseover a buff/debuff during combat
 
 ## [v0.9.2] - 2026-01-24
 ### Fixed
