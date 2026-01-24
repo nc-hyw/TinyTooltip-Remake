@@ -11,8 +11,14 @@ local addon = TinyTooltip
 
 local function SafeBool(fn, ...)
     local ok, value = pcall(fn, ...)
-    if ok and type(value) == "boolean" then
-        return value
+    if (not ok) then
+        return false
+    end
+    local okEval, result = pcall(function()
+        return value == true
+    end)
+    if (okEval) then
+        return result
     end
     return false
 end
@@ -20,14 +26,7 @@ end
 local unpack = table.unpack or unpack
 
 local function SafeBoolEval(fn, ...)
-    local args = {...}
-    local ok, value = pcall(function()
-        return fn(unpack(args)) and true or false
-    end)
-    if ok and type(value) == "boolean" then
-        return value
-    end
-    return false
+    return SafeBool(fn, ...)
 end
 
 local function SafeIsUnit(unit, other)
