@@ -920,8 +920,19 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
             if (not info or not info.tooltipData) then return end
             local flag = info.tooltipData.type
             local guid = info.tooltipData.guid
+            local getterName = info.getterName or info.tooltipData.getterName
+            local function SafeEquals(a, b)
+                local ok, res = pcall(function() return a == b end)
+                return ok and res
+            end
+            local isAura = SafeEquals(flag, 7)
+            if (not isAura and getterName) then
+                isAura = getterName == "GetUnitDebuffByAuraInstanceID"
+                    or getterName == "GetUnitBuffByAuraInstanceID"
+                    or getterName == "GetUnitAuraByAuraInstanceID"
+            end
             --0 物品
-            if (flag == 0) then
+            if (SafeEquals(flag, 0)) then
                 local link
                 if (self.GetItem) then
                     link = select(2, self:GetItem())
@@ -930,17 +941,17 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
                 end
                 if (link) then LibEvent:trigger("tooltip:item", self, link) end
             --1 技能
-            elseif (flag == 1) then
+            elseif (SafeEquals(flag, 1)) then
                 LibEvent:trigger("tooltip:spell", self)
             --2 角色
-            elseif (flag == 2) then
+            elseif (SafeEquals(flag, 2)) then
                 if (not self.GetUnit) then return end
                 local unit = select(2, self:GetUnit())
                 if (unit) then
                     LibEvent:trigger("tooltip:unit", self, unit, guid, flag)
                 end
             --7 BUFF|DEBUFF
-            elseif (flag == 7) then
+            elseif (isAura) then
                 LibEvent:trigger("tooltip:aura", self, info.tooltipData.args)
             --4 交互体
             --5 货币
