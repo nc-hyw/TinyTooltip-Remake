@@ -154,14 +154,7 @@ local T = {
     ["menu.spell"] = "Заклинание",
     ["menu.font"] = "Шрифт",
     ["menu.variables"] = "Переменные",
-    ["help.desc"] = "Страница помощи/отзывов (в стиле LiteMount).\nСюда можно поместить баг-репорты, предложения, благодарности и т.д.",
-    ["help.bug.title"] = "Сообщить о баге / Отзыв",
-    ["help.bug.url"] = "https://example.com/issues",
-    ["help.home.title"] = "Домашняя страница / Скачать",
-    ["help.home.url"] = "https://example.com",
-    ["help.chat.title"] = "Discord / Сообщество",
-    ["help.chat.url"] = "https://example.com/discord",
-    ["help.credits"] = "Благодарности:\n- Автор TinyTooltip\n- Мейнтейнеры Remake/Reforged/Continued\n- И все участники и репортеры",
+    
 }
 for k, v in pairs(T) do
     L[k] = v

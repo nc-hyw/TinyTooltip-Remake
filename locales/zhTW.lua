@@ -159,14 +159,7 @@ local T = {
     ["menu.spell"] = "法術",
     ["menu.font"] = "字體",
     ["menu.variables"] = "變量",
-    ["help.desc"] = "這裏是幫助/反饋頁（仿 LiteMount）。\n你可以把 Bug、建議、致謝、更新日誌等放在這裏，方便維護時收集信息。",
-    ["help.bug.title"] = "提交 Bug / 反饋",
-    ["help.bug.url"] = "https://example.com/issues",
-    ["help.home.title"] = "項目主頁 / 下載地址",
-    ["help.home.url"] = "https://example.com",
-    ["help.chat.title"] = "Discord / 群組",
-    ["help.chat.url"] = "https://example.com/discord",
-    ["help.credits"] = "致謝：\n- TinyTooltip 原作者\n- Remake/Reforged/Continued 維護者\n- 以及所有反饋與貢獻者",
+    
 }
 for k, v in pairs(T) do
     L[k] = v
