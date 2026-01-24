@@ -20,11 +20,12 @@ jobs:
           mkdir -p dist
           zip -r dist/TinyTooltip-Remake.zip \
             TinyTooltip-Remake.toc \
+            About.xml \
             *.lua \
             locales/ \
             libs/ \
             texture/ \
-            -x "*.bk" -x "*.psd" -x "*.git*" -x "*.zip" -x "LiteMount/**"
+            -x "*.bk" -x "*.psd" -x "*.git*" -x "*.zip"
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2

@@ -1,5 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## [v0.9.4] - 2026-01-25
+### Fixed
+- Fix errors occured when in combat and mouseover to friendly unit frames
+- Fix packaging issue where About.xml was missing from the release zip
+
 ## [v0.9.3] - 2026-01-25
 ### Fixed
 - Fix errors when mouseover a buff/debuff during combat
