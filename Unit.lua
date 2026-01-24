@@ -11,6 +11,14 @@ local FACTION_ALLIANCE = FACTION_ALLIANCE
 
 local addon = TinyTooltip
 
+local function SafeBool(fn, ...)
+    local ok, value = pcall(fn, ...)
+    if ok and type(value) == "boolean" then
+        return value
+    end
+    return false
+end
+
 local function strip(text)
     return (text:gsub("%s+([|%x%s]+)<trim>", "%1"))
 end
@@ -46,7 +54,7 @@ local function ColorBackground(tip, config, raw)
 end
 
 local function GrayForDead(tip, config, unit)
-    if (config.grayForDead and UnitIsDeadOrGhost(unit)) then
+    if (config.grayForDead and SafeBool(UnitIsDeadOrGhost, unit)) then
         local line, text
         LibEvent:trigger("tooltip.style.border.color", tip, 0.6, 0.6, 0.6)
         LibEvent:trigger("tooltip.style.background", tip, 0.1, 0.1, 0.1)
@@ -117,8 +125,9 @@ local function NonPlayerCharacter(tip, unit, config, raw)
 end
 
 LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
+    if (not unit or not SafeBool(UnitExists, unit)) then return end
     local raw = addon:GetUnitInfo(unit)
-    if (UnitIsPlayer(unit)) then
+    if (SafeBool(UnitIsPlayer, unit)) then
         PlayerCharacter(tip, unit, addon.db.unit.player, raw)
     else
         NonPlayerCharacter(tip, unit, addon.db.unit.npc, raw)

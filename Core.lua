@@ -156,9 +156,18 @@ function addon:FindLine(tooltip, keyword)
     local line, text
     for i = 2, tooltip:NumLines() do
         line = _G[tooltip:GetName() .. "TextLeft" .. i]
-        text = line:GetText() or ""
-        if (strfind(text, keyword)) then
-            return line, i, _G[tooltip:GetName() .. "TextRight" .. i]
+        local ok, value = pcall(function() return line and line:GetText() end)
+        if (ok) then
+            local okType, isStr = pcall(function() return type(value) == "string" end)
+            if (okType and isStr) then
+                local okNe, notEmpty = pcall(function() return value ~= "" end)
+                if (okNe and notEmpty) then
+                    local okFind, found = pcall(function() return strfind(value, keyword) end)
+                    if (okFind and found) then
+                        return line, i, _G[tooltip:GetName() .. "TextRight" .. i]
+                    end
+                end
+            end
         end
     end
 end
@@ -168,10 +177,19 @@ function addon:HideLine(tooltip, keyword)
     local line, text
     for i = 2, tooltip:NumLines() do
         line = _G[tooltip:GetName() .. "TextLeft" .. i]
-        text = line:GetText() or ""
-        if (strfind(text, keyword)) then
-            line:SetText(nil)
-            break
+        local ok, value = pcall(function() return line and line:GetText() end)
+        if (ok) then
+            local okType, isStr = pcall(function() return type(value) == "string" end)
+            if (okType and isStr) then
+                local okNe, notEmpty = pcall(function() return value ~= "" end)
+                if (okNe and notEmpty) then
+                    local okFind, found = pcall(function() return strfind(value, keyword) end)
+                    if (okFind and found) then
+                        line:SetText(nil)
+                        break
+                    end
+                end
+            end
         end
     end
 end
@@ -390,18 +408,32 @@ end
 -- 全信息
 local t = {}
 function addon:GetUnitInfo(unit)
-    local name, realm = UnitName(unit)
-    local pvpName = UnitPVPName(unit)
-    local gender = UnitSex(unit)
-    local level = UnitLevel(unit)
-    local effectiveLevel = UnitEffectiveLevel(unit)
-    local raceName, race = UnitRace(unit)
-    local className, class = UnitClass(unit)
-    local factionGroup, factionName = UnitFactionGroup(unit)
-    local reaction = UnitReaction(unit, "player")
-    local guildName, guildRank, guildIndex, guildRealm = GetGuildInfo(unit)
-    local classif = UnitClassification(unit)
-    local role = UnitGroupRolesAssigned(unit)
+    local function SafeCall(fn, ...)
+        local ok, a, b, c, d, e, f, g, h, i, j = pcall(fn, ...)
+        if ok then return a, b, c, d, e, f, g, h, i, j end
+    end
+    local function SafeBool(fn, ...)
+        local ok, value = pcall(fn, ...)
+        if ok and type(value) == "boolean" then return value end
+        return false
+    end
+    if (not unit or not SafeBool(UnitExists, unit)) then
+        t.unit = unit
+        return t
+    end
+
+    local name, realm = SafeCall(UnitName, unit)
+    local pvpName = SafeCall(UnitPVPName, unit)
+    local gender = SafeCall(UnitSex, unit)
+    local level = SafeCall(UnitLevel, unit)
+    local effectiveLevel = SafeCall(UnitEffectiveLevel, unit)
+    local raceName, race = SafeCall(UnitRace, unit)
+    local className, class = SafeCall(UnitClass, unit)
+    local factionGroup, factionName = SafeCall(UnitFactionGroup, unit)
+    local reaction = SafeCall(UnitReaction, unit, "player")
+    local guildName, guildRank, guildIndex, guildRealm = SafeCall(GetGuildInfo, unit)
+    local classif = SafeCall(UnitClassification, unit)
+    local role = SafeCall(UnitGroupRolesAssigned, unit)
 
     t.raidIcon     = self:GetRaidIcon(unit)
     t.pvpIcon      = self:GetPVPIcon(unit)
@@ -416,22 +448,22 @@ function addon:GetUnitInfo(unit)
     t.name         = name
     t.gender       = self:GetGender(gender)
     t.realm        = realm or GetRealmName()
-    t.levelValue   = level >= 0 and level or "??"
+    t.levelValue   = (type(level) == "number" and level >= 0) and level or "??"
     t.className    = className
     t.raceName     = raceName
     t.guildName    = guildName
     t.guildRank    = guildRank
     t.guildIndex   = guildName and guildIndex
     t.guildRealm   = guildRealm
-    t.statusAFK    = UnitIsAFK(unit) and AFK
-    t.statusDND    = UnitIsDND(unit) and DND
-    t.statusDC     = not UnitIsConnected(unit) and OFFLINE
+    t.statusAFK    = SafeBool(UnitIsAFK, unit) and AFK
+    t.statusDND    = SafeBool(UnitIsDND, unit) and DND
+    t.statusDC     = SafeBool(UnitIsConnected, unit) == false and OFFLINE
     t.reactionName = reaction and _G["FACTION_STANDING_LABEL"..reaction]
-    t.creature     = UnitCreatureType(unit)
+    t.creature     = SafeCall(UnitCreatureType, unit)
     t.classifBoss  = (level==-1 or classif == "worldboss") and BOSS
     t.classifElite = classif == "elite" and ELITE
     t.classifRare  = (classif == "rare" or classif == "rareelite") and RARE
-    t.isPlayer     = UnitIsPlayer(unit) and PLAYER
+    t.isPlayer     = SafeBool(UnitIsPlayer, unit) and PLAYER
     t.moveSpeed    = self:GetUnitSpeed(unit)
     t.zone         = self:GetZone(unit, t.name, t.realm)
     t.unit         = unit                     --unit
