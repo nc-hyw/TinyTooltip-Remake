@@ -142,8 +142,23 @@ end
 function addon:AutoSetTooltipWidth(tooltip)
     local width, w = 80
     for i = 1, tooltip:NumLines() do
-        w = tonumber(_G[tooltip:GetName() .. "TextLeft" .. i]:GetWidth())
-        width = max(width, w)
+        local line = _G[tooltip:GetName() .. "TextLeft" .. i]
+        local ok, value = pcall(function()
+            return line and line:GetWidth()
+        end)
+        if (ok) then
+            local okType, isNum = pcall(function()
+                return type(value) == "number"
+            end)
+            if (okType and isNum) then
+                local okMax, newWidth = pcall(function()
+                    return max(width, value)
+                end)
+                if (okMax) then
+                    width = newWidth
+                end
+            end
+        end
     end
     width = width + 6
     tooltip:SetMinimumWidth(width)
@@ -414,7 +429,15 @@ function addon:GetUnitInfo(unit)
     end
     local function SafeBool(fn, ...)
         local ok, value = pcall(fn, ...)
-        if ok and type(value) == "boolean" then return value end
+        if (not ok) then
+            return false
+        end
+        local okEval, result = pcall(function()
+            return value == true
+        end)
+        if (okEval) then
+            return result
+        end
         return false
     end
     if (not unit or not SafeBool(UnitExists, unit)) then

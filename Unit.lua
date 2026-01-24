@@ -13,8 +13,14 @@ local addon = TinyTooltip
 
 local function SafeBool(fn, ...)
     local ok, value = pcall(fn, ...)
-    if ok and type(value) == "boolean" then
-        return value
+    if (not ok) then
+        return false
+    end
+    local okEval, result = pcall(function()
+        return value == true
+    end)
+    if (okEval) then
+        return result
     end
     return false
 end
