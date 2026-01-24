@@ -37,7 +37,7 @@ local T = {
     ["about.author.label"] = "Author",
     ["about.author.name"] = "HoshinoAya - Rhonin CN",
     ["about.help.title"] = "Submit Bug / Feedback",
-    ["about.help.url"] = "https://aaa.example.com/issues",
+    ["about.help.url"] = "https://github.com/nc-hyw/TinyTooltip-Remake/issues",
     ["about.credits.title"] = "Credits",
     ["about.credits.content"] = "Thanks to M, the original author of TinyTooltip, and all contributors\n",
 
