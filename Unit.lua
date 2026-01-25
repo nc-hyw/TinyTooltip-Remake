@@ -12,15 +12,14 @@ local FACTION_ALLIANCE = FACTION_ALLIANCE
 local addon = TinyTooltip
 
 -- 默认匹配模式（如果本地化文件没有定义，使用这些）
+-- 使用更精确的模式，避免匹配到正常内容（如公会名、NPC标题等）
 local defaultHintPatterns = {
-    "右键",              -- 中文：右键
-    "Right.*[Cc]lick",  -- 英文：Right-click
-    "设置框体",          -- 中文：设置框体
-    "设置",              -- 中文：设置
-    "[Ss]etup",         -- 英文：Setup
-    "[Ff]ocus",         -- 英文：Focus
-    "焦点",              -- 中文：焦点
-    "框体",              -- 中文：框体
+    "右键",                    -- 中文：右键
+    "Right.*[Cc]lick.*[Ss]etup",  -- 英文：Right-click to setup（完整短语）
+    "设置框体",                -- 中文：设置框体
+    "右键.*设置",              -- 中文：右键设置（完整短语）
+    "设置.*框体",              -- 中文：设置框体（完整短语）
+    "焦点.*框体",              -- 中文：焦点框体（完整短语）
 }
 
 -- 缓存匹配模式列表（避免每次调用都检查本地化文件）
@@ -211,32 +210,36 @@ local function HideRightClickSetupText(tip)
     end
     
     -- 检查最后几行中是否有其他空行（可能是为提示预留的）
-    -- 检查最后5行，移除其中的空行
-    local checkRange = min(5, numLines - 1)
+    -- 提示相关的空行通常出现在 tooltip 末尾，上面有内容但下面没有（或下面是提示）
+    -- 检查最后3行，移除末尾的空行（上面有内容，下面没有内容或也是空行）
+    local checkRange = min(3, numLines - 1)
     if (checkRange >= 1) then
         for i = numLines, max(2, numLines - checkRange), -1 do
             local line = _G[tipName .. "TextLeft" .. i]
             if (line) then
                 local ok, text = pcall(function() return line:GetText() end)
                 if (ok and IsEmptyText(text)) then
-                    -- 检查前后行，如果前后都有内容，这个空行可能是为提示预留的
+                    -- 检查上一行是否有内容
                     local prevLine = (i > 2) and _G[tipName .. "TextLeft" .. (i - 1)] or nil
-                    local nextLine = (i < numLines) and _G[tipName .. "TextLeft" .. (i + 1)] or nil
                     local prevHasContent = false
-                    local nextHasContent = false
                     
                     if (prevLine) then
                         local okPrev, prevText = pcall(function() return prevLine:GetText() end)
                         prevHasContent = okPrev and prevText and not IsEmptyText(prevText)
                     end
                     
+                    -- 检查下一行（如果存在）
+                    local nextLine = (i < numLines) and _G[tipName .. "TextLeft" .. (i + 1)] or nil
+                    local nextIsEmpty = true
+                    
                     if (nextLine) then
                         local okNext, nextText = pcall(function() return nextLine:GetText() end)
-                        nextHasContent = okNext and nextText and not IsEmptyText(nextText)
+                        nextIsEmpty = okNext and IsEmptyText(nextText)
                     end
                     
-                    -- 如果前后都有内容，这个空行可能是为提示预留的，移除它
-                    if (prevHasContent and nextHasContent) then
+                    -- 如果上一行有内容，且下一行不存在或也是空行，这可能是提示前的空行
+                    -- 注意：不移除前后都有内容的空行（那是合法的间距）
+                    if (prevHasContent and nextIsEmpty) then
                         line:SetText(nil)
                         removed = true
                     end
