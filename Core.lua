@@ -320,10 +320,13 @@ end
 
 -- 標記圖標
 function addon:GetRaidIcon(unit)
-    local index = GetRaidTargetIndex(unit)
-    if (index and ICON_LIST[index]) then
-        return ICON_LIST[index] .. "0|t"
-    end
+    local okIndex, index = pcall(GetRaidTargetIndex, unit)
+    if (not okIndex or type(index) ~= "number") then return end
+    local okIcon, icon = pcall(function()
+        return ICON_LIST and ICON_LIST[index]
+    end)
+    if (not okIcon or not icon) then return end
+    return icon .. "0|t"
 end
 
 -- 職業圖標
