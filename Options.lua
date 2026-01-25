@@ -152,6 +152,108 @@ end
 
 local widgets = {}
 
+local function IsInList(list, value)
+    for _, v in ipairs(list) do
+        if (v == value) then
+            return true
+        end
+    end
+    return false
+end
+
+local function GetDefaultValue(keystring)
+    local defaults = addon.defaults or addon.db
+    local keys = {strsplit(".", keystring)}
+    local value = defaults
+    for _, key in ipairs(keys) do
+        if (value == nil) then return end
+        value = value[key]
+    end
+    if (type(value) == "table") then
+        return CopyTable(value)
+    end
+    return value
+end
+
+local function RefreshDropdown(dropdown, value)
+    UIDropDownMenu_SetSelectedValue(dropdown, value)
+    if (value ~= nil) then
+        local text = L["dropdown."..tostring(value)] or tostring(value)
+        UIDropDownMenu_SetText(dropdown, text)
+        if (dropdown.selectedFunc) then
+            dropdown.selectedFunc(dropdown, value, text)
+        end
+    end
+end
+
+local function RefreshColorPick(pick, value)
+    local r, g, b, a = 1, 1, 1, 1
+    if (pick.colortype == "hex") then
+        r, g, b = addon:GetRGBColor(value)
+    elseif (type(value) == "table") then
+        r, g, b, a = unpack(value)
+    end
+    pick:GetNormalTexture():SetVertexColor(r or 1, g or 1, b or 1, a or 1)
+end
+
+local function RefreshWidget(widget, config)
+    local t = config.type
+    if (t == "checkbox") then
+        widget:SetChecked(GetVariable(config.keystring))
+    elseif (t == "slider") then
+        local v = GetVariable(config.keystring) or 0
+        widget:SetValue(v)
+        if (widget.High) then widget.High:SetText(v) end
+    elseif (t == "editbox") then
+        widget:SetText(GetVariable(config.keystring) or "")
+        widget:SetCursorPosition(0)
+    elseif (t == "colorpick") then
+        RefreshColorPick(widget, GetVariable(config.keystring))
+    elseif (t == "dropdown") then
+        RefreshDropdown(widget, GetVariable(config.keystring))
+    elseif (t == "dropdownslider") then
+        RefreshDropdown(widget.dropdown, GetVariable(config.keystring..".colorfunc"))
+        local v = GetVariable(config.keystring..".alpha") or 0
+        widget.slider:SetValue(v)
+        if (widget.slider.High) then widget.slider.High:SetText(v) end
+    elseif (t == "anchor") then
+        RefreshDropdown(widget.dropdown, GetVariable(config.keystring..".position"))
+        widget.checkbox1:SetChecked(GetVariable(config.keystring..".hiddenInCombat"))
+        widget.checkbox2:SetChecked(GetVariable(config.keystring..".returnInCombat"))
+        widget.checkbox3:SetChecked(GetVariable(config.keystring..".returnOnUnitFrame"))
+    elseif (t == "element") then
+        widget.checkbox:SetChecked(GetVariable(config.keystring..".enable"))
+        if (widget.colorpick) then
+            local color = GetVariable(config.keystring..".color")
+            RefreshColorPick(widget.colorpick, color)
+            if (widget.colordropdown) then
+                if (IsInList(widgets.colorDropdata, color)) then
+                    RefreshDropdown(widget.colordropdown, color)
+                else
+                    UIDropDownMenu_SetSelectedValue(widget.colordropdown, nil)
+                    UIDropDownMenu_SetText(widget.colordropdown, VIDEO_QUALITY_LABEL6)
+                end
+            end
+        end
+        if (widget.editbox) then
+            widget.editbox:SetText(GetVariable(config.keystring..".wildcard") or "")
+            widget.editbox:SetCursorPosition(0)
+        end
+        if (widget.filterdropdown) then
+            RefreshDropdown(widget.filterdropdown, GetVariable(config.keystring..".filter"))
+        end
+    end
+end
+
+local function RefreshOptions(parent)
+    if (not parent or not parent.optionWidgets) then return end
+    for _, widget in ipairs(parent.optionWidgets) do
+        if (widget._config) then
+            RefreshWidget(widget, widget._config)
+        end
+    end
+end
+
 function widgets:checkbox(parent, config, labelText)
     local frame = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     frame.keystring = config.keystring
@@ -759,6 +861,9 @@ end
 
 frameRoot.name = addonName
 
+local resetSectionText = L["button.resetSection"] or RESET or "Reset"
+local resetAllText = L["button.resetAll"] or resetSectionText
+
 local frame = CreateFrame("Frame", nil, UIParent)
 frame.anchor = CreateFrame("Frame", nil, frame)
 frame.anchor:SetPoint("TOPLEFT", 32, -16)
@@ -790,7 +895,7 @@ framePC.diy.text = framePC.diy:CreateFontString(nil, "OVERLAY", "GameFont_Gigant
 framePC.diy.text:SetPoint("CENTER", 0, 2)
 framePC.diy.text:SetText(L.DIY.." "..(SETTINGS or ""))
 
-framePC:SetSize(500, #options.pc*30)
+framePC:SetSize(SettingsPanel.Container:GetWidth()-64, #options.pc*30)
 local framePCScrollFrame = CreateFrame("ScrollFrame", nil, UIParent, "UIPanelScrollFrameTemplate")
 framePCScrollFrame.ScrollBar:Hide()
 framePCScrollFrame.ScrollBar:ClearAllPoints()
@@ -815,7 +920,7 @@ frameNPC.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.npc"]))
 frameNPC.parent = addonName
 frameNPC.name = L["menu.npc"]
 
-frameNPC:SetSize(500, #options.npc*30)
+frameNPC:SetSize(SettingsPanel.Container:GetWidth()-64, #options.npc*30)
 local frameNPCScrollFrame = CreateFrame("ScrollFrame", nil, UIParent, "UIPanelScrollFrameTemplate")
 frameNPCScrollFrame.ScrollBar:Hide()
 frameNPCScrollFrame.ScrollBar:ClearAllPoints()
@@ -895,6 +1000,54 @@ local function InitVariablesFrame()
     end)
 end
 
+local function CreateResetButton(parent, text, onClick, anchorFrame)
+    local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    button:SetSize(150, 22)
+    button:SetText(text)
+    button:SetPoint("TOPRIGHT", anchorFrame or parent, "TOPRIGHT", -28, -12)
+    button:SetScript("OnClick", onClick)
+    return button
+end
+
+local function ResetUnitSection(sectionKey, parent)
+    if (not addon.defaults or not addon.defaults.unit or not addon.defaults.unit[sectionKey]) then return end
+    addon.db.unit[sectionKey] = CopyTable(addon.defaults.unit[sectionKey])
+    RefreshOptions(parent)
+    if (sectionKey == "player") then
+        LibEvent:trigger("tinytooltip:diy:player", "player", true)
+    end
+end
+
+local function ResetStatusbarSection()
+    for _, v in ipairs(options.statusbar) do
+        local value = GetDefaultValue(v.keystring)
+        if (value ~= nil) then
+            SetVariable(v.keystring, value)
+        end
+    end
+    RefreshOptions(frameStatusbar)
+end
+
+local function ResetAllSettings()
+    if (not addon.defaults) then return end
+    TinyTooltipRemakeDB = CopyTable(addon.defaults)
+    TinyTooltipRemakeCharacterDB = {}
+    addon.db = TinyTooltipRemakeDB
+    LibEvent:trigger("TINYTOOLTIP_GENERAL_INIT")
+    RefreshOptions(frame)
+    RefreshOptions(framePC)
+    RefreshOptions(frameNPC)
+    RefreshOptions(frameStatusbar)
+    RefreshOptions(frameSpell)
+    RefreshOptions(frameFont)
+    LibEvent:trigger("tinytooltip:diy:player", "player", true)
+end
+
+frame.reset = CreateResetButton(frame, resetAllText, ResetAllSettings)
+framePC.reset = CreateResetButton(framePC, resetSectionText, function() ResetUnitSection("player", framePC) end)
+frameNPC.reset = CreateResetButton(frameNPC, resetSectionText, function() ResetUnitSection("npc", frameNPC) end)
+frameStatusbar.reset = CreateResetButton(frameStatusbar, resetSectionText, ResetStatusbarSection)
+
 local function InitOptions(list, parent, height)
     local element, offsetX
     for i, v in ipairs(list) do
@@ -905,6 +1058,9 @@ local function InitOptions(list, parent, height)
             elseif (v.type == "anchor") then offsetX = -15
             else offsetX = 0 end
             element = widgets[v.type](widgets, parent, v)
+            parent.optionWidgets = parent.optionWidgets or {}
+            element._config = v
+            tinsert(parent.optionWidgets, element)
             element:SetPoint("TOPLEFT", parent.anchor, "BOTTOMLEFT", offsetX, -(i*height))
         end
     end

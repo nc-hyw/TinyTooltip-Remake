@@ -9,6 +9,7 @@ local addon = TinyTooltip
 
 TinyTooltipRemakeDB = {}
 TinyTooltipRemakeCharacterDB = {}
+addon.defaults = CopyTable(addon.db)
 
 local function ColorStatusBar(self, value)
     if (addon.db.general.statusbarColor == "auto") then

@@ -33,6 +33,9 @@ local T = {
     ["menu.font"] = "Font",
     ["menu.variables"] = "Variables",
 
+    ["button.resetSection"] = "Reset to Defaults",
+    ["button.resetAll"] = "Reset All Settings",
+
     ["about.desc"] = "A simple tooltip addon",
     ["about.author.label"] = "Author",
     ["about.author.name"] = "HoshinoAya - Rhonin CN",

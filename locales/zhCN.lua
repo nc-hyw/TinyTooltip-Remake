@@ -159,6 +159,9 @@ local T = {
     ["menu.spell"] = "法术",
     ["menu.font"] = "字体",
     ["menu.variables"] = "变量",
+
+    ["button.resetSection"] = "恢复默认设置",
+    ["button.resetAll"] = "恢复全部设置",
     
     ["about.desc"] = "简单的鼠标提示工具, 基于TinyTooltip",
     ["about.version.label"] = "版本",
