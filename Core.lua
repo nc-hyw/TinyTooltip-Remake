@@ -707,6 +707,28 @@ LibEvent:attachTrigger("tooltip.anchor.none", function(self, frame, parent)
     frame:Hide()
 end)
 
+-- 安全设置 backdrop，避免在 frame 尺寸为受保护值时出错
+local function SafeSetBackdrop(frame, backdrop)
+    if (not frame or not backdrop) then return false end
+    local ok, width = pcall(function() return frame:GetWidth() end)
+    if (ok and type(width) == "number" and width > 0) then
+        frame:SetBackdrop(backdrop)
+        frame.pendingBackdrop = nil
+        return true
+    end
+    -- 如果 frame 还没有有效尺寸，保存配置延迟设置
+    frame.pendingBackdrop = backdrop
+    return false
+end
+
+-- 解析 style 的 backdrop（GetBackdrop 可能为 nil，如 SafeSetBackdrop 未成功时）
+local function GetStyleBackdrop(style)
+    if (not style) then return nil end
+    local b = style:GetBackdrop()
+    if (b) then return b end
+    return style.pendingBackdrop
+end
+
 LibEvent:attachTrigger("tooltip.style.mask", function(self, frame, boolean)
     LibEvent:trigger("tooltip.style.init", frame)
     frame.style.mask:SetShown(boolean)
@@ -723,13 +745,14 @@ end)
 
 LibEvent:attachTrigger("tooltip.style.bgfile", function(self, frame, bgvalue)
     LibEvent:trigger("tooltip.style.init", frame)
+    local backdrop = GetStyleBackdrop(frame.style)
+    if (not backdrop) then return end
     local bgfile = addon:GetBgFile(bgvalue)
-    local backdrop = frame.style:GetBackdrop()
     local r, g, b, a = frame.style:GetBackdropColor()
     local rr, gg, bb, aa = frame.style:GetBackdropBorderColor()
     if (backdrop.bgFile ~= bgfile) then
         backdrop.bgFile = bgfile
-        frame.style:SetBackdrop(backdrop)
+        SafeSetBackdrop(frame.style, backdrop)
         frame.style:SetBackdropColor(r, g, b, tonumber(a))
         frame.style:SetBackdropBorderColor(rr, gg, bb, aa)
     end
@@ -737,7 +760,8 @@ end)
 
 LibEvent:attachTrigger("tooltip.style.border.size", function(self, frame, size)
     LibEvent:trigger("tooltip.style.init", frame)
-    local backdrop = frame.style:GetBackdrop()
+    local backdrop = GetStyleBackdrop(frame.style)
+    if (not backdrop) then return end
     local r, g, b, a = frame.style:GetBackdropColor()
     if (backdrop.edgeFile == "Interface\\Buttons\\WHITE8X8") then
         backdrop.edgeSize = size
@@ -745,7 +769,7 @@ LibEvent:attachTrigger("tooltip.style.border.size", function(self, frame, size)
         backdrop.insets.left = size
         backdrop.insets.right = size
         backdrop.insets.bottom = size
-        frame.style:SetBackdrop(backdrop)
+        SafeSetBackdrop(frame.style, backdrop)
         frame.style:SetBackdropColor(r, g, b, tonumber(a))
         frame.style.inside:SetPoint("TOPLEFT", frame.style, "TOPLEFT", size, -size)
         frame.style.inside:SetPoint("BOTTOMRIGHT", frame.style, "BOTTOMRIGHT", -size, size)
@@ -754,7 +778,8 @@ end)
 
 LibEvent:attachTrigger("tooltip.style.border.corner", function(self, frame, corner)
     LibEvent:trigger("tooltip.style.init", frame)
-    local backdrop = frame.style:GetBackdrop()
+    local backdrop = GetStyleBackdrop(frame.style)
+    if (not backdrop) then return end
     local r, g, b, a = frame.style:GetBackdropColor()
     if (corner == "angular") then
         backdrop.edgeFile = "Interface\\Buttons\\WHITE8X8"
@@ -788,7 +813,7 @@ LibEvent:attachTrigger("tooltip.style.border.corner", function(self, frame, corn
         frame.style.inside:Hide()
         frame.style.outside:Hide()
     end
-    frame.style:SetBackdrop(backdrop)
+    SafeSetBackdrop(frame.style, backdrop)
     frame.style:SetBackdropColor(r, g, b, a)
 end)
 
@@ -884,9 +909,10 @@ end)
 
 LibEvent:attachTrigger("tooltip.statusbar.position", function(self, position, offsetX, offsetY)
     LibEvent:trigger("tooltip.style.init", GameTooltip)
+    local backdrop = GetStyleBackdrop(GameTooltip.style)
+    if (not backdrop) then return end
     GameTooltip.style:ClearAllPoints()
     GameTooltipStatusBar:ClearAllPoints()
-    local backdrop = GameTooltip.style:GetBackdrop()
     if (not GameTooltipStatusBar:IsShown()) then position = "" end
     if (position == "bottom") then
         local offset = backdrop.edgeFile == "Interface\\Tooltips\\UI-Tooltip-Border" and 5 or backdrop.edgeSize + 1
@@ -929,7 +955,8 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     tip.style = CreateFrame("Frame", nil, tip, BackdropTemplateMixin and "BackdropTemplate" or nil)
     tip.style:SetFrameLevel(tip:GetFrameLevel())
     tip.style:SetAllPoints()
-    tip.style:SetBackdrop(backdrop)
+    -- 安全设置 backdrop：如果 frame 还没有有效尺寸，延迟到 OnShow 时设置
+    SafeSetBackdrop(tip.style, backdrop)
     tip.style:SetBackdropColor(0, 0, 0, 0.9)
     tip.style:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.8)
     tip.style.inside = CreateFrame("Frame", nil, tip.style, BackdropTemplateMixin and "BackdropTemplate" or nil)
@@ -953,7 +980,20 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     tip.style.mask:Hide()
     
     tip.TinyHookScript = addon.TinyHookScript
-    tip:HookScript("OnShow", function(self) LibEvent:trigger("tooltip:show", self) end)
+    tip:HookScript("OnShow", function(self)
+        -- 确保 style frame 有有效尺寸后再设置 backdrop
+        if (self.style and self.style.pendingBackdrop) then
+            if (not SafeSetBackdrop(self.style, self.style.pendingBackdrop)) then
+                -- 如果仍然无法设置，延迟一段时间后再尝试
+                C_Timer.After(0.01, function()
+                    if (self.style and self.style.pendingBackdrop) then
+                        SafeSetBackdrop(self.style, self.style.pendingBackdrop)
+                    end
+                end)
+            end
+        end
+        LibEvent:trigger("tooltip:show", self)
+    end)
     tip:HookScript("OnHide", function(self) LibEvent:trigger("tooltip:hide", self) end)
 
     -- for 10.0

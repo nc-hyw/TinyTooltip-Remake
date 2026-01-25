@@ -1365,12 +1365,24 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
         frame.lines[totalLines+1]:Hide()
         totalLines = totalLines + 1
     end
+    -- 确保 BigFactionIcon 存在（可能在 tooltip:init 之前访问）
+    if (not frame.BigFactionIcon and (frame == GameTooltip or frame.identity == "diy")) then
+        frame.BigFactionIcon = frame:CreateTexture(nil, "OVERLAY")
+        frame.BigFactionIcon:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 18, 0)
+        frame.BigFactionIcon:SetBlendMode("ADD")
+        frame.BigFactionIcon:SetScale(0.24)
+        frame.BigFactionIcon:SetAlpha(0.40)
+    end
     if (diytable.factionBig and diytable.factionBig.enable) then
-        frame.BigFactionIcon:SetTexture("Interface\\Timer\\".. raw.factionGroup .."-Logo")
-        frame.BigFactionIcon:Show()
-        frame:SetWidth(frameWidth+48)
+        if (frame.BigFactionIcon) then
+            frame.BigFactionIcon:SetTexture("Interface\\Timer\\".. raw.factionGroup .."-Logo")
+            frame.BigFactionIcon:Show()
+            frame:SetWidth(frameWidth+48)
+        end
     else
-        frame.BigFactionIcon:Hide()
+        if (frame.BigFactionIcon) then
+            frame.BigFactionIcon:Hide()
+        end
     end
     addon.ColorUnitBorder(frame, diyPlayerTable, raw)
     addon.ColorUnitBackground(frame, diyPlayerTable, raw)
