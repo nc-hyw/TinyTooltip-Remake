@@ -844,10 +844,26 @@ end)
 
 LibEvent:attachTrigger("tooltip.statusbar.height", function(self, height)
     GameTooltipStatusBar:SetHeight(height or 12)
+    if (addon.db.general.statusbarHide) then
+        GameTooltipStatusBar:Hide()
+    elseif ((height or 12) > 0) then
+        GameTooltipStatusBar:Show()
+    end
 end)
 
 LibEvent:attachTrigger("tooltip.statusbar.text", function(self, boolean)
     GameTooltipStatusBar.forceHideText = not boolean
+end)
+
+LibEvent:attachTrigger("tooltip.statusbar.visible", function(self, hide)
+    if (hide) then
+        GameTooltipStatusBar:Hide()
+    else
+        local height = addon.db.general.statusbarHeight or 12
+        if (height > 0) then
+            GameTooltipStatusBar:Show()
+        end
+    end
 end)
 
 LibEvent:attachTrigger("tooltip.statusbar.font", function(self, font, size, flag)
@@ -1080,6 +1096,7 @@ LibEvent:attachTrigger("TINYTOOLTIP_GENERAL_INIT", function(self)
     LibEvent:trigger("tooltip.style.font.body", GameTooltip, addon.db.general.bodyFont, addon.db.general.bodyFontSize, addon.db.general.bodyFontFlag)
     LibEvent:trigger("tooltip.statusbar.height", addon.db.general.statusbarHeight)
     LibEvent:trigger("tooltip.statusbar.text", addon.db.general.statusbarText)
+    LibEvent:trigger("tooltip.statusbar.visible", addon.db.general.statusbarHide)
     LibEvent:trigger("tooltip.statusbar.font", addon.db.general.statusbarFont, addon.db.general.statusbarFontSize, addon.db.general.statusbarFontFlag)
     LibEvent:trigger("tooltip.statusbar.texture", addon.db.general.statusbarTexture)
     for _, tip in pairs(addon.tooltips) do
