@@ -38,7 +38,13 @@ local function SafeIsPlayer(unit)
 end
 
 local function IsTargetToken(unit)
-    return type(unit) == "string" and unit:match("target$")
+    if (type(unit) ~= "string") then
+        return false
+    end
+    local ok, res = pcall(function()
+        return unit:match("target$")
+    end)
+    return ok and res ~= nil
 end
 
 local function GetTargetString(unit)
@@ -60,7 +66,8 @@ local function GetTargetString(unit)
         end
         return format("%s[%s]", icon, name)
     end
-    if (not UnitExists(unit)) then return end
+    if (type(unit) ~= "string") then return end
+    if (not SafeBool(UnitExists, unit)) then return end
     local name = UnitName(unit)
     local icon = addon:GetRaidIcon(unit) or ""
     if SafeIsUnit(unit, "player") then
@@ -77,20 +84,30 @@ local function GetTargetString(unit)
 end
 
 local function UpdateTargetLine(tip, targetUnit)
-    local line = addon:FindLine(tip, "^"..TARGET..":")
     local text = GetTargetString(targetUnit)
-    if (line and not text) then
-        addon:HideLine(tip, "^"..TARGET..":")
+    local line = tip.ttTargetLine
+    if (not text) then
+        if (line) then
+            line:SetText(nil)
+            tip.ttTargetLine = nil
+            if (addon.AutoSetTooltipWidth) then
+                addon:AutoSetTooltipWidth(tip)
+            end
+        end
         return
     end
-    if (text) then
-        local formatted = format("%s: %s", TARGET, text)
-        if (not line) then
-            tip:AddLine(formatted)
-        elseif (line:GetText() ~= formatted) then
-            line:SetText(formatted)
-        end
+    local formatted = format("%s: %s", TARGET, text)
+    if (not line) then
+        tip:AddLine(formatted)
+        line = _G[tip:GetName() .. "TextLeft" .. tip:NumLines()]
+        tip.ttTargetLine = line
+    else
+        line:SetText(formatted)
     end
+    if (addon.AutoSetTooltipWidth) then
+        addon:AutoSetTooltipWidth(tip)
+    end
+    tip:Show()
 end
 
 LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
@@ -98,6 +115,19 @@ LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
         UpdateTargetLine(tip, "playertarget")
     elseif SafeIsUnit(unit, "mouseover") then
         UpdateTargetLine(tip, "mouseovertarget")
+    else
+        if (type(unit) ~= "string") then return end
+        local okConcat, targetUnit = pcall(function() return unit .. "target" end)
+        if (not okConcat or type(targetUnit) ~= "string") then return end
+        if (SafeBool(UnitExists, targetUnit)) then
+            UpdateTargetLine(tip, targetUnit)
+        end
+    end
+end)
+
+LibEvent:attachTrigger("tooltip:cleared, tooltip:hide", function(self, tip)
+    if (tip) then
+        tip.ttTargetLine = nil
     end
 end)
 
@@ -109,7 +139,7 @@ GameTooltip:HookScript("OnUpdate", function(self, elapsed)
         if (owner and (owner.unit or (owner.GetAttribute and owner:GetAttribute("unit")))) then
             return
         end
-        if (not UnitExists("mouseover")) then return end
+        if (not SafeBool(UnitExists, "mouseover")) then return end
         local isPlayer = SafeBool(UnitIsPlayer, "mouseover")
         if (addon.db.unit.player.showTarget and isPlayer)
             or (addon.db.unit.npc.showTarget and not isPlayer) then

@@ -1,5 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## [v0.9.6] - 2026-01-25
+### Fixed
+- Fix an issue that target is not correctly displayed in tooltip when inside dungeon
+
 ## [v0.9.5] - 2026-01-25
 ### Fixed
 - Fix an issue that error occures when apply raid icon to target and mouseover
