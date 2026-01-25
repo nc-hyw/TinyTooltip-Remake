@@ -17,14 +17,17 @@ jobs:
 
       - name: Create zip
         run: |
-          mkdir -p dist
-          zip -r dist/TinyTooltip-Remake.zip \
+          mkdir -p dist/TinyTooltip-Remake
+          cp -R \
             TinyTooltip-Remake.toc \
             About.xml \
             *.lua \
-            locales/ \
-            libs/ \
-            texture/ \
+            locales \
+            libs \
+            texture \
+            dist/TinyTooltip-Remake/
+          cd dist
+          zip -r TinyTooltip-Remake.zip TinyTooltip-Remake \
             -x "*.bk" -x "*.psd" -x "*.git*" -x "*.zip"
 
       - name: Upload Release
