@@ -30,6 +30,8 @@ local T = {
     ["general.anchor.returnOnUnitFrame"]    = "Возвращ. на рамке юнита",
     ["general.alwaysShowIdInfo"]            = "Постоянное отображение ID (В противном случае, удерживайте нажатой клавишу alt/shift)",
     ["general.skinMoreFrames"]              = "Больше рамок скинов |cffcccc33(вступает в силу, после перегрузки)|r",
+    ["general.hideUnitFrameHint"]            = "Скрыть подсказку о настройке рамки юнита",
+    ["general.hideUnitFrameHint.patterns"]  = {"Right.*[Cc]lick", "[Ss]etup", "[Ff]ocus"},
    
     ["item.coloredItemBorder"]              = "Цвет границы предмета",
     ["item.showItemIcon"]                   = "Отображение значка предмета",

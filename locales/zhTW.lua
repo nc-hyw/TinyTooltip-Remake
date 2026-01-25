@@ -30,6 +30,8 @@ local T = {
     ["general.alwaysShowIdInfo"]            = "始終顯示id信息(關閉後按住alt/shift顯示)",
     ["general.skinMoreFrames"]              = "樣式應用于更多框架 |cffcccc33(重載生效)|r",
     ["general.SavedVariablesPerCharacter"]  = "為每個角色保存獨立配置",
+    ["general.hideUnitFrameHint"]            = "隱藏頭像框右鍵設置提示",
+    ["general.hideUnitFrameHint.patterns"]  = {"右鍵", "設置框體", "設置", "焦點", "框體"},
     
     ["item.coloredItemBorder"]              = "物品邊框染色",
     ["item.showItemIcon"]                   = "顯示物品圖標",
