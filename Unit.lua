@@ -60,6 +60,7 @@ end
 -- 检查文本是否为空（优化版本）
 local function IsEmptyText(text)
     if (not text) then return true end
+    if (type(text) ~= "string") then return true end
     local stripped = text:gsub("^%s+", ""):gsub("%s+$", "")
     return stripped == ""
 end
