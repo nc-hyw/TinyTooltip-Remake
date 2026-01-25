@@ -73,7 +73,7 @@ LibEvent:attachEvent("VARIABLES_LOADED", function()
         ColorStatusBar(self)
     end)
     bar:HookScript("OnShow", function(self)
-        if (addon.db.general.statusbarHeight == 0) then
+        if (addon.db.general.statusbarHeight == 0 or addon.db.general.statusbarHide) then
             self:Hide()
         end
     end)

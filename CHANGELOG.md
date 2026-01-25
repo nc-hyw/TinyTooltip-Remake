@@ -1,5 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+## [v0.9.5] - 2026-01-25
+### Fixed
+- Fix an issue that error occures when apply raid icon to target and mouseover
+- Fix an issue in release.yml that packed files do not have top level directory
+### New Feature
+- Added reset to default function
+- Added an option to hide status bar
 ## [v0.9.4] - 2026-01-25
 ### Fixed
 - Fix errors occured when in combat and mouseover to friendly unit frames

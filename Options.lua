@@ -106,6 +106,8 @@ local function CallTrigger(keystring, value)
     end
     if (keystring == "general.statusbarText") then
         LibEvent:trigger("tooltip.statusbar.text", value)
+    elseif (keystring == "general.statusbarHide") then
+        LibEvent:trigger("tooltip.statusbar.visible", value)
     elseif (keystring == "general.statusbarHeight") then
         LibEvent:trigger("tooltip.statusbar.height", value)
     elseif (keystring == "general.statusbarTexture") then
@@ -802,6 +804,7 @@ local options = {
     },
     statusbar = {
         { keystring = "general.statusbarText",      type = "checkbox" },
+        { keystring = "general.statusbarHide",      type = "checkbox" },
         { keystring = "general.statusbarHeight",    type = "slider", min = 0, max = 24, step = 1 },
         { keystring = "general.statusbarOffsetX",   type = "slider", min = -50, max = 50, step = 1 },
         { keystring = "general.statusbarOffsetY",   type = "slider", min = -50, max = 50, step = 1 },

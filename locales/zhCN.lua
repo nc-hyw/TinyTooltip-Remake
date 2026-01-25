@@ -23,6 +23,7 @@ local T = {
     ["general.statusbarFontFlag"]           = "HP字体描边",
     ["general.statusbarTexture"]            = "HP背景材质",
     ["general.statusbarColor"]              = "HP颜色",
+    ["general.statusbarHide"]               = "隐藏状态条",
     ["general.anchor.position"]             = "框架锚点",
     ["general.anchor.returnInCombat"]       = "战斗时固定",
     ["general.anchor.hiddenInCombat"]       = "战斗时隐藏",
