@@ -32,7 +32,6 @@ local T = {
     ["general.skinMoreFrames"]              = "样式应用于更多框架 |cffcccc33(重载生效)|r",
     ["general.SavedVariablesPerCharacter"]  = "为每个角色保存独立配置",
     ["general.hideUnitFrameHint"]            = "隐藏头像框右键设置提示",
-    ["general.hideUnitFrameHint.patterns"]  = {"右键", "设置框体", "右键.*设置", "设置.*框体", "焦点.*框体"},
     
     ["item.coloredItemBorder"]              = "物品边框染色",
     ["item.showItemIcon"]                   = "显示物品图标",

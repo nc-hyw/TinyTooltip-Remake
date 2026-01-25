@@ -31,7 +31,6 @@ local T = {
     ["general.alwaysShowIdInfo"]            = "Постоянное отображение ID (В противном случае, удерживайте нажатой клавишу alt/shift)",
     ["general.skinMoreFrames"]              = "Больше рамок скинов |cffcccc33(вступает в силу, после перегрузки)|r",
     ["general.hideUnitFrameHint"]            = "Скрыть подсказку о настройке рамки юнита",
-    ["general.hideUnitFrameHint.patterns"]  = {"Right.*[Cc]lick.*[Ss]etup"},
    
     ["item.coloredItemBorder"]              = "Цвет границы предмета",
     ["item.showItemIcon"]                   = "Отображение значка предмета",
