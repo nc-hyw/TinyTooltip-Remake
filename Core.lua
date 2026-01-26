@@ -1059,9 +1059,6 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
             end
         )
     end
-    if (tip.DisableDrawLayer) then
-        tip:DisableDrawLayer("BACKGROUND")
-    end
     LibEvent:trigger("tooltip:init", tip)
     for _, v in pairs(addon.tooltips) do
         if (tip == v) then return end
