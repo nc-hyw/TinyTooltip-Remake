@@ -3,7 +3,7 @@ A simple tooltip addon based on deprecated TinyTooltip
 
 [English](#english) | [简体中文](#简体中文)
 
-##English  
+## English  
 
 As TinyTooltip haven't been updated more than a year and not supporting version 12.0
 This remake version which based on original TinyTooltip will be carry on for other players who needs it.
@@ -18,7 +18,7 @@ All other functions should be working properly including customize your tooltip.
 
 As I am interested in maintaining this project from now on and adding more features into it, any suggestion is welcome.
 
-##简体中文  
+## 简体中文  
 
 由于 TinyTooltip 已超过一年未更新且不支持 12.0，本重制版本基于原版 TinyTooltip，继续为有需求的玩家提供支持。
 
