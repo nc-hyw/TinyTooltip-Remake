@@ -852,8 +852,21 @@ LibEvent:attachTrigger("tooltip.style.border.color", function(self, frame, r, g,
 end)
 
 local defaultHeaderFont, defaultHeaderSize, defaultHeaderFlag = GameTooltipHeaderText:GetFont()
+local function NormalizeFontFlag(flag, defaultFlag)
+    -- SetFont third param accepts only specific flags; "NORMAL" is invalid in WoW.
+    -- Map "NORMAL" to empty string (no outline), and "default"/empty to current default flag.
+    if (type(flag) ~= "string" or flag == "") then
+        return defaultFlag
+    end
+    if (flag == "default") then
+        return defaultFlag
+    end
+    if (flag == "NORMAL") then
+        return ""
+    end
+    return flag
+end
 LibEvent:attachTrigger("tooltip.style.font.header", function(self, frame, fontObject, fontSize, fontFlag)
-    if (type(fontFlag) ~= "string" or fontFlag == "") then fontFlag = "default" end
     local font, size, flag = GameTooltipHeaderText:GetFont()
     if (fontObject == "default" and fontSize == "default" and fontFlag == "default") then
         if (size == defaultHeaderSize and flag == defaultHeaderFlag) then
@@ -866,17 +879,12 @@ LibEvent:attachTrigger("tooltip.style.font.header", function(self, frame, fontOb
     elseif (type(fontSize) == "number") then
         size = fontSize
     end
-    if (fontFlag == "default") then
-        flag = defaultHeaderFlag
-    else
-        flag = fontFlag or flag
-    end
+    flag = NormalizeFontFlag(fontFlag, defaultHeaderFlag) or flag
     GameTooltipHeaderText:SetFont(font, size, flag)
 end)
 
 local defaultBodyFont, defaultBodySize, defaultBodyFlag = GameTooltipText:GetFont()
 LibEvent:attachTrigger("tooltip.style.font.body", function(self, frame, fontObject, fontSize, fontFlag)
-    if (type(fontFlag) ~= "string" or fontFlag == "") then fontFlag = "default" end
     local font, size, flag = GameTooltipText:GetFont()
     font = addon:GetFont(fontObject, defaultBodyFont)
     if (fontSize == "default") then
@@ -884,11 +892,7 @@ LibEvent:attachTrigger("tooltip.style.font.body", function(self, frame, fontObje
     elseif (type(fontSize) == "number") then
         size = fontSize
     end
-    if (fontFlag == "default") then
-        flag = defaultBodyFlag
-    else
-        flag = fontFlag or flag
-    end
+    flag = NormalizeFontFlag(fontFlag, defaultBodyFlag) or flag
     GameTooltipText:SetFont(font, size, flag)
 end)
 
@@ -917,12 +921,11 @@ LibEvent:attachTrigger("tooltip.statusbar.visible", function(self, hide)
 end)
 
 LibEvent:attachTrigger("tooltip.statusbar.font", function(self, font, size, flag)
-    if (type(flag) ~= "string" or flag == "") then flag = "default" end
     if (size ~= nil and type(size) ~= "number") then size = nil end
     if (not GameTooltipStatusBar.TextString) then return end
     local origFont, origSize, origFlag = GameTooltipStatusBar.TextString:GetFont()
     font = addon:GetFont(font, NumberFontNormal:GetFont())
-    if (flag == "default") then flag = "THINOUTLINE" end
+    flag = NormalizeFontFlag(flag, "THINOUTLINE") or origFlag
     if (font ~= origFont or size ~= origSize or flag ~= origFlag) then
         GameTooltipStatusBar.TextString:SetFont(font or origFont, size or origSize, flag or origFlag)
     end
