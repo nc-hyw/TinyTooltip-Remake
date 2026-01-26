@@ -11,13 +11,23 @@ if not lib then return end
 local DROPDOWNFRAME_MIN_WIDTH  = 130
 local DROPDOWNFRAME_MAX_HEIGHT = 298
 
-local DropDownFrame = CreateFrame("Frame", nil, UIParent, "InsetFrameTemplate3")
-DropDownFrame.Bg:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Background-Dark")
-DropDownFrame.Bg:SetPoint("TOPLEFT", DropDownFrame.BorderTopLeft, "BOTTOMRIGHT", -6, 5)
-DropDownFrame.Bg:SetPoint("BOTTOMRIGHT", DropDownFrame.BorderBottomRight, "TOPLEFT", 5, -5)
+local DropDownFrame = CreateFrame("Frame", nil, UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
 DropDownFrame:SetFrameStrata("DIALOG")
 DropDownFrame:SetClampedToScreen(true)
 DropDownFrame:SetToplevel(true)
+local dropdownBackdrop = {
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+}
+local function EnsureBackdrop()
+    if not DropDownFrame.backdropSet then
+        DropDownFrame:SetBackdrop(dropdownBackdrop)
+        DropDownFrame:SetBackdropBorderColor(0.6, 0.6, 0.6, 1)
+        DropDownFrame.backdropSet = true
+    end
+end
 DropDownFrame.ScrollFrame = CreateFrame("ScrollFrame", nil, DropDownFrame, "UIPanelScrollFrameTemplate")
 DropDownFrame.ScrollFrame:SetPoint("TOPLEFT", DropDownFrame, "TOPLEFT", 0, -6)
 DropDownFrame.ScrollFrame:SetPoint("BOTTOMRIGHT", DropDownFrame, "BOTTOMRIGHT", -2, 4)
@@ -158,11 +168,17 @@ local Extensions = {
         if (DropDownFrame.parent == self and DropDownFrame:IsShown()) then
             return DropDownFrame:Hide()
         end
+        EnsureBackdrop()
         DropDownFrame.parent = self
         DropDownFrame:HideButtons()
         DropDownFrame.ListFrame:SetWidth(DROPDOWNFRAME_MIN_WIDTH)
         DropDownFrame:SetHeight(min(DROPDOWNFRAME_MAX_HEIGHT, #self.dropdata*18+10))
         self:ListFunc()
+        -- Ensure width is set (ListFunc/AddButton may not be called if dropdata is empty)
+        if (DropDownFrame:GetWidth() == 0) then
+            DropDownFrame:SetWidth(DROPDOWNFRAME_MIN_WIDTH)
+        end
+        DropDownFrame:ClearAllPoints()
         DropDownFrame:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 18, 4)
         DropDownFrame:Show()
     end,
@@ -172,7 +188,11 @@ lib.Initialize = function(frame, initFunction, displayMode)
     for k, v in pairs(Extensions) do frame[k] = v end
     if (not frame.dropdata) then frame.dropdata = {} end
     frame.Button:SetScript("OnClick", function() frame:ToggleDropDownFrame() end)
-    frame:SetScript("OnHide", nil)
+    frame:SetScript("OnHide", function()
+        if (DropDownFrame.parent == frame) then
+            DropDownFrame:Hide()
+        end
+    end)
     if (initFunction) then
         frame:SetListFunc(initFunction)
         DropDownFrame:HideButtons()
