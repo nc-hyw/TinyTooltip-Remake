@@ -778,6 +778,7 @@ local options = {
         { keystring = "unit.player.elements.isPlayer",    type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.role",        type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.moveSpeed",   type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.mplusScore",  type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.zone",        type = "element", color = true, wildcard = true, filter = true, },
     },
     npc = {

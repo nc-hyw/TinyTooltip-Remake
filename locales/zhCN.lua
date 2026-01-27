@@ -53,6 +53,7 @@ local T = {
     ["unit.player.elements.factionIcon"]    = "阵营图标",
     ["unit.player.elements.classIcon"]      = "职业图标",
     ["unit.player.elements.friendIcon"]     = "好友图标",
+    ["unit.player.elements.mplusScore"]     = "史诗钥石评分",
     ["unit.player.elements.title"]          = "头衔",
     ["unit.player.elements.name"]           = "名称",
     ["unit.player.elements.realm"]          = "服务器",
@@ -100,6 +101,7 @@ local T = {
     ["spell.background"]                    = "背景顔色",
     ["spell.borderColor"]                   = "边框颜色",
     ["spell.showIcon"]                      = "法术图标",
+    ["Mythic+ Score"]                       = "史诗钥石评分",
     
     ["dropdown.inherit"]        = "|cffffee00继承全局|r",
     ["dropdown.default"]        = "|cffaaaaaa系统默认|r",
