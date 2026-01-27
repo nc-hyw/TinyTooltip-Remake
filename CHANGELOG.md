@@ -1,38 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
-## [v0.9.6] - 2026-01-25
-### Fixed
-- Fix an issue that target is not correctly displayed in tooltip when inside dungeon
 
-## [v0.9.5] - 2026-01-25
-### Fixed
-- Fix an issue that error occures when apply raid icon to target and mouseover
-- Fix an issue in release.yml that packed files do not have top level directory
-### New Feature
-- Added reset to default function
-- Added an option to hide status bar
-## [v0.9.4] - 2026-01-25
-### Fixed
-- Fix errors occured when in combat and mouseover to friendly unit frames
-- Fix packaging issue where About.xml was missing from the release zip
+Known Issue:  
 
-## [v0.9.3] - 2026-01-25
-### Fixed
-- Fix errors when mouseover a buff/debuff during combat
+Due to how TinyTooltip was disgned, gem and slot icon on item display may not be stable because of conflict with Blizzard UI rendering, there is no way to solve this problem without completely refactoring this addon which is not my top priority right now.
 
-## [v0.9.2] - 2026-01-24
-### Fixed
-- Fix tooltip keeps resizeing due to target info update on tooltip when mouse over to player/target frame
-- Fix secrete value errors when mouseover to player frame during combat inside dungeon
+I will try to rebuilt this addon entireley if I have the time and after the game become stable.
 
-## [v0.9.1] - 2026-01-24
-### Fixed
-- Fix secret value errors when inside dungeon
+## [v1.0.0] - 2026-01-27
+New Feature: 
+- Tooltip can now display M+ scores and colored using Blizzard color profile by default
 
-## [v0.9.0] - 2026-01-24
-### Added
-- Initial release
-- Added support for 12.0
-- Added About Page
-- Added bug report URL
-- Added GitHub Actions release workflow
+Fix:  
+- Fixed an issue that caused lua error when inside dungeon/raid mouseover to aura in nameplates
+- Fixed an issue that dropdown menue will not correctly display after reload
+- Fixed an issue that gem and slot icon will not display ...

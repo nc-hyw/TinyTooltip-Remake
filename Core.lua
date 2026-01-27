@@ -101,6 +101,33 @@ local function AutoValidateElements(src, dst)
     return dst
 end
 
+local function GetMythicPlusScore(unit)
+    local function SafeCall(fn, ...)
+        local ok, a, b, c, d = pcall(fn, ...)
+        if ok then return a, b, c, d end
+    end
+    if (not unit or not UnitIsPlayer or not SafeCall(UnitIsPlayer, unit)) then return end
+    if (C_PlayerInfo and C_PlayerInfo.GetPlayerMythicPlusRatingSummary) then
+        local summary = SafeCall(C_PlayerInfo.GetPlayerMythicPlusRatingSummary, unit)
+        if (summary and summary.currentSeasonScore) then
+            local score = summary.currentSeasonScore
+            local color = summary.currentSeasonScoreColor or summary.color
+            if (not color and C_ChallengeMode and C_ChallengeMode.GetDungeonScoreRarityColor) then
+                color = C_ChallengeMode.GetDungeonScoreRarityColor(score)
+            end
+            local bestLevel
+            if (summary.runs and type(summary.runs) == "table") then
+                for _, run in ipairs(summary.runs) do
+                    if (run and run.bestRunLevel and (not bestLevel or run.bestRunLevel > bestLevel)) then
+                        bestLevel = run.bestRunLevel
+                    end
+                end
+            end
+            return score, color, bestLevel
+        end
+    end
+end
+
 --字符型数字键转为数字键
 function addon:FixNumericKey(t)
     local key
@@ -460,6 +487,7 @@ function addon:GetUnitInfo(unit)
     local guildName, guildRank, guildIndex, guildRealm = SafeCall(GetGuildInfo, unit)
     local classif = SafeCall(UnitClassification, unit)
     local role = SafeCall(UnitGroupRolesAssigned, unit)
+    local mplusScore, mplusColor, mplusBest = GetMythicPlusScore(unit)
 
     t.raidIcon     = self:GetRaidIcon(unit)
     t.pvpIcon      = self:GetPVPIcon(unit)
@@ -492,6 +520,11 @@ function addon:GetUnitInfo(unit)
     t.isPlayer     = SafeBool(UnitIsPlayer, unit) and PLAYER
     t.moveSpeed    = self:GetUnitSpeed(unit)
     t.zone         = self:GetZone(unit, t.name, t.realm)
+    if (mplusScore and mplusScore > 0) then
+        local bestText = (mplusBest and mplusBest > 0) and (" (" .. mplusBest .. ")") or ""
+        t.mplusScore = format("%s %d%s", self.L and self.L["Mythic+ Score"] or "M+ Score", floor(mplusScore + 0.5), bestText)
+        t.mplusScoreColor = mplusColor
+    end
     t.unit         = unit                     --unit
     t.level        = level                    --1~123|-1
     t.effectiveLevel = effectiveLevel or level
@@ -605,6 +638,14 @@ addon.colorfunc.class = function(raw)
     return r, g, b, addon:GetHexColor(r, g, b)
 end
 
+addon.colorfunc.mplus = function(raw)
+    local c = raw and raw.mplusScoreColor
+    if (c and c.r and c.g and c.b) then
+        return c.r, c.g, c.b, addon:GetHexColor(c.r, c.g, c.b)
+    end
+    return 1, 1, 1, "ffffff"
+end
+
 addon.colorfunc.level = function(raw)
     local color = GetCreatureDifficultyColor(raw.effectiveLevel>0 and raw.effectiveLevel or 999)
     return color.r, color.g, color.b, addon:GetHexColor(color)
@@ -686,12 +727,21 @@ LibEvent:attachTrigger("tooltip.scale", function(self, frame, scale)
     frame:SetScale(scale)
 end)
 
+local function SafeSetOwner(frame, parent, anchor, ...)
+    if (not frame or not frame.SetOwner) then return end
+    if (parent and parent.IsForbidden and parent:IsForbidden()) then
+        parent = UIParent
+    end
+    local ok = pcall(frame.SetOwner, frame, parent, anchor, ...)
+    return ok
+end
+
 LibEvent:attachTrigger("tooltip.anchor.cursor", function(self, frame, parent)
-    frame:SetOwner(parent, "ANCHOR_CURSOR")
+    SafeSetOwner(frame, parent, "ANCHOR_CURSOR")
 end)
 
 LibEvent:attachTrigger("tooltip.anchor.cursor.right", function(self, frame, parent, offsetX, offsetY)
-    frame:SetOwner(parent, "ANCHOR_CURSOR_RIGHT", tonumber(offsetX) or 36, tonumber(offsetY) or -12)
+    SafeSetOwner(frame, parent, "ANCHOR_CURSOR_RIGHT", tonumber(offsetX) or 36, tonumber(offsetY) or -12)
 end)
 
 LibEvent:attachTrigger("tooltip.anchor.static", function(self, frame, parent, offsetX, offsetY, anchorPoint)
@@ -703,7 +753,7 @@ LibEvent:attachTrigger("tooltip.anchor.static", function(self, frame, parent, of
 end)
 
 LibEvent:attachTrigger("tooltip.anchor.none", function(self, frame, parent)
-    frame:SetOwner(parent, "ANCHOR_NONE")
+    SafeSetOwner(frame, parent, "ANCHOR_NONE")
     frame:Hide()
 end)
 
