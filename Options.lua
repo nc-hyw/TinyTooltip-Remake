@@ -728,6 +728,40 @@ LibEvent:attachEvent("VARIABLES_LOADED", function()
     end
 end)
 
+-- 布局常量
+local LAYOUT = {
+    ROW_HEIGHT    = 30,
+    ANCHOR_OFFSET = 32,
+    ANCHOR_TOP    = -16,
+    TITLE_LEFT    = 18,
+    PANEL_PADDING = 64,
+    RESET_OFFSET_X = -28,
+    RESET_OFFSET_Y = -12,
+    OFFSET_X = {
+        checkbox = 0, colorpick = 5, slider = 15,
+        dropdown = -15, dropdownslider = -15, anchor = -15,
+        element = 0,
+    },
+    -- Variables / DIY 面板
+    DIY_LINE_HEIGHT    = 24,
+    DIY_LINE_SPACING   = 25,
+    DIY_FIRST_LINE_Y   = 13,   -- -(i*SPACING)+13 首行 Y 偏移
+    DIY_PANEL_PADDING_H = 28,
+    DIY_PANEL_PADDING_V = 36,
+    DIY_ELEMENT_GAP    = 16,
+    DIY_LEFT           = 14,
+    DIY_LINE_DEFAULT_W = 300,
+    DIY_BIG_FACTION_EXTRA = 48,
+    DIY_PREVIEW_OFFSET_X = 332,
+    DIY_PREVIEW_OFFSET_Y = -100,
+    DIY_FRAME_WIDTH    = 300,
+    DIY_FRAME_HEIGHT   = 100,
+    DIY_ARROW_SIZE_W   = 32,
+    DIY_ARROW_SIZE_H   = 48,
+    DIY_ARROW_OFFSET_X = 35,
+    DIY_ARROW_OFFSET_Y = -60,
+}
+
 local options = {
     general = {
         { keystring = "general.mask",               type = "checkbox" },
@@ -836,11 +870,11 @@ local frameRoot = CreateFrame("Frame", nil, SettingsPanel.Container)
 frameRoot:SetAllPoints()
 frameRoot:Hide()
 frameRoot.anchor = CreateFrame("Frame", nil, frameRoot)
-frameRoot.anchor:SetPoint("TOPLEFT", 32, -16)
-frameRoot.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+frameRoot.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frameRoot.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 
 frameRoot.title = frameRoot:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-frameRoot.title:SetPoint("TOPLEFT", 18, -16)
+frameRoot.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 frameRoot.title:SetText(addonName)
 
 -- About / Help page 
@@ -870,19 +904,19 @@ local resetAllText = L["button.resetAll"] or resetSectionText
 
 local frame = CreateFrame("Frame", nil, UIParent)
 frame.anchor = CreateFrame("Frame", nil, frame)
-frame.anchor:SetPoint("TOPLEFT", 32, -16)
-frame.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+frame.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frame.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 frame.title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-frame.title:SetPoint("TOPLEFT", 18, -16)
+frame.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 frame.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.general"]))
 frame.name = L["menu.general"]
 
 local framePC = CreateFrame("Frame", nil, UIParent)
 framePC.anchor = CreateFrame("Frame", nil, framePC)
-framePC.anchor:SetPoint("TOPLEFT", 32, -13)
-framePC.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+framePC.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+framePC.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 framePC.title = framePC:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-framePC.title:SetPoint("TOPLEFT", 18, -16)
+framePC.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 framePC.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.player"]))
 framePC.parent = addonName
 framePC.name = L["menu.player"]
@@ -890,7 +924,7 @@ framePC.name = L["menu.player"]
 framePC.diy = CreateFrame("Button", nil, framePC)
 framePC.diy:SetSize(400, 67)
 framePC.diy:SetScale(0.68)
-framePC.diy:SetPoint("TOPLEFT", 332, -100)
+framePC.diy:SetPoint("TOPLEFT", LAYOUT.DIY_PREVIEW_OFFSET_X, LAYOUT.DIY_PREVIEW_OFFSET_Y)
 framePC.diy:SetNormalTexture("Interface\\LevelUp\\MinorTalents")
 framePC.diy:GetNormalTexture():SetTexCoord(0, 400/512, 341/512, 407/512)
 framePC.diy:GetNormalTexture():SetVertexColor(1, 1, 1, 0.8)
@@ -899,7 +933,7 @@ framePC.diy.text = framePC.diy:CreateFontString(nil, "OVERLAY", "GameFont_Gigant
 framePC.diy.text:SetPoint("CENTER", 0, 2)
 framePC.diy.text:SetText(L.DIY.." "..(SETTINGS or ""))
 
-framePC:SetSize(SettingsPanel.Container:GetWidth()-64, #options.pc*30)
+framePC:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, #options.pc * LAYOUT.ROW_HEIGHT)
 local framePCScrollFrame = CreateFrame("ScrollFrame", nil, UIParent, "UIPanelScrollFrameTemplate")
 framePCScrollFrame.ScrollBar:Hide()
 framePCScrollFrame.ScrollBar:ClearAllPoints()
@@ -916,15 +950,15 @@ framePCScrollFrame:Hide()
 
 local frameNPC = CreateFrame("Frame", nil, UIParent)
 frameNPC.anchor = CreateFrame("Frame", nil, frameNPC)
-frameNPC.anchor:SetPoint("TOPLEFT", 32, -16)
-frameNPC.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+frameNPC.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frameNPC.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 frameNPC.title = frameNPC:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-frameNPC.title:SetPoint("TOPLEFT", 18, -16)
+frameNPC.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 frameNPC.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.npc"]))
 frameNPC.parent = addonName
 frameNPC.name = L["menu.npc"]
 
-frameNPC:SetSize(SettingsPanel.Container:GetWidth()-64, #options.npc*30)
+frameNPC:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, #options.npc * LAYOUT.ROW_HEIGHT)
 local frameNPCScrollFrame = CreateFrame("ScrollFrame", nil, UIParent, "UIPanelScrollFrameTemplate")
 frameNPCScrollFrame.ScrollBar:Hide()
 frameNPCScrollFrame.ScrollBar:ClearAllPoints()
@@ -939,40 +973,40 @@ frameNPCScrollFrame.name = L["menu.npc"]
 
 local frameStatusbar = CreateFrame("Frame", nil, UIParent)
 frameStatusbar.anchor = CreateFrame("Frame", nil, frameStatusbar)
-frameStatusbar.anchor:SetPoint("TOPLEFT", 32, -16)
-frameStatusbar.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+frameStatusbar.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frameStatusbar.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 frameStatusbar.title = frameStatusbar:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-frameStatusbar.title:SetPoint("TOPLEFT", 18, -16)
+frameStatusbar.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 frameStatusbar.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.statusbar"]))
 frameStatusbar.parent = addonName
 frameStatusbar.name = L["menu.statusbar"]
 
 local frameSpell = CreateFrame("Frame", nil, UIParent)
 frameSpell.anchor = CreateFrame("Frame", nil, frameSpell)
-frameSpell.anchor:SetPoint("TOPLEFT", 32, -16)
-frameSpell.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+frameSpell.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frameSpell.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 frameSpell.title = frameSpell:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-frameSpell.title:SetPoint("TOPLEFT", 18, -16)
+frameSpell.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 frameSpell.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.spell"]))
 frameSpell.parent = addonName
 frameSpell.name = L["menu.spell"]
 
 local frameFont = CreateFrame("Frame", nil, UIParent)
 frameFont.anchor = CreateFrame("Frame", nil, frameFont)
-frameFont.anchor:SetPoint("TOPLEFT", 32, -16)
-frameFont.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+frameFont.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frameFont.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 frameFont.title = frameFont:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-frameFont.title:SetPoint("TOPLEFT", 18, -16)
+frameFont.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 frameFont.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.font"]))
 frameFont.parent = addonName
 frameFont.name = L["menu.font"]
 
 local frameVariables = CreateFrame("Frame", nil, UIParent)
 frameVariables.anchor = CreateFrame("Frame", nil, frameVariables)
-frameVariables.anchor:SetPoint("TOPLEFT", 32, -16)
-frameVariables.anchor:SetSize(SettingsPanel.Container:GetWidth()-64, 1)
+frameVariables.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frameVariables.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
 frameVariables.title = frameVariables:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-frameVariables.title:SetPoint("TOPLEFT", 18, -16)
+frameVariables.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
 frameVariables.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.variables"]))
 frameVariables.parent = addonName
 frameVariables.name = L["menu.variables"]
@@ -1004,11 +1038,13 @@ local function InitVariablesFrame()
     end)
 end
 
-local function CreateResetButton(parent, text, onClick, anchorFrame)
+local function CreateResetButton(parent, text, onClick)
     local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     button:SetSize(150, 22)
     button:SetText(text)
-    button:SetPoint("TOPRIGHT", anchorFrame or parent, "TOPRIGHT", -28, -12)
+    -- 锚定到 parent.anchor 右端，与左侧布局统一；anchor 宽度 = 内容区，各页面一致
+    local anchor = parent.anchor or parent
+    button:SetPoint("TOPRIGHT", anchor, "TOPRIGHT", LAYOUT.RESET_OFFSET_X, LAYOUT.RESET_OFFSET_Y)
     button:SetScript("OnClick", onClick)
     return button
 end
@@ -1052,31 +1088,27 @@ framePC.reset = CreateResetButton(framePC, resetSectionText, function() ResetUni
 frameNPC.reset = CreateResetButton(frameNPC, resetSectionText, function() ResetUnitSection("npc", frameNPC) end)
 frameStatusbar.reset = CreateResetButton(frameStatusbar, resetSectionText, ResetStatusbarSection)
 
-local function InitOptions(list, parent, height)
+local function InitOptions(list, parent)
     local element, offsetX
     for i, v in ipairs(list) do
         if (widgets[v.type]) then
-            if (v.type == "colorpick") then offsetX = 5
-            elseif (v.type == "slider") then offsetX = 15
-            elseif (v.type == "dropdown" or v.type == "dropdownslider") then offsetX = -15
-            elseif (v.type == "anchor") then offsetX = -15
-            else offsetX = 0 end
+            offsetX = LAYOUT.OFFSET_X[v.type] or 0
             element = widgets[v.type](widgets, parent, v)
             parent.optionWidgets = parent.optionWidgets or {}
             element._config = v
             tinsert(parent.optionWidgets, element)
-            element:SetPoint("TOPLEFT", parent.anchor, "BOTTOMLEFT", offsetX, -(i*height))
+            element:SetPoint("TOPLEFT", parent.anchor, "BOTTOMLEFT", offsetX, -(i * LAYOUT.ROW_HEIGHT))
         end
     end
 end
 
 LibEvent:attachEvent("VARIABLES_LOADED", function()
-    InitOptions(options.general, frame, 32)
-    InitOptions(options.pc, framePC, 29)
-    InitOptions(options.npc, frameNPC, 27)
-    InitOptions(options.statusbar, frameStatusbar, 36)
-    InitOptions(options.spell, frameSpell, 32)
-    InitOptions(options.font, frameFont, 32)
+    InitOptions(options.general, frame)
+    InitOptions(options.pc, framePC)
+    InitOptions(options.npc, frameNPC)
+    InitOptions(options.statusbar, frameStatusbar)
+    InitOptions(options.spell, frameSpell)
+    InitOptions(options.font, frameFont)
     InitVariablesFrame()
 end)
 
@@ -1142,35 +1174,35 @@ end
 
 local diytable, diyPlayerTable = {}, {}
 
-local frame = CreateFrame("Frame", nil, framePCScrollFrame)
-tinsert(addon.tooltips, frame)
-frame:Show()
-frame:SetFrameStrata("DIALOG")
-frame:SetClampedToScreen(true)
-frame:EnableMouse(true)
-frame:SetMovable(true)
-frame:SetSize(300, 100)
-frame:SetPoint("BOTTOM", framePCScrollFrame, "TOP", 64, 0)
-frame:RegisterForDrag("LeftButton")
-frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
-frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-frame.lines, frame.elements, frame.identity = {}, {}, "diy"
-frame.close = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-frame.close:SetSize(14, 14)
-frame.close:SetPoint("TOPRIGHT", -2, -2)
-frame.close:SetNormalTexture("Interface\\\Buttons\\UI-StopButton")
-frame.close:SetPushedTexture("Interface\\\Buttons\\UI-StopButton")
-frame.close:GetNormalTexture():SetVertexColor(0.9, 0.6, 0)
-frame.close:Hide()
-frame.tips = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLargeOutline")
-frame.tips:SetPoint("BOTTOM", 0, 6)
-frame.tips:SetFont(frame.tips:GetFont(), 12, "NONE")
-frame.tips:SetText(L["<Drag element to customize the style>"])
-frame.arrow = frame:CreateTexture(nil, "OVERLAY")
-frame.arrow:SetSize(32, 48)
-frame.arrow:SetTexture("Interface\\Buttons\\JumpUpArrow")
-frame.arrow:SetPoint("BOTTOM", framePC, "TOP", 35, -60)
-frame:HookScript("OnShow", function() LibEvent:trigger("tinytooltip:diy:player", "player", true) end)
+local frameDIY = CreateFrame("Frame", nil, framePCScrollFrame)
+tinsert(addon.tooltips, frameDIY)
+frameDIY:Show()
+frameDIY:SetFrameStrata("DIALOG")
+frameDIY:SetClampedToScreen(true)
+frameDIY:EnableMouse(true)
+frameDIY:SetMovable(true)
+frameDIY:SetSize(LAYOUT.DIY_FRAME_WIDTH, LAYOUT.DIY_FRAME_HEIGHT)
+frameDIY:SetPoint("BOTTOM", framePCScrollFrame, "TOP", LAYOUT.PANEL_PADDING, 0)
+frameDIY:RegisterForDrag("LeftButton")
+frameDIY:SetScript("OnDragStart", function(self) self:StartMoving() end)
+frameDIY:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+frameDIY.lines, frameDIY.elements, frameDIY.identity = {}, {}, "diy"
+frameDIY.close = CreateFrame("Button", nil, frameDIY, "UIPanelCloseButton")
+frameDIY.close:SetSize(14, 14)
+frameDIY.close:SetPoint("TOPRIGHT", -2, -2)
+frameDIY.close:SetNormalTexture("Interface\\\Buttons\\UI-StopButton")
+frameDIY.close:SetPushedTexture("Interface\\\Buttons\\UI-StopButton")
+frameDIY.close:GetNormalTexture():SetVertexColor(0.9, 0.6, 0)
+frameDIY.close:Hide()
+frameDIY.tips = frameDIY:CreateFontString(nil, "ARTWORK", "GameFontNormalLargeOutline")
+frameDIY.tips:SetPoint("BOTTOM", 0, 6)
+frameDIY.tips:SetFont(frameDIY.tips:GetFont(), 12, "NONE")
+frameDIY.tips:SetText(L["<Drag element to customize the style>"])
+frameDIY.arrow = frameDIY:CreateTexture(nil, "OVERLAY")
+frameDIY.arrow:SetSize(LAYOUT.DIY_ARROW_SIZE_W, LAYOUT.DIY_ARROW_SIZE_H)
+frameDIY.arrow:SetTexture("Interface\\Buttons\\JumpUpArrow")
+frameDIY.arrow:SetPoint("BOTTOM", framePC, "TOP", LAYOUT.DIY_ARROW_OFFSET_X, LAYOUT.DIY_ARROW_OFFSET_Y)
+frameDIY:HookScript("OnShow", function() LibEvent:trigger("tinytooltip:diy:player", "player", true) end)
 
 local DraggingButton, OverButton, OverLine
 
@@ -1215,7 +1247,7 @@ local function OnDragStop(self)
         tinsert(diytable[OverLine.line], self.key)
         OverLine = false
     end
-    for _, f in ipairs(frame.lines) do
+    for _, f in ipairs(frameDIY.lines) do
         f.border:SetAlpha(0)
     end
     for i = #diytable, 1, -1 do
@@ -1264,7 +1296,7 @@ end
 local function CreateLine(parent, lineNumber)
     if (not parent.lines[lineNumber]) then
         local line = CreateFrame("Frame", nil, parent)
-        line:SetSize(300, 24)
+        line:SetSize(LAYOUT.DIY_LINE_DEFAULT_W, LAYOUT.DIY_LINE_HEIGHT)
         line.line = lineNumber
         line.border = CreateFrame("Frame", nil, line, BackdropTemplateMixin and "BackdropTemplate")
         line.border:SetAllPoints()
@@ -1276,9 +1308,9 @@ local function CreateLine(parent, lineNumber)
     return parent.lines[lineNumber]
 end
 
-frame:SetScript("OnUpdate", function(self, elasped)
+frameDIY:SetScript("OnUpdate", function(self, elapsed)
     if (not DraggingButton) then return end
-    self.timer = (self.timer or 0) + elasped
+    self.timer = (self.timer or 0) + elapsed
     if (self.timer < 0.15) then return end
     self.timer = 0
     local hasoverbtn = false
@@ -1321,60 +1353,61 @@ local placeholder = {
 setmetatable(placeholder, {__index = function(_, k) return k end})
 
 LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisable, toggleVisible)
-    if (toggleVisible and frame:IsShown()) then
-        return frame:Hide()
+    if (toggleVisible and frameDIY:IsShown()) then
+        return frameDIY:Hide()
     end
     local raw = addon:GetUnitInfo(unit)
     local frameWidth, lineWidth, totalLines = 0, 0, 0
     local config, value
     for i, v in ipairs(diytable) do
         lineWidth = 0
-        CreateLine(frame, i)
+        CreateLine(frameDIY, i)
         for ii, e in ipairs(v) do
-            CreateElement(frame, e)
+            CreateElement(frameDIY, e)
             config = addon.db.unit.player.elements[e]
             if (skipDisable and not config.enable) then
-                frame.elements[e]:Hide()
+                frameDIY.elements[e]:Hide()
             else
                 value = raw[e] or placeholder[e]
                 if (config.color and config.wildcard) then
                     value = addon:FormatData(value, config, raw)
                 end
-                frame.elements[e]:Show()
-                frame.elements[e]:SetText(value)
-                frame.elements[e]:ClearAllPoints()
-                frame.elements[e]:SetPoint("LEFT", frame.lines[i], "LEFT", lineWidth, 0)
-                lineWidth = lineWidth + frame.elements[e]:GetWidth()
+                frameDIY.elements[e]:Show()
+                frameDIY.elements[e]:SetText(value)
+                frameDIY.elements[e]:ClearAllPoints()
+                frameDIY.elements[e]:SetPoint("LEFT", frameDIY.lines[i], "LEFT", lineWidth, 0)
+                lineWidth = lineWidth + frameDIY.elements[e]:GetWidth()
             end
         end
         if (lineWidth > frameWidth) then
-            frameWidth = lineWidth + 16
+            frameWidth = lineWidth + LAYOUT.DIY_ELEMENT_GAP
         end
         totalLines = i
     end
     totalLines = totalLines + 1
-    frame:SetWidth(frameWidth+28)
-    frame:SetHeight(totalLines*24+36)
+    local padH = (diytable.factionBig and diytable.factionBig.enable) and LAYOUT.DIY_BIG_FACTION_EXTRA or LAYOUT.DIY_PANEL_PADDING_H
+    frameDIY:SetWidth(frameWidth + padH)
+    frameDIY:SetHeight(totalLines * LAYOUT.DIY_LINE_HEIGHT + LAYOUT.DIY_PANEL_PADDING_V)
     for i = 1, totalLines do
-        f = CreateLine(frame, i)
-        f:Show()
-        f:SetWidth(frameWidth)
-        f:SetPoint("TOPLEFT", frame, "TOPLEFT", 14, -(i*25)+25-12)
+        local line = CreateLine(frameDIY, i)
+        line:Show()
+        line:SetWidth(frameWidth)
+        line:SetPoint("TOPLEFT", frameDIY, "TOPLEFT", LAYOUT.DIY_LEFT, -(i * LAYOUT.DIY_LINE_SPACING) + LAYOUT.DIY_FIRST_LINE_Y)
     end
-    while (frame.lines[totalLines+1]) do
-        frame.lines[totalLines+1]:Hide()
-        totalLines = totalLines + 1
+    local k = totalLines + 1
+    while (frameDIY.lines[k]) do
+        frameDIY.lines[k]:Hide()
+        k = k + 1
     end
     if (diytable.factionBig and diytable.factionBig.enable) then
-        frame.BigFactionIcon:SetTexture("Interface\\Timer\\".. raw.factionGroup .."-Logo")
-        frame.BigFactionIcon:Show()
-        frame:SetWidth(frameWidth+48)
+        frameDIY.BigFactionIcon:SetTexture("Interface\\Timer\\".. raw.factionGroup .."-Logo")
+        frameDIY.BigFactionIcon:Show()
     else
-        frame.BigFactionIcon:Hide()
+        frameDIY.BigFactionIcon:Hide()
     end
-    addon.ColorUnitBorder(frame, diyPlayerTable, raw)
-    addon.ColorUnitBackground(frame, diyPlayerTable, raw)
-    frame:Show()
+    addon.ColorUnitBorder(frameDIY, diyPlayerTable, raw)
+    addon.ColorUnitBackground(frameDIY, diyPlayerTable, raw)
+    frameDIY:Show()
 end)
 
 LibEvent:attachTrigger("tooltip:variables:loaded", function()
@@ -1383,7 +1416,7 @@ LibEvent:attachTrigger("tooltip:variables:loaded", function()
 end)
 
 LibEvent:attachTrigger("tooltip:variable:changed", function(self, keystring, value)
-    if (frame:IsShown()) then
+    if (frameDIY:IsShown()) then
         LibEvent:trigger("tinytooltip:diy:player", "player", true)
     end
     if (keystring == "general.SavedVariablesPerCharacter") then
