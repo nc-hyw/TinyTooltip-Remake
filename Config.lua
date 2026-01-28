@@ -31,6 +31,7 @@ addon.db = {
         bodyFontSize      = "default",
         bodyFontFlag      = "default",
         SavedVariablesPerCharacter = false,
+        hideUnitFrameHint = true,                  --隐藏头像框右键设置提示
     },
     unit = {
         player = {

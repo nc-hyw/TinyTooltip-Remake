@@ -9,6 +9,7 @@ local T = {
     ["general.statusbarHide"]   = "Hide Status Bar",
     ["general.alwaysShowIdInfo"] = "Always Show Id Info (Otherwise hold down SHIFT/ALT)",
     ["general.skinMoreFrames"]   = "Skin More Frames |cffcccc33(need to /reload)|r",
+    ["general.hideUnitFrameHint"] = "Hide Unit Frame Right-Click Setup Hint",
     ["dropdown.inherit"]        = "|cffffee00inherit|r",
     ["dropdown.default"]        = "|cffaaaaaadefault|r",
     ["dropdown.cursor"]         = "|cff33ccffcursor|r",
