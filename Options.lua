@@ -106,6 +106,14 @@ local function CallTrigger(keystring, value)
     end
     if (keystring == "general.statusbarText") then
         LibEvent:trigger("tooltip.statusbar.text", value)
+    elseif (keystring == "general.statusbarPercent") then
+        LibEvent:trigger("tooltip.statusbar.text", addon.db.general.statusbarText)
+        if (GameTooltipStatusBar and GameTooltipStatusBar.GetScript) then
+            local fn = GameTooltipStatusBar:GetScript("OnValueChanged")
+            if (fn) then
+                pcall(fn, GameTooltipStatusBar, GameTooltipStatusBar:GetValue())
+            end
+        end
     elseif (keystring == "general.statusbarHide") then
         LibEvent:trigger("tooltip.statusbar.visible", value)
     elseif (keystring == "general.statusbarHeight") then
@@ -839,6 +847,7 @@ local options = {
     },
     statusbar = {
         { keystring = "general.statusbarText",      type = "checkbox" },
+        { keystring = "general.statusbarPercent",   type = "checkbox" },
         { keystring = "general.statusbarHide",      type = "checkbox" },
         { keystring = "general.statusbarHeight",    type = "slider", min = 0, max = 24, step = 1 },
         { keystring = "general.statusbarOffsetX",   type = "slider", min = -50, max = 50, step = 1 },
