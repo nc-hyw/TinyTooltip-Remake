@@ -6,6 +6,7 @@ local L = addon.L
 local T = {
 ["general.statusbarOffsetX"] = "Statusbar Margin-X (0:Default)",
     ["general.statusbarOffsetY"] = "Statusbar Offset Y (0:Default)",
+    ["general.statusbarPercent"] = "Show Health Percentage",
     ["general.statusbarHide"]   = "Hide Status Bar",
     ["general.alwaysShowIdInfo"] = "Always Show Id Info (Otherwise hold down SHIFT/ALT)",
     ["general.skinMoreFrames"]   = "Skin More Frames |cffcccc33(need to /reload)|r",
