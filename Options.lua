@@ -1399,6 +1399,8 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
         frameDIY.lines[k]:Hide()
         k = k + 1
     end
+    -- 确保 BigFactionIcon 存在（可能在 tooltip:init 之前访问）
+    addon.InitBigFactionIcon(frameDIY)
     if (diytable.factionBig and diytable.factionBig.enable) then
         frameDIY.BigFactionIcon:SetTexture("Interface\\Timer\\".. raw.factionGroup .."-Logo")
         frameDIY.BigFactionIcon:Show()

@@ -971,6 +971,17 @@ LibEvent:attachTrigger("tooltip.statusbar.position", function(self, position, of
     end
 end)
 
+-- 初始化 BigFactionIcon 纹理
+function addon.InitBigFactionIcon(tip)
+    if (not tip.BigFactionIcon) then
+        tip.BigFactionIcon = tip:CreateTexture(nil, "OVERLAY")
+        tip.BigFactionIcon:SetPoint("TOPRIGHT", tip, "TOPRIGHT", 18, 0)
+        tip.BigFactionIcon:SetBlendMode("ADD")
+        tip.BigFactionIcon:SetScale(0.24)
+        tip.BigFactionIcon:SetAlpha(0.40)
+    end
+end
+
 LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     if (not tip or tip.style) then return end
     local backdrop = {
@@ -1101,13 +1112,7 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
         tip.GetBackdrop = function(self) return self.style:GetBackdrop() end
         tip.GetBackdropColor = function(self) return self.style:GetBackdropColor() end
         tip.GetBackdropBorderColor = function(self) return self.style:GetBackdropBorderColor() end
-        if (not tip.BigFactionIcon) then
-            tip.BigFactionIcon = tip:CreateTexture(nil, "OVERLAY")
-            tip.BigFactionIcon:SetPoint("TOPRIGHT", tip, "TOPRIGHT", 18, 0)
-            tip.BigFactionIcon:SetBlendMode("ADD")
-            tip.BigFactionIcon:SetScale(0.24)
-            tip.BigFactionIcon:SetAlpha(0.40)
-        end
+        addon.InitBigFactionIcon(tip)
         tip:TinyHookScript("OnUpdate",
             function(self, elapsed)
                 self.updateElapsed = (self.updateElapsed or 0) + elapsed
