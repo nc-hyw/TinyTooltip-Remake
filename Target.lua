@@ -9,6 +9,14 @@ local TOOLTIP_UPDATE_TIME = TOOLTIP_UPDATE_TIME or 0.2
 
 local addon = TinyTooltip
 
+local function GetUnitSettings()
+    local db = addon.db
+    if (not db or not db.unit) then
+        return
+    end
+    return db.unit.player, db.unit.npc
+end
+
 local function SafeBool(fn, ...)
     local ok, value = pcall(fn, ...)
     if (not ok) then
@@ -111,12 +119,30 @@ local function UpdateTargetLine(tip, targetUnit)
 end
 
 LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
+    local player, npc = GetUnitSettings()
+    if (not player or not npc) then return end
     if SafeIsUnit(unit, "player") then
-        UpdateTargetLine(tip, "playertarget")
+        if (player.showTarget) then
+            UpdateTargetLine(tip, "playertarget")
+        else
+            UpdateTargetLine(tip)
+        end
     elseif SafeIsUnit(unit, "mouseover") then
-        UpdateTargetLine(tip, "mouseovertarget")
+        local isPlayer = SafeBool(UnitIsPlayer, "mouseover")
+        if ((isPlayer and player.showTarget)
+            or (not isPlayer and npc.showTarget)) then
+            UpdateTargetLine(tip, "mouseovertarget")
+        else
+            UpdateTargetLine(tip)
+        end
     else
         if (type(unit) ~= "string") then return end
+        local isPlayer = SafeBool(UnitIsPlayer, unit)
+        if ((isPlayer and not player.showTarget)
+            or (not isPlayer and not npc.showTarget)) then
+            UpdateTargetLine(tip)
+            return
+        end
         local okConcat, targetUnit = pcall(function() return unit .. "target" end)
         if (not okConcat or type(targetUnit) ~= "string") then return end
         if (SafeBool(UnitExists, targetUnit)) then
@@ -141,8 +167,10 @@ GameTooltip:HookScript("OnUpdate", function(self, elapsed)
         end
         if (not SafeBool(UnitExists, "mouseover")) then return end
         local isPlayer = SafeBool(UnitIsPlayer, "mouseover")
-        if (addon.db.unit.player.showTarget and isPlayer)
-            or (addon.db.unit.npc.showTarget and not isPlayer) then
+        local player, npc = GetUnitSettings()
+        if (not player or not npc) then return end
+        if (player.showTarget and isPlayer)
+            or (npc.showTarget and not isPlayer) then
             UpdateTargetLine(self, "mouseovertarget")
         end
     end
@@ -180,9 +208,11 @@ LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
     if (not UnitExists("mouseover")) then return end
     local num = GetNumGroupMembers()
     if (num >= 1) then
+        local player, npc = GetUnitSettings()
+        if (not player or not npc) then return end
         local isPlayer = SafeBool(UnitIsPlayer, "mouseover")
-        if (addon.db.unit.player.showTargetBy and isPlayer)
-          or (addon.db.unit.npc.showTargetBy and not isPlayer) then
+        if (player.showTargetBy and isPlayer)
+          or (npc.showTargetBy and not isPlayer) then
             local text = GetTargetByString("mouseover", num, tip)
             if (text) then
                 tip:AddLine(format("%s: %s", addon.L and addon.L.TargetBy or "Targeted By", text), nil, nil, nil, true)

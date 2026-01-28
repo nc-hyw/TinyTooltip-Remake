@@ -18,6 +18,7 @@ addon.db = {
         statusbarFontSize = 10,                     --HP文字大小
         statusbarFontFlag = "THINOUTLINE",          --HP文字樣式
         statusbarText     = true,                   --HP文字
+        statusbarPercent  = true,                  --HP百分比
         statusbarHide     = false,                  --隱藏狀態條
         statusbarColor    = "auto",                 --HP顔色 default|auto|smooth
         statusbarTexture  = "Interface\\AddOns\\TinyTooltip\\texture\\StatusBar", --HP材質
