@@ -912,7 +912,9 @@ LibEvent:attachTrigger("tooltip.statusbar.height", function(self, height)
 end)
 
 LibEvent:attachTrigger("tooltip.statusbar.text", function(self, boolean)
-    GameTooltipStatusBar.forceHideText = not boolean
+    local showText = not not boolean
+    local showPercent = addon.db.general.statusbarPercent
+    GameTooltipStatusBar.forceHideText = not (showText or showPercent)
 end)
 
 LibEvent:attachTrigger("tooltip.statusbar.visible", function(self, hide)

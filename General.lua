@@ -11,13 +11,18 @@ TinyTooltipRemakeDB = {}
 TinyTooltipRemakeCharacterDB = {}
 addon.defaults = CopyTable(addon.db)
 
+local function GetStatusbarUnit()
+    local unit = "mouseover"
+    local focus = GetMouseFocus()
+    if (focus and focus.unit) then
+        unit = focus.unit
+    end
+    return unit
+end
+
 local function ColorStatusBar(self, value)
     if (addon.db.general.statusbarColor == "auto") then
-        local unit = "mouseover"
-        local focus = GetMouseFocus()
-        if (focus and focus.unit) then
-            unit = focus.unit
-        end
+        local unit = GetStatusbarUnit()
         local r, g, b
         if (UnitIsPlayer(unit)) then
             r, g, b = GetClassColor(select(2,UnitClass(unit)))
@@ -56,17 +61,57 @@ LibEvent:attachEvent("VARIABLES_LOADED", function()
         ColorStatusBar(self)
     end)
     bar:HookScript("OnValueChanged", function(self, hp)
-        if (UnitIsDeadOrGhost("mouseover")) then
-            local max = UnitHealthMax("mouseover") or 1
-            self.TextString:SetFormattedText("|cff999999%s|r |cffffcc33<%s>|r", AbbreviateLargeNumbers(max), DEAD)
-        elseif (not self.forceHideText) then
-            local cur = UnitHealth("mouseover") or 1
-            local max = UnitHealthMax("mouseover") or 1
-            if(self.TextString) then
-                self.TextString:SetText(AbbreviateLargeNumbers(cur) .. " / " .. AbbreviateLargeNumbers(max))
+        local unit = GetStatusbarUnit()
+        local showText = addon.db.general.statusbarText
+        local showPercent = addon.db.general.statusbarPercent
+        local shouldShow = showText or showPercent
+        if (UnitIsDeadOrGhost(unit)) then
+            if (self.TextString) then
+                if (showText) then
+                    local max = UnitHealthMax(unit) or 1
+                    self.TextString:SetFormattedText("|cff999999%s|r |cffffcc33<%s>|r", AbbreviateLargeNumbers(max), DEAD)
+                elseif (showPercent) then
+                    self.TextString:SetFormattedText("|cffffcc33<%s>|r", DEAD)
+                else
+                    self.TextString:SetText("")
+                end
             end
-        elseif (self.forceHideText) then
-            if(self.TextString) then
+        elseif (shouldShow and not self.forceHideText) then
+            local cur = UnitHealth(unit) or 1
+            local max = UnitHealthMax(unit) or 1
+            if (self.TextString) then
+                if (showText and showPercent) then
+                    local percent
+                    if (UnitHealthPercent) then
+                        local ok, p = pcall(function()
+                            return UnitHealthPercent(unit, true, CurveConstants and CurveConstants.ScaleTo100)
+                        end)
+                        percent = (ok and type(p) == "number") and p or nil
+                    end
+                    if (percent) then
+                        self.TextString:SetText(AbbreviateLargeNumbers(cur) .. " / " .. AbbreviateLargeNumbers(max) .. " (" .. string.format("%.0f%%", percent) .. ")")
+                    else
+                        self.TextString:SetText(AbbreviateLargeNumbers(cur) .. " / " .. AbbreviateLargeNumbers(max))
+                    end
+                elseif (showText) then
+                    self.TextString:SetText(AbbreviateLargeNumbers(cur) .. " / " .. AbbreviateLargeNumbers(max))
+                else
+                    local percent
+                    if (UnitHealthPercent) then
+                        local ok, p = pcall(function()
+                            return UnitHealthPercent(unit, true, CurveConstants and CurveConstants.ScaleTo100)
+                        end)
+                        percent = (ok and type(p) == "number") and p or nil
+                    end
+                    if (percent) then
+                        self.TextString:SetText(string.format("%.0f%%", percent))
+                    else
+                        self.TextString:SetText("")
+                    end
+                end
+            end
+        else
+            if (self.TextString) then
                 self.TextString:SetText("")
             end
         end
