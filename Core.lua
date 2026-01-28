@@ -514,16 +514,22 @@ function addon:GetUnitInfo(unit)
     t.statusDC     = SafeBool(UnitIsConnected, unit) == false and OFFLINE
     t.reactionName = reaction and _G["FACTION_STANDING_LABEL"..reaction]
     t.creature     = SafeCall(UnitCreatureType, unit)
+    t.mplusScore = nil
+    t.mplusScoreColor = nil
     t.classifBoss  = (level==-1 or classif == "worldboss") and BOSS
     t.classifElite = classif == "elite" and ELITE
     t.classifRare  = (classif == "rare" or classif == "rareelite") and RARE
     t.isPlayer     = SafeBool(UnitIsPlayer, unit) and PLAYER
     t.moveSpeed    = self:GetUnitSpeed(unit)
     t.zone         = self:GetZone(unit, t.name, t.realm)
+    local label = self.L and self.L["Mythic+ Score"] or "M+ Score"
     if (mplusScore and mplusScore > 0) then
         local bestText = (mplusBest and mplusBest > 0) and (" (" .. mplusBest .. ")") or ""
-        t.mplusScore = format("%s %d%s", self.L and self.L["Mythic+ Score"] or "M+ Score", floor(mplusScore + 0.5), bestText)
+        t.mplusScore = format("%s: %d%s", label, floor(mplusScore + 0.5), bestText)
         t.mplusScoreColor = mplusColor
+    else
+        t.mplusScore = format("%s: %d (%d)", label, 0, 0)
+        t.mplusScoreColor = { r = 0.6, g = 0.6, b = 0.6 }
     end
     t.unit         = unit                     --unit
     t.level        = level                    --1~123|-1

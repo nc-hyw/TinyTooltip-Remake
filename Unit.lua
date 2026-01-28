@@ -29,6 +29,58 @@ local function strip(text)
     return (text:gsub("%s+([|%x%s]+)<trim>", "%1"))
 end
 
+local function SafeStripText(text)
+    if not text then return end
+    local ok, stripped = pcall(function()
+        if (type(text) ~= "string") then return end
+        local s = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+        s = strtrim(s or "")
+        if (s == "") then return end
+        return s
+    end)
+    if ok then
+        return stripped
+    end
+end
+
+local function HideOriginalSpecLine(tip, target)
+    if (not target or target == "") then return end
+    for i = 2, tip:NumLines() do
+        local line = _G[tip:GetName() .. "TextLeft" .. i]
+        local text = line and line:GetText()
+        local stripped = SafeStripText(text)
+        if (stripped and stripped == target) then
+                line:SetText(nil)
+                line:Show()
+        end
+    end
+end
+
+local function GetOriginalSpecLine(tip, className)
+    if (not className or className == "") then return end
+    local best, bestLen
+    for i = 2, tip:NumLines() do
+        local line = _G[tip:GetName() .. "TextLeft" .. i]
+        local text = line and line:GetText()
+        local stripped = SafeStripText(text)
+        if (stripped) then
+            local ok, match = pcall(function()
+                if (stripped:find("^%d")) then return false end
+                if (stripped:find("^<")) then return false end
+                return stripped:find(className, 1, true) ~= nil
+            end)
+            if (ok and match) then
+                local len = #stripped
+                if (not bestLen or len < bestLen) then
+                    best = stripped
+                    bestLen = len
+                end
+            end
+        end
+    end
+    return best
+end
+
 local function ColorBorder(tip, config, raw)
     if (config.coloredBorder and addon.colorfunc[config.coloredBorder]) then
         local r, g, b = addon.colorfunc[config.coloredBorder](raw)
@@ -83,6 +135,11 @@ local function ShowBigFactionIcon(tip, config, raw)
 end
 
 local function PlayerCharacter(tip, unit, config, raw)
+    local specLine = GetOriginalSpecLine(tip, raw and raw.className)
+    if (specLine) then
+        raw.className = specLine
+        HideOriginalSpecLine(tip, specLine)
+    end
     local data = addon:GetUnitData(unit, config.elements, raw)
     addon:HideLines(tip, 2, 3)
     addon:HideLine(tip, "^"..LEVEL)
