@@ -679,6 +679,19 @@ function widgets:element(parent, config)
     if (config.wildcard) then
         frame.editbox = self:editbox(frame, {keystring=config.keystring..".wildcard"})
         frame.editbox:SetPoint("LEFT", 330, 0)
+        frame.editbox:HookScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(L["wildcard.help"] or "Format: use %s to insert the value.")
+            if (config.keystring and config.keystring:find("moveSpeed")) then
+                GameTooltip:AddLine(L["wildcard.help.moveSpeed"] or "Example: %d%%", 0.8, 0.8, 0.8, true)
+            else
+                GameTooltip:AddLine(L["wildcard.help.example"] or "Example: (%s) or [%s]", 0.8, 0.8, 0.8, true)
+            end
+            GameTooltip:Show()
+        end)
+        frame.editbox:HookScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
     end
     if (config.filter) then
         frame.filterdropdown = self:dropdown(frame, {keystring=config.keystring..".filter",dropdata=self.filterDropdata}, "")
@@ -1062,6 +1075,7 @@ end
 local function ResetUnitSection(sectionKey, parent)
     if (not addon.defaults or not addon.defaults.unit or not addon.defaults.unit[sectionKey]) then return end
     addon.db.unit[sectionKey] = CopyTable(addon.defaults.unit[sectionKey])
+    LibEvent:trigger("tooltip:variables:loaded")
     RefreshOptions(parent)
     if (sectionKey == "player") then
         LibEvent:trigger("tinytooltip:diy:player", "player", true)
@@ -1083,6 +1097,7 @@ local function ResetAllSettings()
     TinyTooltipRemakeDB = CopyTable(addon.defaults)
     TinyTooltipRemakeCharacterDB = {}
     addon.db = TinyTooltipRemakeDB
+    LibEvent:trigger("tooltip:variables:loaded")
     LibEvent:trigger("TINYTOOLTIP_GENERAL_INIT")
     RefreshOptions(frame)
     RefreshOptions(framePC)
