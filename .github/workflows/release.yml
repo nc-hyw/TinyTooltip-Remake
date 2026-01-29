@@ -17,6 +17,7 @@ jobs:
 
       - name: Create zip
         run: |
+          version=$(grep -m1 '^## Version:' TinyTooltip-Remake.toc | sed 's/## Version:[[:space:]]*//')
           mkdir -p dist/TinyTooltip-Remake
           cp -R \
             TinyTooltip-Remake.toc \
@@ -27,11 +28,11 @@ jobs:
             texture \
             dist/TinyTooltip-Remake/
           cd dist
-          zip -r TinyTooltip-Remake.zip TinyTooltip-Remake \
+          zip -r "TinyTooltip-Remake-v${version}.zip" TinyTooltip-Remake \
             -x "*.bk" -x "*.psd" -x "*.git*" -x "*.zip"
 
       - name: Upload Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/TinyTooltip-Remake.zip
+          files: dist/TinyTooltip-Remake-v*.zip
           body_path: CHANGELOG.md
