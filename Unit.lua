@@ -152,6 +152,9 @@ local function PlayerCharacter(tip, unit, config, raw)
     ColorBorder(tip, config, raw)
     ColorBackground(tip, config, raw)
     GrayForDead(tip, config, unit)
+    if (addon.AutoSetTooltipWidth) then
+        addon:AutoSetTooltipWidth(tip)
+    end
     ShowBigFactionIcon(tip, config, raw)
 end
 
