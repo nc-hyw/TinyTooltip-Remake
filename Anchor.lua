@@ -6,6 +6,13 @@ local GetMouseFocus = GetMouseFocus or GetMouseFoci
 
 local addon = TinyTooltip
 
+local function SafeSetOwner(frame, parent, anchor, ...)
+    if (not parent or type(parent) ~= "table") then
+        parent = UIParent
+    end
+    pcall(frame.SetOwner, frame, parent, anchor, ...)
+end
+
 local function AnchorCursorOnExecute(self)
     if (not self.tip:IsShown()) then return true end
     if (self.tip:GetAnchorType() ~= "ANCHOR_CURSOR") then return true end
@@ -54,8 +61,14 @@ local function AnchorFrame(tip, parent, anchor, isUnitFrame, finally)
     if (anchor.position == "cursorRight") then
         LibEvent:trigger("tooltip.anchor.cursor.right", tip, parent)
     elseif (anchor.position == "cursor") then
-        LibEvent:trigger("tooltip.anchor.cursor", tip, parent)
-        AnchorCursor(tip, parent, anchor.cp, anchor.cx, anchor.cy)
+        local offsetX = tonumber(anchor.cx) or 0
+        local offsetY = tonumber(anchor.cy) or 0
+        if (offsetX == 0 and offsetY == 0) then
+            LibEvent:trigger("tooltip.anchor.cursor", tip, parent)
+        else
+            SafeSetOwner(tip, parent, "ANCHOR_NONE")
+            AnchorCursor(tip, parent, anchor.cp, offsetX, offsetY)
+        end
     elseif (anchor.position == "inherit" and not finally) then
         AnchorFrame(tip, parent, addon.db.general.anchor, isUnitFrame, true)
     elseif (anchor.position == "static") then
