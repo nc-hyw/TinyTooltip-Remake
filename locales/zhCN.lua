@@ -156,6 +156,11 @@ local T = {
     ["Anchor"]   = "锚点器",
     
     ["TargetBy"] = "被关注",
+    ["unit.player.elements.mount"] = "坐骑",
+    ["mount"] = "坐骑",
+    ["Mount"] = "坐骑",
+    ["collected"] = "已收集",
+    ["uncollected"] = "未收集",
     ["menu.general"] = "综合",
     ["menu.player"] = "玩家",
     ["menu.npc"] = "NPC",
@@ -174,6 +179,9 @@ local T = {
     ["about.help.title"] = "提交 Bug / 反馈",
     ["about.credits.title"] = "致谢",
     ["about.credits.content"] = "感谢TinyTooltip原作者 M 及所有贡献者\n",
+    ["wildcard.help"]               = "自定义格式：按回车生效",
+    ["wildcard.help.example"]       = "示例：(%s) 或 [%s]",
+    ["wildcard.help.moveSpeed"]     = "示例：%d%%",
 
 
 
