@@ -822,6 +822,7 @@ local options = {
         { keystring = "unit.player.elements.moveSpeed",   type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.mplusScore",  type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.zone",        type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.mount",       type = "element", color = true, wildcard = true, filter = true, },
     },
     npc = {
         { keystring = "unit.npc.showTarget",            type = "checkbox" },
@@ -1358,6 +1359,7 @@ local placeholder = {
     pvpIcon    = addon.icons.pvp,
     roleIcon   = addon.icons.DAMAGER,
     raidIcon   = ICON_LIST[8] .. "0|t",
+    mount      = L["mount"] or "mount",
 }
 setmetatable(placeholder, {__index = function(_, k) return k end})
 

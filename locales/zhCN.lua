@@ -156,6 +156,11 @@ local T = {
     ["Anchor"]   = "锚点器",
     
     ["TargetBy"] = "被关注",
+    ["unit.player.elements.mount"] = "坐骑",
+    ["mount"] = "坐骑",
+    ["Mount"] = "坐骑",
+    ["collected"] = "已收集",
+    ["uncollected"] = "未收集",
     ["menu.general"] = "综合",
     ["menu.player"] = "玩家",
     ["menu.npc"] = "NPC",

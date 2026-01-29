@@ -26,6 +26,11 @@ local T = {
     ["dropdown.not samecrossrealm"]  = "|cffff3333not|r sameCrossrealm",
     ["TargetBy"]                    = "Targeted By",
     ["showTargetBy"]                = "Show Targeted By",
+    ["unit.player.elements.mount"]  = "Mount",
+    ["mount"]                       = "Mount",
+    ["Mount"]                       = "Mount",
+    ["collected"]                   = "collected",
+    ["uncollected"]                 = "uncollected",
 
     ["menu.general"] = "General",
     ["menu.player"] = "Player",

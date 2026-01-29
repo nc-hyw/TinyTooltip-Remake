@@ -8,14 +8,18 @@ if (not C_MountJournal) then return end
 
 local function GetAllMountSource()
     local mountIDs = C_MountJournal.GetMountIDs()
-    local _, spellID, isCollected, source
+    local name, spellID, isCollected, source
     for i, mountID in ipairs(mountIDs) do
-        _, spellID, _, _, _, _, _, _, _, _, isCollected = C_MountJournal.GetMountInfoByID(mountID)
-        _, _, source = C_MountJournal.GetMountInfoExtraByID(mountID)
-        mounts[spellID] = {
-            source = source,
-            isCollected = isCollected,
-        }
+        name, spellID, _, _, _, _, _, _, _, _, isCollected = C_MountJournal.GetMountInfoByID(mountID)
+        if (spellID) then
+            _, _, source = C_MountJournal.GetMountInfoExtraByID(mountID)
+            mounts[spellID] = {
+                source = source,
+                isCollected = isCollected,
+                mountID = mountID,
+                name = name,
+            }
+        end
     end
     if (#mounts > 0) then return true end
 end
@@ -30,7 +34,6 @@ LibEvent:attachEvent("VARIABLES_LOADED", function()
         onExecute = GetAllMountSource,
     })
 end)
-
 
 LibEvent:attachTrigger("tooltip:aura", function(self, tip, args)
     if (args and args[2] and args[2].intVal) then
