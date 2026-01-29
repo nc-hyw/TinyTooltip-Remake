@@ -593,7 +593,31 @@ function addon:GetUnitData(unit, elements, raw)
         data[i] = {}
         for ii, e in ipairs(v) do
             config = elements[e]
-            if (self:CheckFilter(config, raw) and raw[e]) then
+            if (e == "mount") then
+                if (self:CheckFilter(config, raw) and raw.mountName) then
+                    local labelText = (self.L and self.L.Mount) or MOUNT or "Mount"
+                    local label = "|cffffd200" .. labelText .. ":|r"
+                    local nameText
+                    if (config and config.color and config.wildcard) then
+                        nameText = self:FormatData(raw.mountName, config, raw)
+                    else
+                        nameText = raw.mountName
+                    end
+                    local statusText
+                    if (raw.mountCollected == true) then
+                        local collectedText = (self.L and self.L.collected) or "collected"
+                        statusText = "|cff00ff00(" .. collectedText .. ")|r"
+                    elseif (raw.mountCollected == false) then
+                        local uncollectedText = (self.L and self.L.uncollected) or "uncollected"
+                        statusText = "|cff999999(" .. uncollectedText .. ")|r"
+                    end
+                    if (statusText) then
+                        tinsert(data[i], format("%s %s %s", label, nameText, statusText))
+                    else
+                        tinsert(data[i], format("%s %s", label, nameText))
+                    end
+                end
+            elseif (self:CheckFilter(config, raw) and raw[e]) then
                 if (e == "name") then name = #data[i]+1 end   --name位置
                 if (e == "title") then title = #data[i]+1 end --title位置
                 if (config.color and config.wildcard) then

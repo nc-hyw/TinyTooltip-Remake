@@ -43,6 +43,88 @@ local function SafeStripText(text)
     end
 end
 
+local function FindMountAura(unit)
+    if (not C_MountJournal or not C_MountJournal.GetMountFromSpell) then return end
+    if (AuraUtil and AuraUtil.ForEachAura) then
+        local auraName, auraSpellID, mountID
+        local ok = pcall(AuraUtil.ForEachAura, unit, "HELPFUL", nil, function(aura)
+            if (type(aura) ~= "table" or not aura.spellId) then return end
+            local mount = C_MountJournal.GetMountFromSpell(aura.spellId)
+            if (mount) then
+                auraName = aura.name
+                auraSpellID = aura.spellId
+                mountID = mount
+                return true
+            end
+        end)
+        if (not ok) then
+            auraName, auraSpellID, mountID = nil, nil, nil
+        end
+        if (auraSpellID) then
+            return auraName, auraSpellID, mountID
+        end
+    end
+    if (UnitAura) then
+        for i = 1, 40 do
+            local name, _, _, _, _, _, _, _, _, spellID = UnitAura(unit, i, "HELPFUL")
+            if (not name) then break end
+            local mountID = C_MountJournal.GetMountFromSpell(spellID)
+            if (mountID) then
+                return name, spellID, mountID
+            end
+        end
+        return
+    end
+    if (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex) then
+        for i = 1, 40 do
+            local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+            if (not aura) then break end
+            local mountID = C_MountJournal.GetMountFromSpell(aura.spellId)
+            if (mountID) then
+                return aura.name, aura.spellId, mountID
+            end
+        end
+    end
+end
+
+local function GetMountInfo(unit)
+    if (not C_MountJournal or not C_MountJournal.GetMountInfoByID) then return end
+    if (not SafeBool(UnitIsPlayer, unit)) then return end
+    local auraName, _, mountID = FindMountAura(unit)
+    if (not auraName) then return end
+    local name, isCollected
+    if (mountID) then
+        local ok, mountName, _, _, _, _, _, _, _, _, _, collected = pcall(C_MountJournal.GetMountInfoByID, mountID)
+        if (ok) then
+            name = mountName
+            isCollected = collected
+        end
+    end
+    return name or auraName, isCollected
+end
+
+local function SafeConcat(list, sep)
+    if (type(list) ~= "table") then return "" end
+    local out = {}
+    for i = 1, #list do
+        local v = list[i]
+        if (v ~= nil) then
+            local ok, s = pcall(function()
+                if (type(v) == "string") then return v end
+                if (type(v) == "number") then return tostring(v) end
+            end)
+            if (ok and type(s) == "string") then
+                out[#out + 1] = s
+            end
+        end
+    end
+    local ok, res = pcall(table.concat, out, sep or " ")
+    if (ok and type(res) == "string") then
+        return res
+    end
+    return ""
+end
+
 local function HideOriginalSpecLine(tip, target)
     if (not target or target == "") then return end
     for i = 2, tip:NumLines() do
@@ -140,6 +222,11 @@ local function PlayerCharacter(tip, unit, config, raw)
         raw.className = specLine
         HideOriginalSpecLine(tip, specLine)
     end
+    raw.mountName = nil
+    raw.mountCollected = nil
+    if (config and config.elements and config.elements.mount and config.elements.mount.enable) then
+        raw.mountName, raw.mountCollected = GetMountInfo(unit)
+    end
     local data = addon:GetUnitData(unit, config.elements, raw)
     addon:HideLines(tip, 2, 3)
     addon:HideLine(tip, "^"..LEVEL)
@@ -147,7 +234,7 @@ local function PlayerCharacter(tip, unit, config, raw)
     addon:HideLine(tip, "^"..FACTION_HORDE)
     addon:HideLine(tip, "^"..PVP)
     for i, v in ipairs(data) do
-        addon:GetLine(tip,i):SetText(strip(table.concat(v, " ")))
+        addon:GetLine(tip,i):SetText(strip(SafeConcat(v, " ")))
     end
     ColorBorder(tip, config, raw)
     ColorBackground(tip, config, raw)
@@ -166,7 +253,7 @@ local function NonPlayerCharacter(tip, unit, config, raw)
         local increase = 0
         for i, v in ipairs(data) do
             if (i == 1) then
-                addon:GetLine(tip,i):SetText(table.concat(v, " "))
+                addon:GetLine(tip,i):SetText(SafeConcat(v, " "))
             end
             if (i == 2) then
                 if (config.elements.npcTitle.enable and titleLine) then
@@ -174,10 +261,10 @@ local function NonPlayerCharacter(tip, unit, config, raw)
                     increase = 1
                 end
                 i = i + increase
-                addon:GetLine(tip,i):SetText(table.concat(v, " "))
+                addon:GetLine(tip,i):SetText(SafeConcat(v, " "))
             elseif ( i > 2) then
                 i = i + increase
-                addon:GetLine(tip,i):SetText(table.concat(v, " "))
+                addon:GetLine(tip,i):SetText(SafeConcat(v, " "))
             end
         end
     end

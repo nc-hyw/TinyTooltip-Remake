@@ -26,6 +26,11 @@ local T = {
     ["dropdown.not samecrossrealm"]  = "|cffff3333not|r sameCrossrealm",
     ["TargetBy"]                    = "Targeted By",
     ["showTargetBy"]                = "Show Targeted By",
+    ["unit.player.elements.mount"]  = "Mount",
+    ["mount"]                       = "Mount",
+    ["Mount"]                       = "Mount",
+    ["collected"]                   = "collected",
+    ["uncollected"]                 = "uncollected",
 
     ["menu.general"] = "General",
     ["menu.player"] = "Player",
@@ -45,6 +50,10 @@ local T = {
     ["about.help.url"] = "https://github.com/nc-hyw/TinyTooltip-Remake/issues",
     ["about.credits.title"] = "Credits",
     ["about.credits.content"] = "Thanks to M, the original author of TinyTooltip, and all contributors\n",
+    
+    ["wildcard.help"]             = "Customize Format: Hit enter to take effect.",
+    ["wildcard.help.example"]     = "Example: (%s) or [%s]",
+    ["wildcard.help.moveSpeed"]   = "Example: %d%%",
 
 }
 for k, v in pairs(T) do
