@@ -1,16 +1,35 @@
+[English](#english) | [简体中文](#简体中文)
 ## English
 
-As TinyTooltip haven't been updated more than a year and not supporting version 12.0  
+As TinyTooltip haven't been updated more than a year and not supporting Midnight (version 12.0)  
 This remake version which based on original TinyTooltip will be carry on for other players who needs it.
 
-The original TinyTooltip didn't support equipped item level display, so this version doesn't include it either. Since Blizzard's current API for retrieving equipped item level is bugged and returns incorrect data, adding this feature right now would be meaningless. I will consider implementing it once Blizzard fixes the API. For now, if you want to see equipped item level on tooltips, please use other addons that don't rely on Blizzard's API, such as TinyInspect-Remake or ItemInfoOverlay.
+## Features:
+### Everything the original TinyTooltip Provids:
+- Setup anchor, different anchor profile for spell/player/NPC, change background, color, customize your layout, and more, it's everything that TinyTooltip original proide !
 
-**Limitations:**  
+### Check M+ Score:
+- Now you can check your target M+ score directly inside tooltip
+
+### Check Mount:
+- Now you can check what mount your target are using and if you have collected it
+
+## Comming Soon:
+- These features will be implemented in the future (sooner then you expected)
+
+### Equipped Item Level:
+
+- The original TinyTooltip didn't support equipped item level display, so this version doesn't include it either. Since Blizzard's current API for retrieving equipped item level is bugged and returns incorrect data, adding this feature right now would be meaningless. I will consider implementing it once Blizzard fixes the API. For now, if you want to see equipped item level on tooltips, please use other addons that don't rely on Blizzard's API, such as TinyInspect-Remake or ItemInfoOverlay.  
+Once Blizzard fixed their issue showing equipped item level will be introduced into this addon
+
+- And MORE in planning.
+
+## **Limitations:**  
 Due to API restrictions (or maybe my poor technic):
 
 1.  When inside dungeon/raid, tooltip generated from enemy unit frame is not possible to display target, but tooltip generated from model and name plates are not affected.
 2.  When inside dungeon/raid, tooltip generated from enemy model/nameplates will not be able to comparing target ID which means it is not possible to display ">> You <<" colored in red with tooltip when enemy targeting you. Player tooltip and not inside dungeon/raid is not affected.
-3.  HP queried from tooltip is not be able to perform comparison, Blizzard used a mechanism called secrete value to protected the data, and ANY operation on them is forbidden and will triggering lua error, therefore the tool will only be able to display current and max health and can not show health remaining percentage.
+
 
 All other functions should be working properly including customize your tooltip. But if you ever encounter any problem please submit your feedback in Curseforge or Github including how to reproduce it, what's your intention and what actually happened.
 
@@ -18,15 +37,35 @@ As I am interested in maintaining this project from now on and adding more featu
 
 ## 简体中文
 
-由于 TinyTooltip 已超过一年未更新且不支持 12.0，本重制版本基于原版 TinyTooltip，继续为有需求的玩家提供支持。
+鉴于 TinyTooltip 已停止更新超过一年，且不支持 12.0 版本，这个基于原版 TinyTooltip 开发的重制版将接过接力棒，继续为有需要的玩家提供支持。
 
-**已知问题：**  
-由于 API 限制（也可能是我的技术有限）：
+## 功能特性：
+### 完美继承原版 TinyTooltip 的所有功能：
+- 设置锚点、针对法术/玩家/NPC 的不同锚点配置、更改背景与颜色、自定义布局等等——它完美涵盖了原版 TinyTooltip 提供的所有功能！
 
-1.  在副本/团队副本中，由敌对单位框体生成的提示无法显示目标；由模型和姓名板生成的提示不受影响。
-2.  在副本/团队副本中，由敌方模型/姓名板生成的提示无法比较目标 ID，因此当敌方目标是你时无法显示红色的 “>> 你 <<”。玩家提示以及非副本/团队环境不受影响。
-3.  从 tooltip 获取的 HP 无法进行比较。暴雪使用了名为 “secret value” 的机制来保护数据，对其进行任何运算都会触发 Lua 错误，因此本插件只能显示当前和最大生命值，无法显示剩余生命百分比。
+### 查看大秘境（M+）分数：
+- 现在你可以直接在鼠标提示（Tooltip）中查看目标的大秘境评分。
 
-除此之外的功能应当都能正常使用，包括自定义你的 tooltip。如果你遇到任何问题，请在 Curseforge 或 GitHub 提交反馈，并说明复现步骤、你的预期，以及实际发生的情况。
+### 查看坐骑：
+- 现在你可以查看目标正在使用什么坐骑，以及你是否已经收集了它。
 
-我计划从现在开始维护这个项目并添加更多功能，欢迎任何建议。
+## 即将推出：
+- 以下功能将在未来实现（也许比你预期的要快）：
+
+### 实装等级（Equipped Item Level）：
+
+- 原版 TinyTooltip 不支持显示实装等级，因此本版本目前也未包含此功能。由于暴雪当前用于获取实装等级的 API 存在 Bug，返回的数据不准确，现在添加此功能毫无意义。一旦暴雪修复了 API，我会考虑实现它。目前，如果你希望在鼠标提示上查看实装等级，请使用不依赖暴雪该 API 的其他插件，例如 TinyInspect-Remake 或 ItemInfoOverlay。
+- 暴雪修复相关问题后，本插件将引入实装等级显示功能。
+
+- 更多功能正在规划中。
+
+## **局限性：**
+受限于 API 限制（亦或是我技术有限）：
+
+1. 在地下城/团队副本中，由敌对**单位框体（Unit Frame）**生成的鼠标提示无法显示其目标，但由模型和姓名板（Nameplates）生成的提示不受影响。
+2. 在地下城/团队副本中，由敌对**模型/姓名板**生成的鼠标提示无法比对目标 ID，这意味着当敌人以你为目标时，无法在提示中显示红色的 ">> 你 <<" 字样。玩家提示以及非副本环境不受影响。
+
+
+除此之外，包括自定义提示在内的所有其他功能均应正常工作。如果你遇到任何问题，请在 Curseforge 或 Github 上提交反馈，并务必说明**如何复现问题**、**你的操作意图**以及**实际发生了什么**。
+
+我有意长期维护这个项目并添加更多功能，欢迎提出任何建议。
