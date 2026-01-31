@@ -216,6 +216,8 @@ local function ShowBigFactionIcon(tip, config, raw)
     end
 end
 
+
+
 local function PlayerCharacter(tip, unit, config, raw)
     local specLine = GetOriginalSpecLine(tip, raw and raw.className)
     if (specLine) then
@@ -277,6 +279,23 @@ local function NonPlayerCharacter(tip, unit, config, raw)
     addon:AutoSetTooltipWidth(tip)
 end
 
+local function IsUnitTooltip(tt)
+    local owner = tt and tt:GetOwner()
+    if not owner then return false end
+    
+    -- 安全访问 owner.unit
+    local ok, unit = pcall(function() return owner.unit end)
+    if (ok and unit) then return true end
+    
+    -- 安全访问 GetAttribute
+    if (owner.GetAttribute) then
+        local okAttr, attrUnit = pcall(owner.GetAttribute, owner, "unit")
+        if (okAttr and attrUnit) then return true end
+    end
+    
+    return false
+end
+
 LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
     if (not unit or not SafeBool(UnitExists, unit)) then return end
     local raw = addon:GetUnitInfo(unit)
@@ -286,6 +305,35 @@ LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
         NonPlayerCharacter(tip, unit, addon.db.unit.npc, raw)
     end
 end)
+
+if (GameTooltip_AddInstructionLine) then
+    hooksecurefunc("GameTooltip_AddInstructionLine", function(tt, text)
+        if (not addon.db.general.hideUnitFrameHint) then return end
+        if (tt ~= GameTooltip) then return end
+        if (not UNIT_POPUP_RIGHT_CLICK or text ~= UNIT_POPUP_RIGHT_CLICK) then return end
+        if (not IsUnitTooltip(tt)) then return end
+        
+        local i = tt:NumLines()
+        local line = _G[tt:GetName() .. "TextLeft" .. i]
+        if (not line) then return end
+        
+        local tmpText = line:GetText()
+        if (issecretvalue and issecretvalue(tmpText)) then return end
+        if (tmpText ~= text) then return end
+        
+        line:SetText("")
+        line:Hide()
+        
+        local mLine = _G[tt:GetName() .. "TextLeft" .. (i - 1)]
+        if (mLine and mLine.GetText) then
+            local prevText = mLine:GetText()
+            if (not (issecretvalue and issecretvalue(prevText)) and prevText == " ") then
+                mLine:Hide()
+            end
+        end
+        tt:Show()
+    end)
+end
 
 addon.ColorUnitBorder = ColorBorder
 addon.ColorUnitBackground = ColorBackground
