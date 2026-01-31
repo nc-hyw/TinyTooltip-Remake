@@ -14,6 +14,7 @@ local UIDropDownMenuTemplate = "UIDropDownMenuTemplate"
 local addonName = ...
 local addon = TinyTooltip
 local CopyTable = CopyTable
+local LAYOUT
 
 -- About/Help page init
 function TinyTooltipRemake_About_OnLoad(self)
@@ -231,6 +232,9 @@ local function RefreshWidget(widget, config)
         widget.checkbox1:SetChecked(GetVariable(config.keystring..".hiddenInCombat"))
         widget.checkbox2:SetChecked(GetVariable(config.keystring..".returnInCombat"))
         widget.checkbox3:SetChecked(GetVariable(config.keystring..".returnOnUnitFrame"))
+        if (widget._updateAnchorOptions) then
+            widget._updateAnchorOptions()
+        end
     elseif (t == "element") then
         widget.checkbox:SetChecked(GetVariable(config.keystring..".enable"))
         if (widget.colorpick) then
@@ -261,6 +265,26 @@ local function RefreshOptions(parent)
         if (widget._config) then
             RefreshWidget(widget, widget._config)
         end
+    end
+end
+
+local function RelayoutOptions(parent)
+    if (not parent or not parent.optionWidgets or not parent.anchor) then return end
+    local totalHeight = 0
+    for _, element in ipairs(parent.optionWidgets) do
+        local config = element._config
+        local height = element:GetHeight() or (LAYOUT and LAYOUT.ROW_HEIGHT) or 30
+        if (LAYOUT and height < LAYOUT.ROW_HEIGHT) then
+            height = LAYOUT.ROW_HEIGHT
+        end
+        totalHeight = totalHeight + height
+        local offsetX = (LAYOUT and config and LAYOUT.OFFSET_X[config.type]) or 0
+        element:ClearAllPoints()
+        element:SetPoint("TOPLEFT", parent.anchor, "BOTTOMLEFT", offsetX, -totalHeight)
+    end
+    parent.__optionsHeight = totalHeight
+    if (parent.__autoSize and parent.SetSize and LAYOUT and SettingsPanel and SettingsPanel.Container) then
+        parent:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, totalHeight)
     end
 end
 
@@ -703,17 +727,161 @@ end
 
 function widgets:anchor(parent, config)
     local frame = CreateFrame("Frame", nil, parent)
-    frame:SetSize(400, 30)
+    local parentWidth = parent and parent.anchor and parent.anchor:GetWidth()
+    frame:SetSize(parentWidth or 400, LAYOUT.ROW_HEIGHT)
     frame.anchorbutton = self:anchorbutton(frame, config)
     frame.dropdown = self:dropdown(frame, {keystring=config.keystring..".position",dropdata=config.dropdata})
     frame.dropdown:SetPoint("LEFT", 0, 0)
     frame.anchorbutton:SetPoint("LEFT", frame.dropdown.Label, "LEFT", 1, 0)
-    frame.checkbox1 = self:checkbox(frame, {keystring=config.keystring..".hiddenInCombat"})
-    frame.checkbox1:SetPoint("LEFT", frame.dropdown.Label, "RIGHT", 10, -1)
-    frame.checkbox2 = self:checkbox(frame, {keystring=config.keystring..".returnInCombat"})
-    frame.checkbox2:SetPoint("LEFT", frame.checkbox1.Text, "RIGHT", 3, 0)
-    frame.checkbox3 = self:checkbox(frame, {keystring=config.keystring..".returnOnUnitFrame"})
-    frame.checkbox3:SetPoint("LEFT", frame.checkbox2.Text, "RIGHT", 3, 0)
+
+    frame.optionButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    frame.optionButton:SetSize(220, 22)
+    frame.optionButton:SetPoint("RIGHT", frame, "RIGHT", -10, -1)
+    if (frame.optionButton.Text) then
+        frame.optionButton.Text:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+        frame.optionButton.Text:ClearAllPoints()
+        frame.optionButton.Text:SetPoint("LEFT", 10, 0)
+        frame.optionButton.Text:SetPoint("RIGHT", -22, 0)
+        frame.optionButton.Text:SetJustifyH("LEFT")
+    end
+    frame.optionButton.arrow = frame.optionButton:CreateTexture(nil, "ARTWORK")
+    frame.optionButton.arrow:SetSize(16, 16)
+    frame.optionButton.arrow:SetPoint("RIGHT", -6, 0)
+    frame.optionButton.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+    frame.optionButton.arrow:SetTexCoord(0, 1, 0, 1)
+
+    frame.optionPanel = CreateFrame("Frame", nil, frame, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    frame.optionPanel:SetBackdrop({
+        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12,
+        insets   = {left = 4, right = 4, top = 4, bottom = 4},
+    })
+    frame.optionPanel:SetBackdropColor(0, 0, 0, 0.85)
+    frame.optionPanel:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.8)
+    frame.optionPanel:SetPoint("TOPLEFT", frame.optionButton, "BOTTOMLEFT", 0, -2)
+    frame.optionPanel:SetPoint("TOPRIGHT", frame.optionButton, "BOTTOMRIGHT", 0, -2)
+    frame.optionPanel:SetFrameStrata("DIALOG")
+    frame.optionPanel:SetFrameLevel(frame:GetFrameLevel() + 10)
+    frame.optionPanel:Hide()
+
+    frame.checkbox1 = self:checkbox(frame.optionPanel, {keystring=config.keystring..".hiddenInCombat"})
+    frame.checkbox2 = self:checkbox(frame.optionPanel, {keystring=config.keystring..".returnInCombat"})
+    frame.checkbox3 = self:checkbox(frame.optionPanel, {keystring=config.keystring..".returnOnUnitFrame"})
+    if (frame.checkbox2) then
+        frame.checkbox2.tooltipText = L["hint.anchor.returnInCombat"] or frame.checkbox2.tooltipText
+    end
+    if (frame.checkbox3) then
+        frame.checkbox3.tooltipText = L["hint.anchor.returnOnUnitFrame"] or frame.checkbox3.tooltipText
+    end
+    local function HookCheckboxTooltip(box)
+        if (not box) then return end
+        box:HookScript("OnEnter", function(self)
+            if (self.tooltipText and self.tooltipText ~= "") then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText(self.tooltipText, 1, 1, 1, 1)
+                GameTooltip:Show()
+            end
+        end)
+        box:HookScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+    end
+    HookCheckboxTooltip(frame.checkbox2)
+    HookCheckboxTooltip(frame.checkbox3)
+    frame.checkbox1:SetPoint("TOPLEFT", 8, -6)
+    frame.checkbox2:SetPoint("TOPLEFT", frame.checkbox1, "BOTTOMLEFT", 0, -6)
+    frame.checkbox3:SetPoint("TOPLEFT", frame.checkbox2, "BOTTOMLEFT", 0, -6)
+
+    local function UpdateOptionSummary()
+        local selections = {}
+        if (frame.checkbox1:GetChecked()) then
+            tinsert(selections, L[config.keystring..".hiddenInCombat"])
+        end
+        if (frame.checkbox2:GetChecked()) then
+            tinsert(selections, L[config.keystring..".returnInCombat"])
+        end
+        if (frame.checkbox3:GetChecked()) then
+            tinsert(selections, L[config.keystring..".returnOnUnitFrame"])
+        end
+        local summary
+        if (#selections == 0) then
+            summary = L["anchor.none"] or "None"
+        else
+            summary = table.concat(selections, ", ")
+        end
+        local text = summary
+        local fontString = frame.optionButton.Text
+        if (fontString and frame.optionButton.GetWidth) then
+            local maxWidth = frame.optionButton:GetWidth() - 36
+            if (maxWidth < 40) then maxWidth = 40 end
+            local function TruncateToFit(value)
+                fontString:SetText(value)
+                if (fontString:GetStringWidth() <= maxWidth) then
+                    return value
+                end
+                local ellipsis = "..."
+                local low, high = 0, #value
+                while (low < high) do
+                    local mid = math.floor((low + high) / 2)
+                    local candidate = value:sub(1, mid) .. ellipsis
+                    fontString:SetText(candidate)
+                    if (fontString:GetStringWidth() <= maxWidth) then
+                        low = mid + 1
+                    else
+                        high = mid
+                    end
+                end
+                local finalLen = math.max(0, low - 1)
+                return value:sub(1, finalLen) .. ellipsis
+            end
+            text = TruncateToFit(text)
+        end
+        frame.optionButton:SetText(text)
+    end
+
+    local function UpdatePanelLayout()
+        UpdateOptionSummary()
+        local panelHeight = (LAYOUT.ROW_HEIGHT * 3) + 12
+        local panelWidth = frame.optionButton:GetWidth()
+        frame.optionPanel:SetHeight(panelHeight)
+        frame.optionPanel:SetWidth(panelWidth)
+
+        frame:SetHeight(LAYOUT.ROW_HEIGHT)
+    end
+
+    frame.checkbox1:HookScript("OnClick", function(self)
+        if (self:GetChecked()) then
+            frame.checkbox2:SetChecked(false)
+            SetVariable(config.keystring..".returnInCombat", false)
+        end
+        UpdatePanelLayout()
+    end)
+    frame.checkbox2:HookScript("OnClick", function(self)
+        if (self:GetChecked()) then
+            frame.checkbox1:SetChecked(false)
+            SetVariable(config.keystring..".hiddenInCombat", false)
+        end
+        UpdatePanelLayout()
+    end)
+    frame.checkbox3:HookScript("OnClick", UpdatePanelLayout)
+
+    frame.optionButton:SetScript("OnClick", function()
+        frame.optionPanel:SetShown(not frame.optionPanel:IsShown())
+        UpdatePanelLayout()
+    end)
+
+    local baseSelectedFunc = frame.dropdown.selectedFunc
+    frame.dropdown.selectedFunc = function(self, value, text)
+        if (baseSelectedFunc) then
+            baseSelectedFunc(self, value, text)
+        end
+        UpdatePanelLayout()
+    end
+
+    frame:HookScript("OnShow", UpdatePanelLayout)
+    frame._updateAnchorOptions = UpdatePanelLayout
+    UpdatePanelLayout()
     return frame
 end
 
@@ -750,7 +918,7 @@ LibEvent:attachEvent("VARIABLES_LOADED", function()
 end)
 
 -- 布局常量
-local LAYOUT = {
+LAYOUT = {
     ROW_HEIGHT    = 30,
     ANCHOR_OFFSET = 32,
     ANCHOR_TOP    = -16,
