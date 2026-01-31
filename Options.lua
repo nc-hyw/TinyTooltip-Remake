@@ -643,6 +643,12 @@ local function ApplyStaticAnchor(frame)
     local point = GetVariable(frame.cp) or "BOTTOMRIGHT"
     local x = frame.ax_value or GetVariable(frame.kx) or -CONTAINER_OFFSET_X
     local y = frame.ay_value or GetVariable(frame.ky) or CONTAINER_OFFSET_Y
+    if (frame.ax_value == nil and frame.ay_value == nil) then
+        local tooltipScale = (addon and addon.db and addon.db.general and addon.db.general.scale) or 1
+        if (tooltipScale == 0) then tooltipScale = 1 end
+        x = x * tooltipScale
+        y = y * tooltipScale
+    end
     frame:ClearAllPoints()
     frame:SetPoint(point, UIParent, point, x, y)
 end
