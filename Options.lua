@@ -543,6 +543,15 @@ local function StaticFrameOnDragStop(self)
     end
 end
 
+local function ApplyStaticAnchor(frame)
+    if (not frame or not frame.kx or not frame.ky or not frame.cp) then return end
+    local point = GetVariable(frame.cp) or "BOTTOMRIGHT"
+    local x = GetVariable(frame.kx) or -CONTAINER_OFFSET_X-13
+    local y = GetVariable(frame.ky) or CONTAINER_OFFSET_Y
+    frame:ClearAllPoints()
+    frame:SetPoint(point, UIParent, point, x, y)
+end
+
 local function CreateAnchorButton(frame, anchorPoint)
     local button = CreateFrame("Button", nil, frame)
     button.cp = anchorPoint
@@ -558,6 +567,9 @@ local function CreateAnchorButton(frame, anchorPoint)
         SetVariable(parent.cp, self.cp)
         self:GetNormalTexture():SetVertexColor(1, 0.2, 0.1)
         StaticFrameOnDragStop(frame)
+        if (frame.kx and frame.ky and frame.cp) then
+            ApplyStaticAnchor(frame)
+        end
     end)
     frame[anchorPoint] = button
 end
@@ -665,7 +677,7 @@ function widgets:anchorbutton(parent, config)
             saframe.ky = self.keystring .. ".y"
             saframe.cp = self.keystring .. ".p"
             saframe[GetVariable(saframe.cp) or "BOTTOMRIGHT"]:GetNormalTexture():SetVertexColor(1, 0.2, 0.1)
-            saframe:SetPoint(GetVariable(saframe.cp) or "BOTTOMRIGHT", UIParent, GetVariable(saframe.cp) or "BOTTOMRIGHT", GetVariable(saframe.kx) or -CONTAINER_OFFSET_X-13, GetVariable(saframe.ky) or CONTAINER_OFFSET_Y)
+            ApplyStaticAnchor(saframe)
             saframe:Show()
         elseif (value == "cursor") then
             caframe.cx = self.keystring .. ".cx"
