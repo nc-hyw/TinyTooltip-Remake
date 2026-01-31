@@ -518,36 +518,44 @@ do
     line:SetPoint("CENTER")
 end
 
+local function Round(value)
+    return floor(value + 0.5)
+end
+
 local function StaticFrameOnDragStop(self)
     self:StopMovingOrSizing()
+    local screenWidth = UIParent:GetWidth()
+    local screenHeight = UIParent:GetHeight()
     local p = GetVariable(self.cp) or "BOTTOMRIGHT"
     local left, right, top, bottom = self:GetLeft(), self:GetRight(), self:GetTop(), self:GetBottom()
+    local tooltipScale = (addon and addon.db and addon.db.general and addon.db.general.scale) or 1
+    if (tooltipScale == 0) then tooltipScale = 1 end
+    local function SaveOffsets(rawX, rawY)
+        self.ax_value = Round(rawX)
+        self.ay_value = Round(rawY)
+        SetVariable(self.kx, Round(rawX / tooltipScale))
+        SetVariable(self.ky, Round(rawY / tooltipScale))
+    end
     if (p == "BOTTOMRIGHT") then
-        SetVariable(self.kx, floor(right - GetScreenWidth())+4)
-        SetVariable(self.ky, floor(bottom)-3)
+        SaveOffsets(right - screenWidth, bottom)
     elseif (p == "BOTTOMLEFT") then
-        SetVariable(self.kx, floor(left)-2)
-        SetVariable(self.ky, floor(bottom)-3)
+        SaveOffsets(left, bottom)
     elseif (p == "TOPLEFT") then
-        SetVariable(self.kx, floor(left)-2)
-        SetVariable(self.ky, floor(top-GetScreenHeight()))
+        SaveOffsets(left, top - screenHeight)
     elseif (p == "TOPRIGHT") then
-        SetVariable(self.kx, floor(right - GetScreenWidth())+4)
-        SetVariable(self.ky, floor(top-GetScreenHeight()))
+        SaveOffsets(right - screenWidth, top - screenHeight)
     elseif (p == "TOP") then
-        SetVariable(self.kx, floor(left-GetScreenWidth()/2+100))
-        SetVariable(self.ky, floor(top-GetScreenHeight()))
+        SaveOffsets(left - screenWidth/2 + 100, top - screenHeight)
     elseif (p == "BOTTOM") then
-        SetVariable(self.kx, floor(left-GetScreenWidth()/2+100))
-        SetVariable(self.ky, floor(bottom)-3)
+        SaveOffsets(left - screenWidth/2 + 100, bottom)
     end
 end
 
 local function ApplyStaticAnchor(frame)
     if (not frame or not frame.kx or not frame.ky or not frame.cp) then return end
     local point = GetVariable(frame.cp) or "BOTTOMRIGHT"
-    local x = GetVariable(frame.kx) or -CONTAINER_OFFSET_X-13
-    local y = GetVariable(frame.ky) or CONTAINER_OFFSET_Y
+    local x = frame.ax_value or GetVariable(frame.kx) or -CONTAINER_OFFSET_X
+    local y = frame.ay_value or GetVariable(frame.ky) or CONTAINER_OFFSET_Y
     frame:ClearAllPoints()
     frame:SetPoint(point, UIParent, point, x, y)
 end

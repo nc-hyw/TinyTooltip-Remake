@@ -778,7 +778,7 @@ LibEvent:attachTrigger("tooltip.anchor.static", function(self, frame, parent, of
     local anchor = select(2, frame:GetPoint())
     if (anchor == UIParent or anchor == GameTooltipDefaultContainer) then
         frame:ClearAllPoints()
-        frame:SetPoint(anchorPoint or "BOTTOMRIGHT", UIParent, anchorPoint or "BOTTOMRIGHT", tonumber(offsetX) or (-CONTAINER_OFFSET_X-13), tonumber(offsetY) or CONTAINER_OFFSET_Y)
+        frame:SetPoint(anchorPoint or "BOTTOMRIGHT", UIParent, anchorPoint or "BOTTOMRIGHT", tonumber(offsetX) or (-CONTAINER_OFFSET_X), tonumber(offsetY) or CONTAINER_OFFSET_Y)
     end
 end)
 
