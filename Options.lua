@@ -647,6 +647,7 @@ local function ApplyStaticAnchor(frame)
     frame:SetPoint(point, UIParent, point, x, y)
 end
 
+local UpdateCursorAnchorControls
 local function CreateAnchorButton(frame, anchorPoint)
     local button = CreateFrame("Button", nil, frame)
     button.cp = anchorPoint
@@ -661,23 +662,60 @@ local function CreateAnchorButton(frame, anchorPoint)
         end
         SetVariable(parent.cp, self.cp)
         self:GetNormalTexture():SetVertexColor(1, 0.2, 0.1)
-        StaticFrameOnDragStop(frame)
-        if (frame.kx and frame.ky and frame.cp) then
+        if (frame and frame.kx and frame.ky and frame.cp) then
+            StaticFrameOnDragStop(frame)
             ApplyStaticAnchor(frame)
+        end
+        if (parent == caframe and UpdateCursorAnchorControls) then
+            UpdateCursorAnchorControls()
         end
     end)
     frame[anchorPoint] = button
 end
-local function CreateAnchorInput(frame, k)
+local function CreateAnchorInput(frame, k, labelText)
     local box = CreateFrame("EditBox", nil, frame, "NumericInputSpinnerTemplate")
-    box:SetNumeric(nil)
+    box:SetNumeric(false)
+    if (box.SetValueStep) then
+        box:SetValueStep(1)
+    end
+    if (box.SetNumber) then
+        box:SetNumber(0)
+    end
     box:SetAutoFocus(false)
     box:SetSize(40, 20)
     box:SetScript("OnEnterPressed", function(self)
         local parent = self:GetParent()
-        SetVariable(parent[k], tonumber(self:GetText()) or 0)
+        local num = tonumber(self:GetText()) or 0
+        if (self.GetMinMaxValues) then
+            local minValue, maxValue = self:GetMinMaxValues()
+            if (minValue and num < minValue) then
+                num = minValue
+            elseif (maxValue and num > maxValue) then
+                num = maxValue
+            end
+        end
+        if (self.SetNumber) then
+            self:SetNumber(num)
+        else
+            self:SetText(tostring(num))
+        end
+        SetVariable(parent[k], num)
         self:ClearFocus()
     end)
+    box:HookScript("OnEnter", function(self)
+        if (self:IsEnabled()) then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L["anchor.offset.locked"] or "Offset is disabled when anchor point is Bottom.")
+        GameTooltip:Show()
+    end)
+    box:HookScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+    if (labelText) then
+        box.label = box:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+        box.label:SetText(labelText)
+        box.label:SetPoint("RIGHT", box, "LEFT", -34, 0)
+    end
     return box
 end
 
@@ -731,10 +769,85 @@ caframe:SetMovable(true)
 caframe:RegisterForDrag("LeftButton")
 caframe:SetScript("OnDragStart", function(self) self:StartMoving() end)
 caframe:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-caframe.inputx = CreateAnchorInput(caframe, "cx")
+local function UpdateCursorAnchorLimits()
+    local width = (UIParent and UIParent.GetWidth and UIParent:GetWidth()) or GetScreenWidth() or 0
+    local height = (UIParent and UIParent.GetHeight and UIParent:GetHeight()) or GetScreenHeight() or 0
+    width = floor(width)
+    height = floor(height)
+    if (caframe.inputx and caframe.inputx.SetMinMaxValues) then
+        caframe.inputx:SetMinMaxValues(-width, width)
+    end
+    if (caframe.inputy and caframe.inputy.SetMinMaxValues) then
+        caframe.inputy:SetMinMaxValues(-height, height)
+    end
+    if (caframe.inputx and caframe.inputx.SetMaxLetters) then
+        local digits = strlen(tostring(abs(width)))
+        caframe.inputx:SetMaxLetters(digits + 1)
+    end
+    if (caframe.inputy and caframe.inputy.SetMaxLetters) then
+        local digits = strlen(tostring(abs(height)))
+        caframe.inputy:SetMaxLetters(digits + 1)
+    end
+end
+local function SetAnchorInputValue(box, value)
+    if (box and box.SetNumber) then
+        box:SetNumber(tonumber(value) or 0)
+    elseif (box) then
+        box:SetText(tostring(tonumber(value) or 0))
+    end
+end
+local function UpdateCursorAnchorInputs()
+    if (not caframe or not caframe.cx or not caframe.cy) then return end
+    SetAnchorInputValue(caframe.inputx, GetVariable(caframe.cx))
+    SetAnchorInputValue(caframe.inputy, GetVariable(caframe.cy))
+end
+local function SetSpinnerEnabled(box, enabled)
+    if (not box) then return end
+    box:SetEnabled(enabled)
+    box:SetAlpha(enabled and 1 or 0.5)
+    if (box.DecrementButton) then
+        box.DecrementButton:SetEnabled(enabled)
+        box.DecrementButton:SetAlpha(enabled and 1 or 0.5)
+    elseif (box.DecButton) then
+        box.DecButton:SetEnabled(enabled)
+        box.DecButton:SetAlpha(enabled and 1 or 0.5)
+    end
+    if (box.IncrementButton) then
+        box.IncrementButton:SetEnabled(enabled)
+        box.IncrementButton:SetAlpha(enabled and 1 or 0.5)
+    elseif (box.IncButton) then
+        box.IncButton:SetEnabled(enabled)
+        box.IncButton:SetAlpha(enabled and 1 or 0.5)
+    end
+end
+UpdateCursorAnchorControls = function()
+    if (not caframe or not caframe.cp) then return end
+    local cp = GetVariable(caframe.cp) or "BOTTOM"
+    local enabled = cp ~= "BOTTOM"
+    if (not enabled) then
+        SetVariable(caframe.cx, 0)
+        SetVariable(caframe.cy, 0)
+        SetAnchorInputValue(caframe.inputx, 0)
+        SetAnchorInputValue(caframe.inputy, 0)
+    end
+    SetSpinnerEnabled(caframe.inputx, enabled)
+    SetSpinnerEnabled(caframe.inputy, enabled)
+end
+caframe.inputx = CreateAnchorInput(caframe, "cx", "X")
 caframe.inputx:SetPoint("CENTER", 0, 40)
-caframe.inputy = CreateAnchorInput(caframe, "cy")
+caframe.inputy = CreateAnchorInput(caframe, "cy", "Y")
 caframe.inputy:SetPoint("CENTER", 0, 10)
+caframe:HookScript("OnShow", function()
+    UpdateCursorAnchorLimits()
+    UpdateCursorAnchorInputs()
+    UpdateCursorAnchorControls()
+end)
+LibEvent:attachTrigger("tooltip:variable:changed", function(self, keystring, value)
+    if (not caframe or not caframe.IsShown or not caframe:IsShown()) then return end
+    if (keystring == caframe.cp) then
+        UpdateCursorAnchorControls()
+    end
+end)
 caframe.ok = CreateFrame("Button", nil, caframe, "UIPanelButtonTemplate")
 caframe.ok:SetText(SAVE)
 caframe.ok:SetSize(68, 20)
@@ -778,9 +891,9 @@ function widgets:anchorbutton(parent, config)
             caframe.cx = self.keystring .. ".cx"
             caframe.cy = self.keystring .. ".cy"
             caframe.cp = self.keystring .. ".cp"
-            caframe.inputx:SetText(GetVariable(caframe.cx) or 0)
-            caframe.inputy:SetText(GetVariable(caframe.cy) or 0)
+            UpdateCursorAnchorInputs()
             caframe[GetVariable(caframe.cp) or "BOTTOM"]:GetNormalTexture():SetVertexColor(1, 0.2, 0.1)
+            UpdateCursorAnchorControls()
             caframe:Show()
         end
     end)

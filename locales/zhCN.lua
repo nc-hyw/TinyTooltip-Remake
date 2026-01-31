@@ -188,6 +188,7 @@ local T = {
 
     ["hint.anchor.returnInCombat"]          = "当在战斗中获取鼠标提示时将显示在默认位置",
     ["hint.anchor.returnOnUnitFrame"]       = "单位框体获取的鼠标提示将被固定在默认位置",
+    ["anchor.offset.locked"]                = "锚定位置为下方时无法调节偏移量",
     ["anchor.none"]                         = "无",
 }
 for k, v in pairs(T) do

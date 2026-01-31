@@ -58,6 +58,7 @@ local T = {
 
     ["hint.anchor.returnInCombat"] = "When mouseover in combat, the tooltip are fixed at the default position.",
     ["hint.anchor.returnOnUnitFrame"] = "Tooltips from unit frames are fixed at the default position.",
+    ["anchor.offset.locked"]      = "Offset is disabled when anchor point is Bottom.",
     ["anchor.none"]             = "None",
 }   
 for k, v in pairs(T) do
