@@ -15,6 +15,25 @@ local addonName = ...
 local addon = TinyTooltip
 local CopyTable = CopyTable
 local LAYOUT
+local function RoundScale(value)
+    return floor(value + 0.5)
+end
+
+local function RescaleAnchorOffsets(anchor, ratio)
+    if (not anchor) then return end
+    if (anchor.x ~= nil) then anchor.x = RoundScale(anchor.x * ratio) end
+    if (anchor.y ~= nil) then anchor.y = RoundScale(anchor.y * ratio) end
+end
+
+local function RescaleStaticAnchorOffsets(oldScale, newScale)
+    if (not addon or not addon.db) then return end
+    if (oldScale == 0 or newScale == 0) then return end
+    if (oldScale == newScale) then return end
+    local ratio = oldScale / newScale
+    RescaleAnchorOffsets(addon.db.general and addon.db.general.anchor, ratio)
+    RescaleAnchorOffsets(addon.db.unit and addon.db.unit.player and addon.db.unit.player.anchor, ratio)
+    RescaleAnchorOffsets(addon.db.unit and addon.db.unit.npc and addon.db.unit.npc.anchor, ratio)
+end
 
 -- About/Help page init
 function TinyTooltipRemake_About_OnLoad(self)
@@ -89,6 +108,11 @@ local function CallTrigger(keystring, value)
         if (keystring == "general.mask") then
             LibEvent:trigger("tooltip.style.mask", tip, value)
         elseif (keystring == "general.scale") then
+            local oldScale = addon._lastScale or value
+            if (oldScale ~= value) then
+                RescaleStaticAnchorOffsets(oldScale, value)
+            end
+            addon._lastScale = value
             LibEvent:trigger("tooltip.scale", tip, value)
         elseif (keystring == "general.background") then
             LibEvent:trigger("tooltip.style.background", tip, unpack(value))
@@ -215,6 +239,7 @@ local function RefreshWidget(widget, config)
         local v = GetVariable(config.keystring) or 0
         widget:SetValue(v)
         if (widget.High) then widget.High:SetText(v) end
+        if (widget.editbox) then widget.editbox:SetText(v) end
     elseif (t == "editbox") then
         widget:SetText(GetVariable(config.keystring) or "")
         widget:SetCursorPosition(0)
@@ -299,6 +324,38 @@ function widgets:checkbox(parent, config, labelText)
     return frame
 end
 
+local function NormalizeSliderValue(slider, value)
+    if (value == nil) then return nil end
+    value = tonumber(value)
+    if (value == nil) then return nil end
+    local minValue, maxValue = slider:GetMinMaxValues()
+    if (minValue and value < minValue) then value = minValue end
+    if (maxValue and value > maxValue) then value = maxValue end
+    local step = slider:GetValueStep() or 1
+    if (step < 0.1) then
+        value = tonumber(format("%.2f", value))
+    elseif (step < 1) then
+        value = tonumber(format("%.1f", value))
+    else
+        value = floor(value + 0.2)
+    end
+    return value
+end
+
+local function CommitSliderEdit(editbox)
+    local slider = editbox and editbox.slider
+    if (not slider) then return end
+    local value = NormalizeSliderValue(slider, editbox:GetText())
+    if (value == nil) then
+        editbox:SetText(slider:GetValue() or "")
+        return
+    end
+    slider._fromEdit = true
+    slider:SetValue(value)
+    slider._fromEdit = false
+    editbox:SetText(value)
+end
+
 function widgets:slider(parent, config)
     local frame = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     frame:SetWidth(118)
@@ -314,19 +371,49 @@ function widgets:slider(parent, config)
     frame:SetMinMaxValues(config.min, config.max)
     frame:SetValueStep(config.step)
     frame:SetValue(GetVariable(config.keystring))
+
+    if (config.input) then
+        local editbox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+        editbox:SetAutoFocus(false)
+        editbox:SetSize(48, 18)
+        editbox:SetPoint("LEFT", frame, "RIGHT", 6, -1)
+        editbox:SetText(GetVariable(config.keystring))
+        editbox:SetCursorPosition(0)
+        editbox.slider = frame
+        editbox:SetScript("OnEnterPressed", function(self)
+            self._skipFocusLost = true
+            CommitSliderEdit(self)
+            self:ClearFocus()
+        end)
+        editbox:SetScript("OnEditFocusLost", function(self)
+            if (self._skipFocusLost) then
+                self._skipFocusLost = false
+                return
+            end
+            CommitSliderEdit(self)
+        end)
+        frame.editbox = editbox
+        frame.Text:ClearAllPoints()
+        frame.Text:SetPoint("LEFT", editbox, "RIGHT", 6, 0)
+    end
+
     frame:SetScript("OnValueChanged", function(self, value)
-        local step = self:GetValueStep() or 1
-        if (step < 0.1) then
-            value = format("%.2f", value)
-        elseif (step < 1) then
-            value = format("%.1f", value)
-        else
-            value = floor(value+0.2)
+        if (self._fromEdit) then
+            self._fromEdit = false
         end
-        value = tonumber(value)
-        if (self:GetValue() ~= value) then
-            SetVariable(self.keystring, value)
-            self.High:SetText(value)
+        local normalized = NormalizeSliderValue(self, value)
+        if (normalized == nil) then return end
+        if (self:GetValue() ~= normalized) then
+            self._fromEdit = true
+            self:SetValue(normalized)
+            self._fromEdit = false
+        end
+        if (GetVariable(self.keystring) ~= normalized) then
+            SetVariable(self.keystring, normalized)
+        end
+        self.High:SetText(normalized)
+        if (self.editbox and not self.editbox:HasFocus()) then
+            self.editbox:SetText(normalized)
         end
     end)
     return frame
@@ -977,8 +1064,8 @@ local options = {
         { keystring = "general.skinMoreFrames",     type = "checkbox" },
         { keystring = "general.background",         type = "colorpick", hasopacity = true },
         { keystring = "general.borderColor",        type = "colorpick", hasopacity = true },
-        { keystring = "general.scale",              type = "slider", min = 0.5, max = 4, step = 0.1 },
-        { keystring = "general.borderSize",         type = "slider", min = 1, max = 6, step = 1 },
+        { keystring = "general.scale",              type = "slider", min = 0.5, max = 4, step = 0.1, input = true },
+        { keystring = "general.borderSize",         type = "slider", min = 1, max = 6, step = 1, input = true },
         { keystring = "general.borderCorner",       type = "dropdown", dropdata = widgets.borderDropdata },
         { keystring = "general.bgfile",             type = "dropdown", dropdata = widgets.bgfileDropdata },
         { keystring = "general.anchor",             type = "anchor", dropdata = {"default","cursorRight","cursor","static"} },
