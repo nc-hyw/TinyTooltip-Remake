@@ -56,7 +56,10 @@ local T = {
     ["wildcard.help.example"]     = "Example: (%s) or [%s]",
     ["wildcard.help.moveSpeed"]   = "Example: %d%%",
 
-}
+    ["hint.anchor.returnInCombat"] = "When mouseover in combat, the tooltip are fixed at the default position.",
+    ["hint.anchor.returnOnUnitFrame"] = "Tooltips from unit frames are fixed at the default position.",
+    ["anchor.none"]             = "None",
+}   
 for k, v in pairs(T) do
     L[k] = v
 end
