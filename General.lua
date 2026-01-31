@@ -3,6 +3,8 @@ local LibEvent = LibStub:GetLibrary("LibEvent.7000")
 
 local DEAD = DEAD
 local CopyTable = CopyTable
+local GetMouseFocus = GetMouseFocus or GetMouseFoci
+
 local addon = TinyTooltip
 
 TinyTooltipRemakeDB = {}
@@ -11,11 +13,9 @@ addon.defaults = CopyTable(addon.db)
 
 local function GetStatusbarUnit()
     local unit = "mouseover"
-    if (GameTooltip and GameTooltip.GetUnit) then
-        local _, tipUnit = GameTooltip:GetUnit()
-        if (tipUnit) then
-            return tipUnit
-        end
+    local focus = GetMouseFocus()
+    if (focus and focus.unit) then
+        unit = focus.unit
     end
     return unit
 end
