@@ -26,9 +26,9 @@ local T = {
     ["general.statusbarColor"]              = "HP颜色",
     ["general.statusbarHide"]               = "隐藏状态条",
     ["general.anchor.position"]             = "框架锚点",
-    ["general.anchor.returnInCombat"]       = "战斗时固定",
+    ["general.anchor.returnInCombat"]       = "战斗时固定至默认位置",
     ["general.anchor.hiddenInCombat"]       = "战斗时隐藏",
-    ["general.anchor.returnOnUnitFrame"]    = "UnitFrame上固定",
+    ["general.anchor.returnOnUnitFrame"]    = "单位框体时固定至默认位置",
     ["general.alwaysShowIdInfo"]            = "始终显示id信息(关闭后按住alt/shift显示)",
     ["general.skinMoreFrames"]              = "样式应用于更多框架 |cffcccc33(重载生效)|r",
     ["general.SavedVariablesPerCharacter"]  = "为每个角色保存独立配置",
@@ -39,9 +39,9 @@ local T = {
     ["quest.coloredQuestBorder"]            = "任务边框染色",
     
     ["unit.player.anchor.position"]         = "框架锚点",
-    ["unit.player.anchor.returnInCombat"]   = "战斗时固定",
+    ["unit.player.anchor.returnInCombat"]   = "战斗时固定至默认位置",
     ["unit.player.anchor.hiddenInCombat"]   = "战斗时隐藏",
-    ["unit.player.anchor.returnOnUnitFrame"] = "UnitFrame上固定",
+    ["unit.player.anchor.returnOnUnitFrame"] = "单位框体时固定至默认位置",
     ["unit.player.background"]              = "背景染色",
     ["unit.player.coloredBorder"]           = "边框染色",
     ["unit.player.showTarget"]              = "显示目标",
@@ -77,9 +77,9 @@ local T = {
     ["unit.player.elements.zone"]           = "地区",
     
     ["unit.npc.anchor.position"]            = "框架锚点",
-    ["unit.npc.anchor.returnInCombat"]      = "战斗时固定",
+    ["unit.npc.anchor.returnInCombat"]      = "战斗时固定至默认位置",
     ["unit.npc.anchor.hiddenInCombat"]      = "战斗时隐藏",
-    ["unit.npc.anchor.returnOnUnitFrame"]   = "UnitFrame上固定",
+    ["unit.npc.anchor.returnOnUnitFrame"]   = "单位框体时固定至默认位置",
     ["unit.npc.background"]                 = "背景染色",
     ["unit.npc.coloredBorder"]              = "边框染色",
     ["unit.npc.showTarget"]                 = "显示目标",
@@ -184,9 +184,11 @@ local T = {
     ["wildcard.help.example"]       = "示例：(%s) 或 [%s]",
     ["wildcard.help.moveSpeed"]     = "示例：%d%%",
 
+    ["<Drag element to customize the style>"] = "<拖动元素以自定义样式>",
 
-
-    ["<Drag element to customize the style>"] = "<拖动元素以自定义样式>"
+    ["hint.anchor.returnInCombat"]          = "当在战斗中获取鼠标提示时将显示在默认位置",
+    ["hint.anchor.returnOnUnitFrame"]       = "单位框体获取的鼠标提示将被固定在默认位置",
+    ["anchor.none"]                         = "无",
 }
 for k, v in pairs(T) do
     L[k] = v
