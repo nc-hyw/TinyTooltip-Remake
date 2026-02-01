@@ -312,6 +312,25 @@ LibEvent:attachTrigger("tooltip:show", function(self, tip)
     if (FACTION_HORDE) then addon:HideLine(tip, "^" .. FACTION_HORDE) end
 end)
 
+local function RemoveFactionLinesPost(tip)
+    if (not tip or not tip.GetName) then return end
+    for i = 2, tip:NumLines() do
+        local line = _G[tip:GetName() .. "TextLeft" .. i]
+        local text = line and line:GetText()
+        local stripped = SafeStripText(text)
+        if (stripped and (stripped == FACTION_ALLIANCE or stripped == FACTION_HORDE)) then
+            line:SetText("")
+            line:Hide() -- somehow not working but I will keep it in  here
+        end
+    end
+end
+
+if (TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and Enum.TooltipDataType) then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tip)
+        RemoveFactionLinesPost(tip)
+    end)
+end
+
 local function RemoveRightClickHint(tt)
     local removed = false
     if (not tt or not tt.GetName) then return false end
