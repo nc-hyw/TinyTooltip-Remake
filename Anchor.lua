@@ -15,7 +15,8 @@ end
 
 local function AnchorCursorOnExecute(self)
     if (not self.tip:IsShown()) then return true end
-    if (self.tip:GetAnchorType() ~= "ANCHOR_CURSOR") then return true end
+    local anchorType = self.tip:GetAnchorType()
+    if (anchorType ~= "ANCHOR_CURSOR" and anchorType ~= "ANCHOR_NONE") then return true end
     local x, y = GetCursorPosition()
     self.tip:ClearAllPoints()
     self.tip:SetPoint(self.cp, UIParent, "BOTTOMLEFT", floor(x/self.scale+self.cx), floor(y/self.scale+self.cy))
@@ -63,11 +64,12 @@ local function AnchorFrame(tip, parent, anchor, isUnitFrame, finally)
     elseif (anchor.position == "cursor") then
         local offsetX = tonumber(anchor.cx) or 0
         local offsetY = tonumber(anchor.cy) or 0
-        if (offsetX == 0 and offsetY == 0) then
+        local point = anchor.cp
+        if (offsetX == 0 and offsetY == 0 and (not point or point == "BOTTOM")) then
             LibEvent:trigger("tooltip.anchor.cursor", tip, parent)
         else
-            SafeSetOwner(tip, parent, "ANCHOR_NONE")
-            AnchorCursor(tip, parent, anchor.cp, offsetX, offsetY)
+            SafeSetOwner(tip, parent, "ANCHOR_CURSOR")
+            AnchorCursor(tip, parent, point, offsetX, offsetY)
         end
     elseif (anchor.position == "inherit" and not finally) then
         AnchorFrame(tip, parent, addon.db.general.anchor, isUnitFrame, true)

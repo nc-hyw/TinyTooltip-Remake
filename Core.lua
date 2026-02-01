@@ -1174,6 +1174,7 @@ if (GameTooltip_SetBackdropStyle) then
 end
 
 LibEvent:attachTrigger("TINYTOOLTIP_GENERAL_INIT", function(self)
+    addon._lastScale = addon.db.general.scale
     LibEvent:trigger("tooltip.style.font.header", GameTooltip, addon.db.general.headerFont, addon.db.general.headerFontSize, addon.db.general.headerFontFlag)
     LibEvent:trigger("tooltip.style.font.body", GameTooltip, addon.db.general.bodyFont, addon.db.general.bodyFontSize, addon.db.general.bodyFontFlag)
     LibEvent:trigger("tooltip.statusbar.height", addon.db.general.statusbarHeight)

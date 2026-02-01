@@ -15,6 +15,25 @@ local addonName = ...
 local addon = TinyTooltip
 local CopyTable = CopyTable
 local LAYOUT
+local function RoundScale(value)
+    return floor(value + 0.5)
+end
+
+local function RescaleAnchorOffsets(anchor, ratio)
+    if (not anchor) then return end
+    if (anchor.x ~= nil) then anchor.x = RoundScale(anchor.x * ratio) end
+    if (anchor.y ~= nil) then anchor.y = RoundScale(anchor.y * ratio) end
+end
+
+local function RescaleStaticAnchorOffsets(oldScale, newScale)
+    if (not addon or not addon.db) then return end
+    if (oldScale == 0 or newScale == 0) then return end
+    if (oldScale == newScale) then return end
+    local ratio = oldScale / newScale
+    RescaleAnchorOffsets(addon.db.general and addon.db.general.anchor, ratio)
+    RescaleAnchorOffsets(addon.db.unit and addon.db.unit.player and addon.db.unit.player.anchor, ratio)
+    RescaleAnchorOffsets(addon.db.unit and addon.db.unit.npc and addon.db.unit.npc.anchor, ratio)
+end
 
 -- About/Help page init
 function TinyTooltipRemake_About_OnLoad(self)
@@ -89,6 +108,11 @@ local function CallTrigger(keystring, value)
         if (keystring == "general.mask") then
             LibEvent:trigger("tooltip.style.mask", tip, value)
         elseif (keystring == "general.scale") then
+            local oldScale = addon._lastScale or value
+            if (oldScale ~= value) then
+                RescaleStaticAnchorOffsets(oldScale, value)
+            end
+            addon._lastScale = value
             LibEvent:trigger("tooltip.scale", tip, value)
         elseif (keystring == "general.background") then
             LibEvent:trigger("tooltip.style.background", tip, unpack(value))
@@ -215,6 +239,7 @@ local function RefreshWidget(widget, config)
         local v = GetVariable(config.keystring) or 0
         widget:SetValue(v)
         if (widget.High) then widget.High:SetText(v) end
+        if (widget.editbox) then widget.editbox:SetText(v) end
     elseif (t == "editbox") then
         widget:SetText(GetVariable(config.keystring) or "")
         widget:SetCursorPosition(0)
@@ -299,6 +324,38 @@ function widgets:checkbox(parent, config, labelText)
     return frame
 end
 
+local function NormalizeSliderValue(slider, value)
+    if (value == nil) then return nil end
+    value = tonumber(value)
+    if (value == nil) then return nil end
+    local minValue, maxValue = slider:GetMinMaxValues()
+    if (minValue and value < minValue) then value = minValue end
+    if (maxValue and value > maxValue) then value = maxValue end
+    local step = slider:GetValueStep() or 1
+    if (step < 0.1) then
+        value = tonumber(format("%.2f", value))
+    elseif (step < 1) then
+        value = tonumber(format("%.1f", value))
+    else
+        value = floor(value + 0.2)
+    end
+    return value
+end
+
+local function CommitSliderEdit(editbox)
+    local slider = editbox and editbox.slider
+    if (not slider) then return end
+    local value = NormalizeSliderValue(slider, editbox:GetText())
+    if (value == nil) then
+        editbox:SetText(slider:GetValue() or "")
+        return
+    end
+    slider._fromEdit = true
+    slider:SetValue(value)
+    slider._fromEdit = false
+    editbox:SetText(value)
+end
+
 function widgets:slider(parent, config)
     local frame = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     frame:SetWidth(118)
@@ -314,19 +371,49 @@ function widgets:slider(parent, config)
     frame:SetMinMaxValues(config.min, config.max)
     frame:SetValueStep(config.step)
     frame:SetValue(GetVariable(config.keystring))
+
+    if (config.input) then
+        local editbox = CreateFrame("EditBox", nil, frame, "InputBoxTemplate")
+        editbox:SetAutoFocus(false)
+        editbox:SetSize(48, 18)
+        editbox:SetPoint("LEFT", frame, "RIGHT", 6, -1)
+        editbox:SetText(GetVariable(config.keystring))
+        editbox:SetCursorPosition(0)
+        editbox.slider = frame
+        editbox:SetScript("OnEnterPressed", function(self)
+            self._skipFocusLost = true
+            CommitSliderEdit(self)
+            self:ClearFocus()
+        end)
+        editbox:SetScript("OnEditFocusLost", function(self)
+            if (self._skipFocusLost) then
+                self._skipFocusLost = false
+                return
+            end
+            CommitSliderEdit(self)
+        end)
+        frame.editbox = editbox
+        frame.Text:ClearAllPoints()
+        frame.Text:SetPoint("LEFT", editbox, "RIGHT", 6, 0)
+    end
+
     frame:SetScript("OnValueChanged", function(self, value)
-        local step = self:GetValueStep() or 1
-        if (step < 0.1) then
-            value = format("%.2f", value)
-        elseif (step < 1) then
-            value = format("%.1f", value)
-        else
-            value = floor(value+0.2)
+        if (self._fromEdit) then
+            self._fromEdit = false
         end
-        value = tonumber(value)
-        if (self:GetValue() ~= value) then
-            SetVariable(self.keystring, value)
-            self.High:SetText(value)
+        local normalized = NormalizeSliderValue(self, value)
+        if (normalized == nil) then return end
+        if (self:GetValue() ~= normalized) then
+            self._fromEdit = true
+            self:SetValue(normalized)
+            self._fromEdit = false
+        end
+        if (GetVariable(self.keystring) ~= normalized) then
+            SetVariable(self.keystring, normalized)
+        end
+        self.High:SetText(normalized)
+        if (self.editbox and not self.editbox:HasFocus()) then
+            self.editbox:SetText(normalized)
         end
     end)
     return frame
@@ -556,10 +643,17 @@ local function ApplyStaticAnchor(frame)
     local point = GetVariable(frame.cp) or "BOTTOMRIGHT"
     local x = frame.ax_value or GetVariable(frame.kx) or -CONTAINER_OFFSET_X
     local y = frame.ay_value or GetVariable(frame.ky) or CONTAINER_OFFSET_Y
+    if (frame.ax_value == nil and frame.ay_value == nil) then
+        local tooltipScale = (addon and addon.db and addon.db.general and addon.db.general.scale) or 1
+        if (tooltipScale == 0) then tooltipScale = 1 end
+        x = x * tooltipScale
+        y = y * tooltipScale
+    end
     frame:ClearAllPoints()
     frame:SetPoint(point, UIParent, point, x, y)
 end
 
+local UpdateCursorAnchorControls
 local function CreateAnchorButton(frame, anchorPoint)
     local button = CreateFrame("Button", nil, frame)
     button.cp = anchorPoint
@@ -574,23 +668,60 @@ local function CreateAnchorButton(frame, anchorPoint)
         end
         SetVariable(parent.cp, self.cp)
         self:GetNormalTexture():SetVertexColor(1, 0.2, 0.1)
-        StaticFrameOnDragStop(frame)
-        if (frame.kx and frame.ky and frame.cp) then
+        if (frame and frame.kx and frame.ky and frame.cp) then
+            StaticFrameOnDragStop(frame)
             ApplyStaticAnchor(frame)
+        end
+        if (parent == caframe and UpdateCursorAnchorControls) then
+            UpdateCursorAnchorControls()
         end
     end)
     frame[anchorPoint] = button
 end
-local function CreateAnchorInput(frame, k)
+local function CreateAnchorInput(frame, k, labelText)
     local box = CreateFrame("EditBox", nil, frame, "NumericInputSpinnerTemplate")
-    box:SetNumeric(nil)
+    box:SetNumeric(false)
+    if (box.SetValueStep) then
+        box:SetValueStep(1)
+    end
+    if (box.SetNumber) then
+        box:SetNumber(0)
+    end
     box:SetAutoFocus(false)
     box:SetSize(40, 20)
     box:SetScript("OnEnterPressed", function(self)
         local parent = self:GetParent()
-        SetVariable(parent[k], tonumber(self:GetText()) or 0)
+        local num = tonumber(self:GetText()) or 0
+        if (self.GetMinMaxValues) then
+            local minValue, maxValue = self:GetMinMaxValues()
+            if (minValue and num < minValue) then
+                num = minValue
+            elseif (maxValue and num > maxValue) then
+                num = maxValue
+            end
+        end
+        if (self.SetNumber) then
+            self:SetNumber(num)
+        else
+            self:SetText(tostring(num))
+        end
+        SetVariable(parent[k], num)
         self:ClearFocus()
     end)
+    box:HookScript("OnEnter", function(self)
+        if (self:IsEnabled()) then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L["anchor.offset.locked"] or "Offset is disabled when anchor point is Bottom.")
+        GameTooltip:Show()
+    end)
+    box:HookScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+    if (labelText) then
+        box.label = box:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+        box.label:SetText(labelText)
+        box.label:SetPoint("RIGHT", box, "LEFT", -34, 0)
+    end
     return box
 end
 
@@ -644,10 +775,85 @@ caframe:SetMovable(true)
 caframe:RegisterForDrag("LeftButton")
 caframe:SetScript("OnDragStart", function(self) self:StartMoving() end)
 caframe:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-caframe.inputx = CreateAnchorInput(caframe, "cx")
+local function UpdateCursorAnchorLimits()
+    local width = (UIParent and UIParent.GetWidth and UIParent:GetWidth()) or GetScreenWidth() or 0
+    local height = (UIParent and UIParent.GetHeight and UIParent:GetHeight()) or GetScreenHeight() or 0
+    width = floor(width)
+    height = floor(height)
+    if (caframe.inputx and caframe.inputx.SetMinMaxValues) then
+        caframe.inputx:SetMinMaxValues(-width, width)
+    end
+    if (caframe.inputy and caframe.inputy.SetMinMaxValues) then
+        caframe.inputy:SetMinMaxValues(-height, height)
+    end
+    if (caframe.inputx and caframe.inputx.SetMaxLetters) then
+        local digits = strlen(tostring(abs(width)))
+        caframe.inputx:SetMaxLetters(digits + 1)
+    end
+    if (caframe.inputy and caframe.inputy.SetMaxLetters) then
+        local digits = strlen(tostring(abs(height)))
+        caframe.inputy:SetMaxLetters(digits + 1)
+    end
+end
+local function SetAnchorInputValue(box, value)
+    if (box and box.SetNumber) then
+        box:SetNumber(tonumber(value) or 0)
+    elseif (box) then
+        box:SetText(tostring(tonumber(value) or 0))
+    end
+end
+local function UpdateCursorAnchorInputs()
+    if (not caframe or not caframe.cx or not caframe.cy) then return end
+    SetAnchorInputValue(caframe.inputx, GetVariable(caframe.cx))
+    SetAnchorInputValue(caframe.inputy, GetVariable(caframe.cy))
+end
+local function SetSpinnerEnabled(box, enabled)
+    if (not box) then return end
+    box:SetEnabled(enabled)
+    box:SetAlpha(enabled and 1 or 0.5)
+    if (box.DecrementButton) then
+        box.DecrementButton:SetEnabled(enabled)
+        box.DecrementButton:SetAlpha(enabled and 1 or 0.5)
+    elseif (box.DecButton) then
+        box.DecButton:SetEnabled(enabled)
+        box.DecButton:SetAlpha(enabled and 1 or 0.5)
+    end
+    if (box.IncrementButton) then
+        box.IncrementButton:SetEnabled(enabled)
+        box.IncrementButton:SetAlpha(enabled and 1 or 0.5)
+    elseif (box.IncButton) then
+        box.IncButton:SetEnabled(enabled)
+        box.IncButton:SetAlpha(enabled and 1 or 0.5)
+    end
+end
+UpdateCursorAnchorControls = function()
+    if (not caframe or not caframe.cp) then return end
+    local cp = GetVariable(caframe.cp) or "BOTTOM"
+    local enabled = cp ~= "BOTTOM"
+    if (not enabled) then
+        SetVariable(caframe.cx, 0)
+        SetVariable(caframe.cy, 0)
+        SetAnchorInputValue(caframe.inputx, 0)
+        SetAnchorInputValue(caframe.inputy, 0)
+    end
+    SetSpinnerEnabled(caframe.inputx, enabled)
+    SetSpinnerEnabled(caframe.inputy, enabled)
+end
+caframe.inputx = CreateAnchorInput(caframe, "cx", "X")
 caframe.inputx:SetPoint("CENTER", 0, 40)
-caframe.inputy = CreateAnchorInput(caframe, "cy")
+caframe.inputy = CreateAnchorInput(caframe, "cy", "Y")
 caframe.inputy:SetPoint("CENTER", 0, 10)
+caframe:HookScript("OnShow", function()
+    UpdateCursorAnchorLimits()
+    UpdateCursorAnchorInputs()
+    UpdateCursorAnchorControls()
+end)
+LibEvent:attachTrigger("tooltip:variable:changed", function(self, keystring, value)
+    if (not caframe or not caframe.IsShown or not caframe:IsShown()) then return end
+    if (keystring == caframe.cp) then
+        UpdateCursorAnchorControls()
+    end
+end)
 caframe.ok = CreateFrame("Button", nil, caframe, "UIPanelButtonTemplate")
 caframe.ok:SetText(SAVE)
 caframe.ok:SetSize(68, 20)
@@ -691,9 +897,9 @@ function widgets:anchorbutton(parent, config)
             caframe.cx = self.keystring .. ".cx"
             caframe.cy = self.keystring .. ".cy"
             caframe.cp = self.keystring .. ".cp"
-            caframe.inputx:SetText(GetVariable(caframe.cx) or 0)
-            caframe.inputy:SetText(GetVariable(caframe.cy) or 0)
+            UpdateCursorAnchorInputs()
             caframe[GetVariable(caframe.cp) or "BOTTOM"]:GetNormalTexture():SetVertexColor(1, 0.2, 0.1)
+            UpdateCursorAnchorControls()
             caframe:Show()
         end
     end)
@@ -977,8 +1183,8 @@ local options = {
         { keystring = "general.skinMoreFrames",     type = "checkbox" },
         { keystring = "general.background",         type = "colorpick", hasopacity = true },
         { keystring = "general.borderColor",        type = "colorpick", hasopacity = true },
-        { keystring = "general.scale",              type = "slider", min = 0.5, max = 4, step = 0.1 },
-        { keystring = "general.borderSize",         type = "slider", min = 1, max = 6, step = 1 },
+        { keystring = "general.scale",              type = "slider", min = 0.5, max = 4, step = 0.1, input = true },
+        { keystring = "general.borderSize",         type = "slider", min = 1, max = 6, step = 1, input = true },
         { keystring = "general.borderCorner",       type = "dropdown", dropdata = widgets.borderDropdata },
         { keystring = "general.bgfile",             type = "dropdown", dropdata = widgets.bgfileDropdata },
         { keystring = "general.anchor",             type = "anchor", dropdata = {"default","cursorRight","cursor","static"} },
