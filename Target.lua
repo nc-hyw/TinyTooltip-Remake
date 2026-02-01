@@ -115,7 +115,41 @@ local function UpdateTargetLine(tip, targetUnit)
     if (addon.AutoSetTooltipWidth) then
         addon:AutoSetTooltipWidth(tip)
     end
-    tip:Show()
+    -- tip:Show()
+    if (addon and addon.HideLine) then
+        if (FACTION_ALLIANCE) then addon:HideLine(tip, "^" .. FACTION_ALLIANCE) end
+        if (FACTION_HORDE) then addon:HideLine(tip, "^" .. FACTION_HORDE) end
+        if (UNIT_POPUP_RIGHT_CLICK) then addon:HideLine(tip, UNIT_POPUP_RIGHT_CLICK) end
+    end
+    if (addon and addon.db and addon.db.general and addon.db.general.hideUnitFrameHint) then
+        for i = 2, tip:NumLines() do
+            local line = _G[tip:GetName() .. "TextLeft" .. i]
+            local text
+            if (line and line.GetText) then
+                local ok, value = pcall(line.GetText, line)
+                if (ok) then
+                    text = value
+                end
+            end
+            if (type(text) == "string") then
+                if (issecretvalue and issecretvalue(text)) then
+                    -- can't safely read/strip secret text
+                else
+                    local ok, stripped = pcall(function()
+                        local s = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+                        return s:gsub("^%s+", ""):gsub("%s+$", "")
+                    end)
+                    if (ok and type(stripped) == "string") then
+                        if (UNIT_POPUP_RIGHT_CLICK and stripped == UNIT_POPUP_RIGHT_CLICK) then
+                            line:SetText(nil)
+
+                        end
+                    end
+                end
+            end
+        end
+    end
+    -- tip:Show()
 end
 
 LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)

@@ -306,32 +306,73 @@ LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
     end
 end)
 
+LibEvent:attachTrigger("tooltip:show", function(self, tip)
+    if (tip ~= GameTooltip) then return end
+    if (FACTION_ALLIANCE) then addon:HideLine(tip, "^" .. FACTION_ALLIANCE) end
+    if (FACTION_HORDE) then addon:HideLine(tip, "^" .. FACTION_HORDE) end
+end)
+
+local function RemoveRightClickHint(tt)
+    local removed = false
+    if (not tt or not tt.GetName) then return false end
+    for i = 2, tt:NumLines() do
+        local line = _G[tt:GetName() .. "TextLeft" .. i]
+        local text
+        if (line and line.GetText) then
+            local ok, value = pcall(line.GetText, line)
+            if (ok) then
+                text = value
+            end
+        end
+        if (type(text) == "string") then
+            if (issecretvalue and issecretvalue(text)) then
+                -- can't safely read/strip secret text
+            else
+                local ok, stripped = pcall(function()
+                    local s = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+                    return s:gsub("^%s+", ""):gsub("%s+$", "")
+                end)
+                if (ok and type(stripped) == "string") then
+                    if (UNIT_POPUP_RIGHT_CLICK and stripped == UNIT_POPUP_RIGHT_CLICK) then
+                        line:SetText("")
+                        line:Hide()
+                        removed = true
+                    end
+                end
+            end
+        end
+    end
+    return removed
+end
+
 if (GameTooltip_AddInstructionLine) then
     hooksecurefunc("GameTooltip_AddInstructionLine", function(tt, text)
         if (not addon.db.general.hideUnitFrameHint) then return end
         if (tt ~= GameTooltip) then return end
-        if (not UNIT_POPUP_RIGHT_CLICK or text ~= UNIT_POPUP_RIGHT_CLICK) then return end
         if (not IsUnitTooltip(tt)) then return end
+        -- debug output removed
         
-        local i = tt:NumLines()
-        local line = _G[tt:GetName() .. "TextLeft" .. i]
-        if (not line) then return end
-        
-        local tmpText = line:GetText()
-        if (issecretvalue and issecretvalue(tmpText)) then return end
-        if (tmpText ~= text) then return end
-        
-        line:SetText("")
-        line:Hide()
-        
-        local mLine = _G[tt:GetName() .. "TextLeft" .. (i - 1)]
-        if (mLine and mLine.GetText) then
-            local prevText = mLine:GetText()
-            if (not (issecretvalue and issecretvalue(prevText)) and prevText == " ") then
-                mLine:Hide()
+        local removed = false
+        if (UNIT_POPUP_RIGHT_CLICK and text == UNIT_POPUP_RIGHT_CLICK) then
+            local i = tt:NumLines()
+            local line = _G[tt:GetName() .. "TextLeft" .. i]
+            if (line) then
+                pcall(line.SetText, line, "")
+                pcall(line.Hide, line)
+                removed = true
+            end
+            local mLine = _G[tt:GetName() .. "TextLeft" .. (i - 1)]
+            if (mLine and mLine.GetText) then
+                local okPrev, prevText = pcall(mLine.GetText, mLine)
+                if (okPrev and (not (issecretvalue and issecretvalue(prevText))) and prevText == " ") then
+                    pcall(mLine.Hide, mLine)
+                end
             end
         end
-        tt:Show()
+        if (not removed) then
+            removed = RemoveRightClickHint(tt)
+        end
+        -- debug output removed
     end)
 end
 
