@@ -1,12 +1,30 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-Known Issue:  
+Limitations:  
 
 Due to how TinyTooltip was disgned, gem and slot icon on item display may not be stable because of conflict with Blizzard UI rendering, there is no way to solve this problem without completely refactoring this addon which is not my top priority right now.
 
+When anchor point selected to bottom and set to anchor to mouse, custom is not allowed as 
+it will causing jittering due to anchor competition with blizzard UI system
+
 I will try to rebuilt this addon entireley if I have the time and after the game become stable.  
-## [v1.1.0] -2026-01-29  
+
+## [v1.1.2] - 2026-02-01
+New Feature:
+- Now you can select hide "Right click to confgure the frame" in General setting page
+- Added Text lable in offset setup for better experence
+
+Fix:
+- Redesigned layout regarding anchor setting to solve overlapping issue of Anchor button
+- Fixed an error when try to open Anchor box without close existing Anchor box
+- Fixed static anchor will not working properly with scale setting
+- Fixed an issue where customized anchor will not working properly
+- Fixed an issue where selecting custom anchor position will cause error
+- Fixed an issue where tooltip will not move with cursor when "anchor to cursor" was selected
+- Fixed an issue where faction will repeately display when targeting an enemy NPC
+
+## [v1.1.0] - 2026-01-29  
 New Feature:
 - Player now have the option to display Mount information and if it was collected in tooltip  
 
