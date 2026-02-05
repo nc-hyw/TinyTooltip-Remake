@@ -32,6 +32,22 @@ local C_BattleNet_GetAccountInfoByGUID = C_BattleNet and C_BattleNet.GetAccountI
 
 local addon = TinyTooltip
 
+local function SafeHideNineSlice(tip)
+    if (not tip or not tip.NineSlice) then return end
+    local ns = tip.NineSlice
+    if (type(ns) == "table" and ns.Hide) then
+        ns:Hide()
+        return
+    end
+    if (type(ns) == "userdata" and ns.IsObjectType) then
+        if (ns:IsObjectType("Region") and ns.Hide) then
+            ns:Hide()
+        end
+    end
+end
+
+addon.SafeHideNineSlice = SafeHideNineSlice
+
 -- language & global vars
 addon.L, addon.G = {}, {}
 setmetatable(addon.L, {__index = function(_, k) return k end})
@@ -1035,7 +1051,7 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
         tip:SetBackdrop(nil)
     end
     if (tip.NineSlice) then
-        tip.NineSlice:Hide()
+        addon.SafeHideNineSlice(tip)
     end
     tip.style = CreateFrame("Frame", nil, tip, BackdropTemplateMixin and "BackdropTemplate" or nil)
     tip.style:SetFrameLevel(tip:GetFrameLevel())
@@ -1198,10 +1214,25 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     addon.tooltips[#addon.tooltips+1] = tip
 end)
 
+local function SafeHideNineSlice(tip)
+    if (not tip or not tip.NineSlice) then return end
+    local ns = tip.NineSlice
+    if (type(ns) == "table" and ns.Hide) then
+        pcall(ns.Hide, ns)
+        return
+    end
+    if (type(ns) == "userdata" and ns.IsObjectType) then
+        local ok, isRegion = pcall(ns.IsObjectType, ns, "Region")
+        if (ok and isRegion and ns.Hide) then
+            pcall(ns.Hide, ns)
+        end
+    end
+end
+
 if (SharedTooltip_SetBackdropStyle) then
     hooksecurefunc("SharedTooltip_SetBackdropStyle", function(self, style, embedded)
         if (self.style and self.NineSlice) then
-            self.NineSlice:Hide()
+            addon.SafeHideNineSlice(self)
         end
         if (self.style and self.SetBackdrop) then
             self:SetBackdrop(nil)
@@ -1212,7 +1243,7 @@ end
 if (GameTooltip_SetBackdropStyle) then
     hooksecurefunc("GameTooltip_SetBackdropStyle", function(self, style)
         if (self.style and self.NineSlice) then
-            self.NineSlice:Hide()
+            addon.SafeHideNineSlice(self)
         end
         if (self.style and self.SetBackdrop) then
             self:SetBackdrop(nil)
