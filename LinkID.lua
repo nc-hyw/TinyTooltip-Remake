@@ -1,6 +1,7 @@
 local LibEvent = LibStub:GetLibrary("LibEvent.7000")
 
 local addon = TinyTooltip
+local L = addon.L or {}
 
 local function ParseHyperLink(link)
     local name, value = string.match(link or "", "|?H(%a+):(%d+):")
@@ -23,8 +24,81 @@ local function ShowId(tooltip, name, value, noBlankLine)
     end
 end
 
+local function GetSpellIconId(spellId)
+    if (not spellId or not C_Spell or not C_Spell.GetSpellTexture) then return end
+    local icon = C_Spell.GetSpellTexture(spellId)
+    if (type(icon) == "number") then
+        return icon
+    end
+end
+
+local function GetItemIconId(linkOrId)
+    if (not linkOrId) then return end
+    local _, _, _, _, _, _, _, maxStack, _, icon = GetItemInfo(linkOrId)
+    if (type(icon) == "number") then
+        return icon
+    end
+end
+
+local function GetItemMaxStack(linkOrId)
+    if (not linkOrId) then return end
+    local _, _, _, _, _, _, _, maxStack = GetItemInfo(linkOrId)
+    if (type(maxStack) == "number" and maxStack > 0) then
+        return maxStack
+    end
+end
+
+local function ShowSpellInfo(tooltip, spellId)
+    if (not spellId) then return end
+    ShowId(tooltip, L["id.spell"] or "Spell ID", spellId)
+    local iconId = GetSpellIconId(spellId)
+    if (iconId) then
+        ShowId(tooltip, L["id.icon"] or "Icon ID", iconId, true)
+    end
+end
+
+local function ShowItemInfo(tooltip, linkOrId)
+    if (not linkOrId) then return end
+    local _, itemId = ParseHyperLink(linkOrId)
+    ShowId(tooltip, L["id.item"] or "Item ID", itemId)
+    local iconId = GetItemIconId(linkOrId)
+    if (iconId) then
+        ShowId(tooltip, L["id.icon"] or "Icon ID", iconId, true)
+    end
+    local maxStack = GetItemMaxStack(linkOrId)
+    if (maxStack) then
+        ShowId(tooltip, L["id.maxStack"] or "Max Stack Count", maxStack, true)
+    end
+end
+
 local function ShowLinkIdInfo(tooltip, link)
-    ShowId(tooltip, ParseHyperLink(link or select(2,tooltip:GetItem())))
+    ShowItemInfo(tooltip, link or select(2,tooltip:GetItem()))
+end
+
+local function GetSpellIdFromTooltip(tip)
+    if (not tip or not tip.GetSpell) then return end
+    local ok, _, spellId = pcall(tip.GetSpell, tip)
+    if (ok and type(spellId) == "number") then
+        return spellId
+    end
+end
+
+local function GetAuraSpellId(unit, index, filter)
+    if (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex) then
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
+        if (aura and aura.spellId) then
+            return aura.spellId
+        end
+    end
+end
+
+local function GetAuraSpellIdByInstance(unit, auraInstanceID)
+    if (C_UnitAuras and C_UnitAuras.GetAuraDataByAuraInstanceID) then
+        local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
+        if (aura and aura.spellId) then
+            return aura.spellId
+        end
+    end
 end
 
 
@@ -34,13 +108,45 @@ LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
 end)
 
 LibEvent:attachTrigger("tooltip:spell", function(self, tip)
-    ShowId(tip, "Spell", (select(2,tip:GetSpell())))
+    ShowSpellInfo(tip, GetSpellIdFromTooltip(tip))
 end)
 
 LibEvent:attachTrigger("tooltip:aura", function(self, tip, args)
-    if (args and args[2] and args[2].intVal) then
-        ShowId(tip, "Spell", args[2].intVal)
+    local spellId = (args and args[2] and args[2].intVal) or GetSpellIdFromTooltip(tip)
+    ShowSpellInfo(tip, spellId)
+end)
+
+local function HookAuraSetter(fnName, resolver)
+    if (GameTooltip and GameTooltip[fnName]) then
+        hooksecurefunc(GameTooltip, fnName, function(tip, ...)
+            local spellId = resolver(...)
+            ShowSpellInfo(tip, spellId)
+        end)
     end
+end
+
+HookAuraSetter("SetUnitAura", function(unit, index, filter)
+    return GetAuraSpellId(unit, index, filter)
+end)
+
+HookAuraSetter("SetUnitBuff", function(unit, index, filter)
+    return GetAuraSpellId(unit, index, filter)
+end)
+
+HookAuraSetter("SetUnitDebuff", function(unit, index, filter)
+    return GetAuraSpellId(unit, index, filter)
+end)
+
+HookAuraSetter("SetUnitAuraByAuraInstanceID", function(unit, auraInstanceID)
+    return GetAuraSpellIdByInstance(unit, auraInstanceID)
+end)
+
+HookAuraSetter("SetUnitBuffByAuraInstanceID", function(unit, auraInstanceID)
+    return GetAuraSpellIdByInstance(unit, auraInstanceID)
+end)
+
+HookAuraSetter("SetUnitDebuffByAuraInstanceID", function(unit, auraInstanceID)
+    return GetAuraSpellIdByInstance(unit, auraInstanceID)
 end)
 
 -- Quest
