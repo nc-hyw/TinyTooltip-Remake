@@ -28,6 +28,10 @@ local function SpellIcon(tip)
             local okFind, found = pcall(strfind, text, "^|T")
             if (okFind and not found) then
                 addon:GetLine(tip,1):SetFormattedText("|T%s:16:16:0:0:32:32:2:30:2:30|t %s", texture, text)
+                tip:Show()
+                if (addon.AutoSetTooltipWidth) then
+                    addon:AutoSetTooltipWidth(tip)
+                end
             end
         end
     end
