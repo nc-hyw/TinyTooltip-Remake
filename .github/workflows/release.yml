@@ -36,3 +36,4 @@ jobs:
         with:
           files: dist/TinyTooltip-Remake-v*.zip
           body_path: CHANGELOG.md
+          prerelease: ${{ contains(github.ref_name, 'alpha') }}
