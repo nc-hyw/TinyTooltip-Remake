@@ -9,6 +9,16 @@ When anchor point selected to bottom and set to anchor to mouse, custom is not a
 it will causing jittering due to anchor competition with blizzard UI system
 
 I will try to rebuilt this addon entireley if I have the time and after the game become stable.  
+## [v1.2.0] - 2026-02-06
+New Feature:
+- Now id info also shows iconID and spellID, itemID has been localized in simplified Chinese
+- Buff now also shows spellID
+
+Fix: 
+- Fixed an issue where target line will be displayed on item/spell tooltip when overlay
+- Fixed an issue where text is not aligned in frame while descrption text and id was turned off but icon is turned on
+
+
 ## [v1.1.3] - 2026-02-01
 Fix:
 - Fix an issue where displayed line over 4 rows will cause misallginment
