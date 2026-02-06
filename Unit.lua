@@ -320,7 +320,7 @@ local function RemoveFactionLinesPost(tip)
         local stripped = SafeStripText(text)
         if (stripped and (stripped == FACTION_ALLIANCE or stripped == FACTION_HORDE)) then
             line:SetText("")
-            line:Hide() -- somehow not working but I will keep it in  here
+            --line:Hide() -- somehow not working but I will keep it in  here
         end
     end
 end
@@ -354,7 +354,7 @@ local function RemoveRightClickHint(tt)
                 if (ok and type(stripped) == "string") then
                     if (UNIT_POPUP_RIGHT_CLICK and stripped == UNIT_POPUP_RIGHT_CLICK) then
                         line:SetText("")
-                        line:Hide()
+                        --line:Hide()
                         removed = true
                     end
                 end
@@ -391,7 +391,6 @@ if (GameTooltip_AddInstructionLine) then
         if (not removed) then
             removed = RemoveRightClickHint(tt)
         end
-        -- debug output removed
     end)
 end
 

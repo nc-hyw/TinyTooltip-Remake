@@ -60,6 +60,10 @@ local T = {
     ["hint.anchor.returnOnUnitFrame"] = "Tooltips from unit frames are fixed at the default position.",
     ["anchor.offset.locked"]      = "Offset is disabled when anchor point is Bottom.",
     ["anchor.none"]             = "None",
+    ["id.item"]                 = "Item ID",
+    ["id.spell"]                = "Spell ID",
+    ["id.icon"]                 = "Icon ID",
+    ["id.maxStack"]             = "Max Stack Count",
 }   
 for k, v in pairs(T) do
     L[k] = v

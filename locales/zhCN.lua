@@ -190,6 +190,10 @@ local T = {
     ["hint.anchor.returnOnUnitFrame"]       = "单位框体获取的鼠标提示将被固定在默认位置",
     ["anchor.offset.locked"]                = "锚定位置为下方时无法调节偏移量",
     ["anchor.none"]                         = "无",
+    ["id.item"]                             = "物品ID",
+    ["id.spell"]                            = "法术ID",
+    ["id.icon"]                             = "图标ID",
+    ["id.maxStack"]                         = "最大堆叠数",
 }
 for k, v in pairs(T) do
     L[k] = v
