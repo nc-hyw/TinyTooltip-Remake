@@ -153,6 +153,7 @@ local function UpdateTargetLine(tip, targetUnit)
 end
 
 LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
+    tip.ttIsUnit = true
     local player, npc = GetUnitSettings()
     if (not player or not npc) then return end
     if SafeIsUnit(unit, "player") then
@@ -185,9 +186,18 @@ LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
     end
 end)
 
+LibEvent:attachTrigger("tooltip:item, tooltip:spell", function(self, tip)
+    tip.ttIsUnit = false
+    if (tip.ttTargetLine) then
+        tip.ttTargetLine:SetText(nil)
+        tip.ttTargetLine = nil
+    end
+end)
+
 LibEvent:attachTrigger("tooltip:cleared, tooltip:hide", function(self, tip)
     if (tip) then
         tip.ttTargetLine = nil
+        tip.ttIsUnit = nil
     end
 end)
 
@@ -199,6 +209,7 @@ GameTooltip:HookScript("OnUpdate", function(self, elapsed)
         if (owner and (owner.unit or (owner.GetAttribute and owner:GetAttribute("unit")))) then
             return
         end
+        if (not self.ttIsUnit) then return end
         if (not SafeBool(UnitExists, "mouseover")) then return end
         local isPlayer = SafeBool(UnitIsPlayer, "mouseover")
         local player, npc = GetUnitSettings()

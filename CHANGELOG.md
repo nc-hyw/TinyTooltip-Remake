@@ -9,6 +9,9 @@ When anchor point selected to bottom and set to anchor to mouse, custom is not a
 it will causing jittering due to anchor competition with blizzard UI system
 
 I will try to rebuilt this addon entireley if I have the time and after the game become stable.  
+## [v1.1.3] - 2026-02-01
+Fix:
+- Fix an issue where displayed line over 4 rows will cause misallginment
 
 ## [v1.1.2] - 2026-02-01
 New Feature:
