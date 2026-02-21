@@ -782,6 +782,34 @@ local function SafeSetOwner(frame, parent, anchor, ...)
     return ok
 end
 
+local function IsWorldMapOwner(owner)
+    local current = owner
+    for _ = 1, 8 do
+        if (not current) then break end
+        if (WorldMapFrame and current == WorldMapFrame) then
+            return true
+        end
+        if (current.GetName) then
+            local okName, name = pcall(current.GetName, current)
+            if (okName and type(name) == "string") then
+                if (name:find("WorldMap")
+                    or name:find("QuestMap")
+                    or name:find("MapCanvas")
+                    or name:find("POI")) then
+                    return true
+                end
+            end
+        end
+        if (not current.GetParent) then break end
+        local okParent, parent = pcall(current.GetParent, current)
+        if (not okParent) then break end
+        current = parent
+    end
+    return false
+end
+
+addon.IsWorldMapOwner = IsWorldMapOwner
+
 LibEvent:attachTrigger("tooltip.anchor.cursor", function(self, frame, parent)
     SafeSetOwner(frame, parent, "ANCHOR_CURSOR")
 end)
@@ -803,100 +831,183 @@ LibEvent:attachTrigger("tooltip.anchor.none", function(self, frame, parent)
     frame:Hide()
 end)
 
--- 安全设置 backdrop，避免在 frame 尺寸为受保护值时出错
-local function SafeSetBackdrop(frame, backdrop)
-    if (not frame or not backdrop) then return false end
-    local ok, width = pcall(function() return frame:GetWidth() end)
-    if (ok and type(width) == "number" and width > 0) then
-        frame:SetBackdrop(backdrop)
-        frame.pendingBackdrop = nil
-        return true
+local DEFAULT_TOOLTIP_BACKDROP = {
+    bgFile   = "Interface\\RaidFrame\\UI-RaidFrame-GroupBg",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 14,
+    insets   = {left = 3, right = 3, top = 3, bottom = 3},
+}
+
+local function EnsureNativeStyleData(tip)
+    if (not tip) then return end
+    if (not tip._tinyBackdrop) then
+        tip._tinyBackdrop = CopyTable(DEFAULT_TOOLTIP_BACKDROP)
     end
-    -- 如果 frame 还没有有效尺寸，保存配置延迟设置
-    frame.pendingBackdrop = backdrop
-    return false
+    if (not tip._tinyBackdropColor) then
+        tip._tinyBackdropColor = {0, 0, 0, 0.9}
+    end
+    if (not tip._tinyBackdropBorderColor) then
+        tip._tinyBackdropBorderColor = {0.6, 0.6, 0.6, 0.8}
+    end
+    if (not tip._tinyBorderCorner) then
+        tip._tinyBorderCorner = "default"
+    end
+    if (not tip._tinyBorderSize) then
+        tip._tinyBorderSize = 1
+    end
 end
 
--- 解析 style 的 backdrop（GetBackdrop 可能为 nil，如 SafeSetBackdrop 未成功时）
-local function GetStyleBackdrop(style)
-    if (not style) then return nil end
-    local b = style:GetBackdrop()
-    if (b) then return b end
-    return style.pendingBackdrop
+local function GetStyleBackdrop(tip)
+    EnsureNativeStyleData(tip)
+    return tip and tip._tinyBackdrop
 end
 
-LibEvent:attachTrigger("tooltip.style.mask", function(self, frame, boolean)
-    LibEvent:trigger("tooltip.style.init", frame)
-    frame.style.mask:SetShown(boolean)
-end)
-
-LibEvent:attachTrigger("tooltip.style.background", function(self, frame, r, g, b, a)
-    LibEvent:trigger("tooltip.style.init", frame)
-    local rr, gg, bb, aa = frame.style:GetBackdropColor()
-    if (rr ~= r or gg ~= g or bb ~= b or aa ~= a) then
-        if (frame.SetBackdrop) then frame:SetBackdrop(nil) end
-        frame.style:SetBackdropColor(r or rr, g or gg, b or bb, tonumber(a or aa or 0.9))
+local function GetStyleBackdropColor(tip)
+    EnsureNativeStyleData(tip)
+    if (tip and tip._tinyBackdropColor) then
+        return unpack(tip._tinyBackdropColor)
     end
-end)
+    return 0, 0, 0, 0.9
+end
 
-LibEvent:attachTrigger("tooltip.style.bgfile", function(self, frame, bgvalue)
-    LibEvent:trigger("tooltip.style.init", frame)
-    local backdrop = GetStyleBackdrop(frame.style)
-    if (not backdrop) then return end
-    local bgfile = addon:GetBgFile(bgvalue)
-    local r, g, b, a = frame.style:GetBackdropColor()
-    local rr, gg, bb, aa = frame.style:GetBackdropBorderColor()
-    if (backdrop.bgFile ~= bgfile) then
-        backdrop.bgFile = bgfile
-        SafeSetBackdrop(frame.style, backdrop)
-        frame.style:SetBackdropColor(r, g, b, tonumber(a))
-        frame.style:SetBackdropBorderColor(rr, gg, bb, aa)
+local function GetStyleBackdropBorderColor(tip)
+    EnsureNativeStyleData(tip)
+    if (tip and tip._tinyBackdropBorderColor) then
+        return unpack(tip._tinyBackdropBorderColor)
     end
-end)
+    return 0.6, 0.6, 0.6, 0.8
+end
 
-LibEvent:attachTrigger("tooltip.style.border.size", function(self, frame, size)
-    LibEvent:trigger("tooltip.style.init", frame)
-    local backdrop = GetStyleBackdrop(frame.style)
+local NINE_SLICE_BORDER_PARTS = {
+    "TopLeftCorner",
+    "TopRightCorner",
+    "BottomLeftCorner",
+    "BottomRightCorner",
+    "TopEdge",
+    "BottomEdge",
+    "LeftEdge",
+    "RightEdge",
+}
+
+local function TintNineSliceBorder(tip, r, g, b, a)
+    local ns = tip and tip.NineSlice
+    if (not ns) then return end
+    if (ns.SetBorderColor) then
+        pcall(ns.SetBorderColor, ns, r, g, b, a)
+    end
+    for _, regionName in ipairs(NINE_SLICE_BORDER_PARTS) do
+        local region = ns[regionName]
+        if (region and region.SetVertexColor) then
+            pcall(region.SetVertexColor, region, r, g, b, a)
+        end
+    end
+end
+
+local function TintNineSliceBackground(tip)
+    local ns = tip and tip.NineSlice
+    if (not ns) then return end
+
+    local backdrop = GetStyleBackdrop(tip)
+    local bgFile = backdrop and backdrop.bgFile
+    local r, g, b, a = GetStyleBackdropColor(tip)
+
+    if (ns.SetCenterColor) then
+        pcall(ns.SetCenterColor, ns, r, g, b, a)
+    end
+
+    local center = ns.Center
+    if (not center) then return end
+    if (center.SetTexture) then
+        pcall(center.SetTexture, center, bgFile)
+    end
+    if (center.SetTexCoord) then
+        pcall(center.SetTexCoord, center, 0, 1, 0, 1)
+    end
+    if (center.SetVertexColor) then
+        pcall(center.SetVertexColor, center, r, g, b, a)
+    end
+end
+
+local function SetStyleBackdropColor(tip, r, g, b, a)
+    if (not tip) then return end
+    EnsureNativeStyleData(tip)
+    tip._tinyBackdropColor = {tonumber(r) or 0, tonumber(g) or 0, tonumber(b) or 0, tonumber(a) or 0.9}
+    if (tip.SetBackdropColor) then
+        pcall(tip.SetBackdropColor, tip, tip._tinyBackdropColor[1], tip._tinyBackdropColor[2], tip._tinyBackdropColor[3], tip._tinyBackdropColor[4])
+    end
+    TintNineSliceBackground(tip)
+end
+
+local function SetStyleBackdropBorderColor(tip, r, g, b, a)
+    if (not tip) then return end
+    EnsureNativeStyleData(tip)
+    tip._tinyBackdropBorderColor = {tonumber(r) or 0.6, tonumber(g) or 0.6, tonumber(b) or 0.6, tonumber(a) or 0.8}
+    if (tip.SetBackdropBorderColor) then
+        pcall(tip.SetBackdropBorderColor, tip, tip._tinyBackdropBorderColor[1], tip._tinyBackdropBorderColor[2], tip._tinyBackdropBorderColor[3], tip._tinyBackdropBorderColor[4])
+    end
+    TintNineSliceBorder(tip, tip._tinyBackdropBorderColor[1], tip._tinyBackdropBorderColor[2], tip._tinyBackdropBorderColor[3], tip._tinyBackdropBorderColor[4])
+end
+
+local function EnsureStyleMask(tip)
+    if (not tip) then return end
+    if (tip._tinyMask) then return tip._tinyMask end
+    local mask = tip:CreateTexture(nil, "OVERLAY")
+    mask:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
+    mask:SetPoint("TOPLEFT", 3, -3)
+    mask:SetPoint("BOTTOMRIGHT", tip, "TOPRIGHT", -3, -32)
+    mask:SetBlendMode("ADD")
+    mask:SetGradient("VERTICAL", CreateColor(0,0,0,0), CreateColor(0.9,0.9,0.9,0.4))
+    mask:Hide()
+    tip._tinyMask = mask
+    return mask
+end
+
+local function ApplyNativeBackdrop(tip)
+    if (not tip) then return false end
+    EnsureNativeStyleData(tip)
+    if (tip.SetBackdrop and tip._tinyBackdrop) then
+        pcall(tip.SetBackdrop, tip, tip._tinyBackdrop)
+    end
+    local r, g, b, a = GetStyleBackdropColor(tip)
+    local rr, gg, bb, aa = GetStyleBackdropBorderColor(tip)
+    SetStyleBackdropColor(tip, r, g, b, a)
+    SetStyleBackdropBorderColor(tip, rr, gg, bb, aa)
+    TintNineSliceBackground(tip)
+    return true
+end
+
+local function ApplyBorderCorner(tip, corner)
+    EnsureNativeStyleData(tip)
+    local backdrop = GetStyleBackdrop(tip)
     if (not backdrop) then return end
-    local r, g, b, a = frame.style:GetBackdropColor()
-    if (backdrop.edgeFile == "Interface\\Buttons\\WHITE8X8") then
+    tip._tinyBorderCorner = corner or "default"
+    if (tip._tinyBorderCorner == "angular") then
+        local size = tonumber(tip._tinyBorderSize) or 1
+        backdrop.edgeFile = "Interface\\Buttons\\WHITE8X8"
         backdrop.edgeSize = size
         backdrop.insets.top = size
         backdrop.insets.left = size
         backdrop.insets.right = size
         backdrop.insets.bottom = size
-        SafeSetBackdrop(frame.style, backdrop)
-        frame.style:SetBackdropColor(r, g, b, tonumber(a))
-        frame.style.inside:SetPoint("TOPLEFT", frame.style, "TOPLEFT", size, -size)
-        frame.style.inside:SetPoint("BOTTOMRIGHT", frame.style, "BOTTOMRIGHT", -size, size)
-    end
-end)
-
-LibEvent:attachTrigger("tooltip.style.border.corner", function(self, frame, corner)
-    LibEvent:trigger("tooltip.style.init", frame)
-    local backdrop = GetStyleBackdrop(frame.style)
-    if (not backdrop) then return end
-    local r, g, b, a = frame.style:GetBackdropColor()
-    if (corner == "angular") then
-        backdrop.edgeFile = "Interface\\Buttons\\WHITE8X8"
-        backdrop.edgeSize = min(backdrop.edgeSize, 6)
-        frame.style.mask:SetPoint("TOPLEFT", 1, -1)
-        frame.style.mask:SetPoint("BOTTOMRIGHT", frame.style, "TOPRIGHT", -1, -32)
-        frame.style.outside:Show()
-        frame.style.inside:Show()
-        frame.style.inside:SetPoint("TOPLEFT", frame.style, "TOPLEFT", backdrop.edgeSize, -backdrop.edgeSize)
-        frame.style.inside:SetPoint("BOTTOMRIGHT", frame.style, "BOTTOMRIGHT", -backdrop.edgeSize, backdrop.edgeSize)
-    elseif (LibMedia and LibMedia:IsValid("border", corner)) then
-        backdrop.edgeFile = LibMedia:Fetch("border", corner)
+        local mask = EnsureStyleMask(tip)
+        if (mask) then
+            mask:ClearAllPoints()
+            mask:SetPoint("TOPLEFT", 1, -1)
+            mask:SetPoint("BOTTOMRIGHT", tip, "TOPRIGHT", -1, -32)
+        end
+    elseif (LibMedia and LibMedia:IsValid("border", tip._tinyBorderCorner)) then
+        backdrop.edgeFile = LibMedia:Fetch("border", tip._tinyBorderCorner)
         backdrop.edgeSize = 14
         backdrop.insets.top = 3
         backdrop.insets.left = 3
         backdrop.insets.right = 3
         backdrop.insets.bottom = 3
-        frame.style.mask:SetPoint("TOPLEFT", 3, -3)
-        frame.style.mask:SetPoint("BOTTOMRIGHT", frame.style, "TOPRIGHT", -3, -32)
-        frame.style.inside:Hide()
-        frame.style.outside:Hide()
+        local mask = EnsureStyleMask(tip)
+        if (mask) then
+            mask:ClearAllPoints()
+            mask:SetPoint("TOPLEFT", 3, -3)
+            mask:SetPoint("BOTTOMRIGHT", tip, "TOPRIGHT", -3, -32)
+        end
     else
         backdrop.edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border"
         backdrop.edgeSize = 14
@@ -904,22 +1015,71 @@ LibEvent:attachTrigger("tooltip.style.border.corner", function(self, frame, corn
         backdrop.insets.left = 3
         backdrop.insets.right = 3
         backdrop.insets.bottom = 3
-        frame.style.mask:SetPoint("TOPLEFT", 3, -3)
-        frame.style.mask:SetPoint("BOTTOMRIGHT", frame.style, "TOPRIGHT", -3, -32)
-        frame.style.inside:Hide()
-        frame.style.outside:Hide()
+        local mask = EnsureStyleMask(tip)
+        if (mask) then
+            mask:ClearAllPoints()
+            mask:SetPoint("TOPLEFT", 3, -3)
+            mask:SetPoint("BOTTOMRIGHT", tip, "TOPRIGHT", -3, -32)
+        end
     end
-    SafeSetBackdrop(frame.style, backdrop)
-    frame.style:SetBackdropColor(r, g, b, a)
+end
+
+local function SafeClearStyleBackdrop(tip)
+    -- Native mode: keep backdrop on the tooltip itself; no extra style layer to clear.
+end
+
+addon.SafeClearStyleBackdrop = SafeClearStyleBackdrop
+
+LibEvent:attachTrigger("tooltip.style.mask", function(self, frame, boolean)
+    LibEvent:trigger("tooltip.style.init", frame)
+    local mask = EnsureStyleMask(frame)
+    if (mask) then
+        mask:SetShown(boolean)
+    end
+end)
+
+LibEvent:attachTrigger("tooltip.style.background", function(self, frame, r, g, b, a)
+    LibEvent:trigger("tooltip.style.init", frame)
+    local rr, gg, bb, aa = GetStyleBackdropColor(frame)
+    if (rr ~= r or gg ~= g or bb ~= b or aa ~= a) then
+        SetStyleBackdropColor(frame, r or rr, g or gg, b or bb, tonumber(a or aa or 0.9))
+    end
+    ApplyNativeBackdrop(frame)
+end)
+
+LibEvent:attachTrigger("tooltip.style.bgfile", function(self, frame, bgvalue)
+    LibEvent:trigger("tooltip.style.init", frame)
+    local backdrop = GetStyleBackdrop(frame)
+    if (not backdrop) then return end
+    local bgfile = addon:GetBgFile(bgvalue)
+    if (backdrop.bgFile ~= bgfile) then
+        backdrop.bgFile = bgfile
+    end
+    ApplyNativeBackdrop(frame)
+end)
+
+LibEvent:attachTrigger("tooltip.style.border.size", function(self, frame, size)
+    LibEvent:trigger("tooltip.style.init", frame)
+    frame._tinyBorderSize = tonumber(size) or frame._tinyBorderSize or 1
+    if (frame._tinyBorderCorner == "angular") then
+        ApplyBorderCorner(frame, frame._tinyBorderCorner)
+        ApplyNativeBackdrop(frame)
+    end
+end)
+
+LibEvent:attachTrigger("tooltip.style.border.corner", function(self, frame, corner)
+    LibEvent:trigger("tooltip.style.init", frame)
+    ApplyBorderCorner(frame, corner)
+    ApplyNativeBackdrop(frame)
 end)
 
 LibEvent:attachTrigger("tooltip.style.border.color", function(self, frame, r, g, b, a)
     LibEvent:trigger("tooltip.style.init", frame)
-    local rr, gg, bb, aa = frame.style:GetBackdropBorderColor()
+    local rr, gg, bb, aa = GetStyleBackdropBorderColor(frame)
     if (rr ~= r or gg ~= g or bb ~= b or aa ~= a) then
-        if (frame.SetBackdrop) then frame:SetBackdrop(nil) end
-        frame.style:SetBackdropBorderColor(r or rr, g or gg, b or bb, a or aa)
+        SetStyleBackdropBorderColor(frame, r or rr, g or gg, b or bb, a or aa)
     end
+    ApplyNativeBackdrop(frame)
 end)
 
 local defaultHeaderFont, defaultHeaderSize, defaultHeaderFlag = GameTooltipHeaderText:GetFont()
@@ -1010,99 +1170,47 @@ end)
 
 LibEvent:attachTrigger("tooltip.statusbar.position", function(self, position, offsetX, offsetY)
     LibEvent:trigger("tooltip.style.init", GameTooltip)
-    local backdrop = GetStyleBackdrop(GameTooltip.style)
-    if (not backdrop) then return end
-    GameTooltip.style:ClearAllPoints()
+    local backdrop = GetStyleBackdrop(GameTooltip) or DEFAULT_TOOLTIP_BACKDROP
     GameTooltipStatusBar:ClearAllPoints()
     if (not GameTooltipStatusBar:IsShown()) then position = "" end
     if (position == "bottom") then
-        local offset = backdrop.edgeFile == "Interface\\Tooltips\\UI-Tooltip-Border" and 5 or backdrop.edgeSize + 1
+        local edgeSize = tonumber(backdrop.edgeSize) or 14
+        local offset = backdrop.edgeFile == "Interface\\Tooltips\\UI-Tooltip-Border" and 5 or edgeSize + 1
         if (not offsetX or offsetX == 0) then offsetX = offset end
         if (not offsetY or offsetY == 0) then offsetY = -offset end
         GameTooltipStatusBar:SetPoint("TOPLEFT", GameTooltip, "BOTTOMLEFT", offsetX, 2)
         GameTooltipStatusBar:SetPoint("TOPRIGHT", GameTooltip, "BOTTOMRIGHT", -offsetX, 2)
-        GameTooltip.style:SetPoint("TOPLEFT")
-        GameTooltip.style:SetPoint("BOTTOMRIGHT", GameTooltipStatusBar, "BOTTOMRIGHT", offsetX, offsetY)
     elseif (position == "top") then
-        local offset = backdrop.edgeFile == "Interface\\Tooltips\\UI-Tooltip-Border" and 4 or backdrop.edgeSize
+        local edgeSize = tonumber(backdrop.edgeSize) or 14
+        local offset = backdrop.edgeFile == "Interface\\Tooltips\\UI-Tooltip-Border" and 4 or edgeSize
         if (not offsetX or offsetX == 0) then offsetX = offset end
         if (not offsetY or offsetY == 0) then offsetY = offset end
         GameTooltipStatusBar:SetPoint("BOTTOMLEFT", GameTooltip, "TOPLEFT", offsetX, -4)
         GameTooltipStatusBar:SetPoint("BOTTOMRIGHT", GameTooltip, "TOPRIGHT", -offsetX, -4)
-        GameTooltip.style:SetPoint("TOPLEFT", GameTooltipStatusBar, "TOPLEFT", -offsetX, offsetY)
-        GameTooltip.style:SetPoint("BOTTOMRIGHT")
     else
         local offset = backdrop.edgeFile == "Interface\\Tooltips\\UI-Tooltip-Border" and 2 or 0
         GameTooltipStatusBar:SetPoint("TOPLEFT", GameTooltip, "BOTTOMLEFT", offset, -1)
         GameTooltipStatusBar:SetPoint("TOPRIGHT", GameTooltip, "BOTTOMRIGHT", -offset, -1)
-        GameTooltip.style:SetAllPoints()
     end
 end)
 
 LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
-    if (not tip or tip.style) then return end
-    local backdrop = {
-        bgFile   = "Interface\\RaidFrame\\UI-RaidFrame-GroupBg",
-        insets   = {left = 3, right = 3, top = 3, bottom = 3},
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 14,
-    }
-    if (tip.SetBackdrop) then
-        tip:SetBackdrop(nil)
-    end
-    if (tip.NineSlice) then
-        addon.SafeHideNineSlice(tip)
-    end
-    tip.style = CreateFrame("Frame", nil, tip, BackdropTemplateMixin and "BackdropTemplate" or nil)
-    tip.style:SetFrameLevel(tip:GetFrameLevel())
-    tip.style:SetAllPoints()
-    -- 安全设置 backdrop：如果 frame 还没有有效尺寸，延迟到 OnShow 时设置
-    SafeSetBackdrop(tip.style, backdrop)
-    tip.style:SetBackdropColor(0, 0, 0, 0.9)
-    tip.style:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.8)
-    tip.style.inside = CreateFrame("Frame", nil, tip.style, BackdropTemplateMixin and "BackdropTemplate" or nil)
-    tip.style.inside:SetBackdrop({edgeSize=1,edgeFile="Interface\\Buttons\\WHITE8X8"})
-    tip.style.inside:SetPoint("TOPLEFT", tip.style, "TOPLEFT", 1, -1)
-    tip.style.inside:SetPoint("BOTTOMRIGHT", tip.style, "BOTTOMRIGHT", -1, 1)
-    tip.style.inside:SetBackdropBorderColor(0.1, 0.1, 0.1, 0.8)
-    tip.style.inside:Hide()
-    tip.style.outside = CreateFrame("Frame", nil, tip.style, BackdropTemplateMixin and "BackdropTemplate" or nil)
-    tip.style.outside:SetBackdrop({edgeSize=1,edgeFile="Interface\\Buttons\\WHITE8X8"})
-    tip.style.outside:SetPoint("TOPLEFT", tip.style, "TOPLEFT", -1, 1)
-    tip.style.outside:SetPoint("BOTTOMRIGHT", tip.style, "BOTTOMRIGHT", 1, -1)
-    tip.style.outside:SetBackdropBorderColor(0, 0, 0, 0.5)
-    tip.style.outside:Hide()
-    tip.style.mask = tip.style:CreateTexture(nil, "OVERLAY")
-    tip.style.mask:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
-    tip.style.mask:SetPoint("TOPLEFT", 3, -3)
-    tip.style.mask:SetPoint("BOTTOMRIGHT", tip.style, "TOPRIGHT", -3, -32)
-    tip.style.mask:SetBlendMode("ADD")
-    tip.style.mask:SetGradient("VERTICAL", CreateColor(0,0,0,0), CreateColor(0.9,0.9,0.9,0.4))
-    tip.style.mask:Hide()
-    
+    if (not tip or tip._tinyNativeStyle) then return end
+    EnsureNativeStyleData(tip)
+    tip._tinyNativeStyle = true
+    EnsureStyleMask(tip)
+    ApplyBorderCorner(tip, tip._tinyBorderCorner)
+    ApplyNativeBackdrop(tip)
+
     tip.TinyHookScript = addon.TinyHookScript
     tip:HookScript("OnShow", function(self)
-        -- 确保 style frame 有有效尺寸后再设置 backdrop
-        if (self.style and self.style.pendingBackdrop) then
-            if (SafeSetBackdrop(self.style, self.style.pendingBackdrop)) then
-                -- 设置 backdrop 后重新应用颜色
-                self.style:SetBackdropColor(0, 0, 0, 0.9)
-                self.style:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.8)
-            else
-                -- 如果仍然无法设置，延迟一段时间后再尝试
-                C_Timer.After(0.01, function()
-                    if (self.style and self.style.pendingBackdrop) then
-                        if (SafeSetBackdrop(self.style, self.style.pendingBackdrop)) then
-                            self.style:SetBackdropColor(0, 0, 0, 0.9)
-                            self.style:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.8)
-                        end
-                    end
-                end)
-            end
-        end
+        self._tinyLastOwner = self.GetOwner and self:GetOwner()
+        ApplyNativeBackdrop(self)
         LibEvent:trigger("tooltip:show", self)
     end)
-    tip:HookScript("OnHide", function(self) LibEvent:trigger("tooltip:hide", self) end)
+    tip:HookScript("OnHide", function(self)
+        LibEvent:trigger("tooltip:hide", self)
+    end)
 
     -- for 10.0
     if (tip.ProcessInfo) then
@@ -1187,9 +1295,6 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     )
 
     if (tip == GameTooltip or tip.identity == "diy") then
-        tip.GetBackdrop = function(self) return self.style:GetBackdrop() end
-        tip.GetBackdropColor = function(self) return self.style:GetBackdropColor() end
-        tip.GetBackdropBorderColor = function(self) return self.style:GetBackdropBorderColor() end
         if (not tip.BigFactionIcon) then
             tip.BigFactionIcon = tip:CreateTexture(nil, "OVERLAY")
             tip.BigFactionIcon:SetPoint("TOPRIGHT", tip, "TOPRIGHT", 18, 0)
@@ -1214,39 +1319,18 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     addon.tooltips[#addon.tooltips+1] = tip
 end)
 
-local function SafeHideNineSlice(tip)
-    if (not tip or not tip.NineSlice) then return end
-    local ns = tip.NineSlice
-    if (type(ns) == "table" and ns.Hide) then
-        pcall(ns.Hide, ns)
-        return
-    end
-    if (type(ns) == "userdata" and ns.IsObjectType) then
-        local ok, isRegion = pcall(ns.IsObjectType, ns, "Region")
-        if (ok and isRegion and ns.Hide) then
-            pcall(ns.Hide, ns)
-        end
-    end
-end
-
 if (SharedTooltip_SetBackdropStyle) then
     hooksecurefunc("SharedTooltip_SetBackdropStyle", function(self, style, embedded)
-        if (self.style and self.NineSlice) then
-            addon.SafeHideNineSlice(self)
-        end
-        if (self.style and self.SetBackdrop) then
-            self:SetBackdrop(nil)
+        if (self and self._tinyNativeStyle) then
+            ApplyNativeBackdrop(self)
         end
     end)
 end
 
 if (GameTooltip_SetBackdropStyle) then
     hooksecurefunc("GameTooltip_SetBackdropStyle", function(self, style)
-        if (self.style and self.NineSlice) then
-            addon.SafeHideNineSlice(self)
-        end
-        if (self.style and self.SetBackdrop) then
-            self:SetBackdrop(nil)
+        if (self and self._tinyNativeStyle) then
+            ApplyNativeBackdrop(self)
         end
     end)
 end

@@ -140,12 +140,15 @@ LibEvent:attachEvent("VARIABLES_LOADED", function()
     Tooltip_Small:SetShadowColor(0, 0, 0, 0.9)
 end)
 
-LibEvent:attachTrigger("tooltip:cleared, tooltip:hide", function(self, tip)
+LibEvent:attachTrigger("tooltip:hide", function(self, tip)
+    local owner = (tip and tip.GetOwner and tip:GetOwner()) or (tip and tip._tinyLastOwner)
+    if (tip == GameTooltip and addon.IsWorldMapOwner and addon.IsWorldMapOwner(owner)) then
+        if (tip.BigFactionIcon) then tip.BigFactionIcon:Hide() end
+        return
+    end
     LibEvent:trigger("tooltip.style.border.color", tip, unpack(addon.db.general.borderColor))
     LibEvent:trigger("tooltip.style.background", tip, unpack(addon.db.general.background))
     if (tip.BigFactionIcon) then tip.BigFactionIcon:Hide() end
-    if (tip.SetBackdrop) then tip:SetBackdrop(nil) end
-    if (tip.NineSlice and addon.SafeHideNineSlice) then addon.SafeHideNineSlice(tip) end
 end)
 
 LibEvent:attachTrigger("tooltip:show", function(self, tip)
