@@ -38,6 +38,13 @@ local function SpellIcon(tip)
 end
 
 LibEvent:attachTrigger("tooltip:spell", function(self, tip)
+    if (addon.db and addon.db.general) then
+        LibEvent:trigger("tooltip.style.bgfile", tip, addon.db.general.bgfile)
+        LibEvent:trigger("tooltip.style.border.corner", tip, addon.db.general.borderCorner)
+        if (addon.db.general.borderCorner == "angular") then
+            LibEvent:trigger("tooltip.style.border.size", tip, addon.db.general.borderSize)
+        end
+    end
     SpellIcon(tip)
     ColorBorder(tip)
     ColorBackground(tip)

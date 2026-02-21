@@ -43,7 +43,7 @@ local frames = {
 LibEvent:attachTrigger("tooltip:variables:loaded", function()
     if (addon.db.general.skinMoreFrames) then
         for _, v in pairs(frames) do
-            if (v and not v.style) then tinsert(addon.tooltips, v) end
+            if (v and not v._tinyNativeStyle) then tinsert(addon.tooltips, v) end
         end
     end
 end)

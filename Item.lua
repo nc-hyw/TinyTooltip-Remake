@@ -43,6 +43,16 @@ local function ItemStackCount(tip, itemInfo)
 end
 
 LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
+    if (addon.db and addon.db.general) then
+        LibEvent:trigger("tooltip.style.bgfile", tip, addon.db.general.bgfile)
+        if (addon.db.general.background) then
+            LibEvent:trigger("tooltip.style.background", tip, unpack(addon.db.general.background))
+        end
+        LibEvent:trigger("tooltip.style.border.corner", tip, addon.db.general.borderCorner)
+        if (addon.db.general.borderCorner == "angular") then
+            LibEvent:trigger("tooltip.style.border.size", tip, addon.db.general.borderSize)
+        end
+    end
     local itemInfo = GetItemInfoFromLink(link)
     local quality = (itemInfo and itemInfo.itemQuality) or 0
     local r, g, b = GetItemQualityColor(quality)
