@@ -4,6 +4,11 @@
 -------------------------------------
 
 TinyTooltip = {}
+local addonFolderName = ...
+if (type(addonFolderName) ~= "string" or addonFolderName == "") then
+    addonFolderName = "TinyTooltip-Remake"
+end
+local addonTexturePath = ("Interface\\AddOns\\%s\\texture\\"):format(addonFolderName)
 
 local LibEvent = LibStub:GetLibrary("LibEvent.7000")
 local LibMedia = LibStub:GetLibrary("LibSharedMedia-3.0", true)
@@ -76,7 +81,7 @@ addon.icons = {
     battlepet  = "|TInterface\\Timer\\Panda-Logo:15|t",
     pettype    = "|TInterface\\TargetingFrame\\PetBadge-%s:14|t",
     questboss  = "|TInterface\\TargetingFrame\\PortraitQuestBadge:0|t",
-    friend     = "|TInterface\\AddOns\\TinyTooltip\\texture\\friend:14:14:0:0:32:32:1:30:2:30|t",
+    friend     = ("|T%sfriend.blp:14:14:0:0:32:32:1:30:2:30|t"):format(addonTexturePath),
     bnetfriend = "|TInterface\\ChatFrame\\UI-ChatIcon-BattleNet:14:14:0:0:32:32:1:30:2:30|t",
     TANK       = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:14:14:0:0:64:64:0:19:22:41|t",
     HEALER     = "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES:14:14:0:0:64:64:20:39:1:20|t",
@@ -313,21 +318,15 @@ function addon:GetBgFile(bgvalue)
     if (type(bgvalue) ~= "string" or bgvalue == "") then
         return
     end
-    local function NormalizeTexturePath(path)
-        if (type(path) ~= "string") then
-            return path
-        end
-        return (path:gsub("/", "\\"))
-    end
     if (self.bgs[bgvalue]) then
-        return NormalizeTexturePath(self.bgs[bgvalue])
+        return self.bgs[bgvalue]
     end
     -- Only resolve through LSM when the key is registered; otherwise
     -- keep custom/raw texture paths untouched.
     if (LibMedia and LibMedia:IsValid("background", bgvalue)) then
-        return NormalizeTexturePath(LibMedia:Fetch("background", bgvalue))
+        return LibMedia:Fetch("background", bgvalue)
     end
-    return NormalizeTexturePath(bgvalue)
+    return bgvalue
 end
 
 --Bar
