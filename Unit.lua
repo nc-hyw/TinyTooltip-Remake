@@ -212,7 +212,10 @@ local function ShowBigFactionIcon(tip, config, raw)
         tip.BigFactionIcon:Show()
         tip.BigFactionIcon:SetTexture("Interface\\Timer\\".. raw.factionGroup .."-Logo")
         tip:Show()
-        tip:SetMinimumWidth(tip:GetWidth() + 30)
+        local okWidth, width = pcall(tip.GetWidth, tip)
+        if (okWidth and type(width) == "number" and not (issecretvalue and issecretvalue(width))) then
+            tip:SetMinimumWidth(width + 30)
+        end
     end
 end
 
@@ -259,8 +262,11 @@ local function NonPlayerCharacter(tip, unit, config, raw)
             end
             if (i == 2) then
                 if (config.elements.npcTitle.enable and titleLine) then
-                    titleLine:SetText(addon:FormatData(titleLine:GetText(), config.elements.npcTitle, raw))
-                    increase = 1
+                    local npcTitleText = titleLine:GetText()
+                    if (npcTitleText and npcTitleText ~= "") then
+                        titleLine:SetText(addon:FormatData(npcTitleText, config.elements.npcTitle, raw))
+                        increase = 1
+                    end
                 end
                 i = i + increase
                 addon:GetLine(tip,i):SetText(SafeConcat(v, " "))
