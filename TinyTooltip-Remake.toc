@@ -2,13 +2,14 @@
 ## Title: TinyTooltip-Remake
 ## Notes: A powerful tooltip enhancement addon based on TinyTooltip.
 ## Author: 星野绫-罗宁 CN
-## Version: 1.2.0
+## Version: 1.2.1-alpha.1
 ## SavedVariables: TinyTooltipRemakeDB 
 ## SavedVariablesPerCharacter: TinyTooltipRemakeCharacterDB
 
 libs\lib.xml
 About.xml
 Core.lua
+DialogueUICompat.lua
 Config.lua
 General.lua
 Anchor.lua
