@@ -27,9 +27,13 @@ local T = {
     ["dropdown.not samecrossrealm"]  = "|cffff3333not|r sameCrossrealm",
     ["TargetBy"]                    = "Targeted By",
     ["showTargetBy"]                = "Show Targeted By",
+    ["unit.player.elements.itemLevelLabel"] = "ItemLevel Label",
+    ["unit.player.elements.itemLevel"] = "ItemLevel",
     ["unit.player.elements.mount"]  = "Mount",
+    ["ItemLevel"]                   = "ItemLevel",
     ["mount"]                       = "Mount",
     ["Mount"]                       = "Mount",
+    ["dropdown.itemLevel"]          = "ItemLevel (Blizzard)",
     ["collected"]                   = "collected",
     ["uncollected"]                 = "uncollected",
 

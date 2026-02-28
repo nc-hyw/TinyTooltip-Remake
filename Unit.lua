@@ -232,6 +232,12 @@ local function PlayerCharacter(tip, unit, config, raw)
     if (config and config.elements and config.elements.mount and config.elements.mount.enable) then
         raw.mountName, raw.mountCollected = GetMountInfo(unit)
     end
+    if (config and config.elements and addon.RequestInspectItemLevel) then
+        local showItemLevel = (config.elements.itemLevel and config.elements.itemLevel.enable) or (config.elements.itemLevelLabel and config.elements.itemLevelLabel.enable)
+        if (showItemLevel and raw and raw.itemLevel == "??") then
+            addon:RequestInspectItemLevel(unit)
+        end
+    end
     local data = addon:GetUnitData(unit, config.elements, raw)
     addon:HideLines(tip, 2, 3)
     addon:HideLine(tip, "^"..LEVEL)
