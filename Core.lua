@@ -220,6 +220,170 @@ local function GetMythicPlusScore(unit)
     end
 end
 
+local INSPECT_CACHE_TTL = 900
+local INSPECT_REQUEST_INTERVAL = 1.2
+addon.inspectState = addon.inspectState or {
+    cache = {},
+    pendingGUID = nil,
+    pendingUnit = nil,
+    lastRequestAt = 0,
+    suspendedUntil = 0,
+}
+
+local function GetCachedInspectItemLevel(unit)
+    local state = addon.inspectState
+    if (not state or not state.cache or not unit or not UnitGUID) then return end
+    local guid = UnitGUID(unit)
+    if (not guid) then return end
+    local cached = state.cache[guid]
+    if (not cached or type(cached.level) ~= "number" or type(cached.time) ~= "number") then return end
+    local now = GetTime and GetTime() or 0
+    if ((now - cached.time) > INSPECT_CACHE_TTL) then
+        state.cache[guid] = nil
+        return
+    end
+    return cached.level
+end
+
+local function CacheInspectItemLevel(guid, level)
+    if (not guid or type(level) ~= "number" or level <= 0) then return end
+    local state = addon.inspectState
+    if (not state or not state.cache) then return end
+    state.cache[guid] = {
+        level = floor(level + 0.5),
+        time = GetTime and GetTime() or 0,
+    }
+end
+
+local function GetUnitItemLevel(unit)
+    local function SafeCall(fn, ...)
+        local ok, a, b, c = pcall(fn, ...)
+        if ok then return a, b, c end
+    end
+    if (not unit or not UnitIsPlayer or not SafeCall(UnitIsPlayer, unit)) then return end
+
+    if (UnitIsUnit and SafeCall(UnitIsUnit, unit, "player") and GetAverageItemLevel) then
+        local average, equipped = SafeCall(GetAverageItemLevel)
+        if (type(equipped) == "number" and equipped > 0) then
+            return equipped
+        end
+        if (type(average) == "number" and average > 0) then
+            return average
+        end
+    end
+
+    local cachedInspectLevel = GetCachedInspectItemLevel(unit)
+    if (type(cachedInspectLevel) == "number" and cachedInspectLevel > 0) then
+        return cachedInspectLevel
+    end
+
+    if (C_PaperDollInfo and C_PaperDollInfo.GetInspectItemLevel) then
+        local inspectLevel = SafeCall(C_PaperDollInfo.GetInspectItemLevel, unit)
+        if (type(inspectLevel) == "number" and inspectLevel > 0) then
+            if (UnitGUID) then
+                CacheInspectItemLevel(UnitGUID(unit), inspectLevel)
+            end
+            return inspectLevel
+        end
+    end
+end
+
+function addon:RequestInspectItemLevel(unit)
+    local function SafeBool(fn, ...)
+        local ok, value = pcall(fn, ...)
+        if (ok and value == true) then
+            return true
+        end
+        return false
+    end
+    if (not unit or not NotifyInspect or not CanInspect) then return end
+    if (not SafeBool(UnitExists, unit)) then return end
+    if (not SafeBool(UnitIsPlayer, unit)) then return end
+    if (SafeBool(UnitIsUnit, unit, "player")) then return end
+    if (not SafeBool(CanInspect, unit)) then return end
+
+    local guid = UnitGUID and UnitGUID(unit)
+    if (not guid) then return end
+
+    local state = self.inspectState
+    if (not state) then return end
+    local now = GetTime and GetTime() or 0
+    if ((state.suspendedUntil or 0) > now) then
+        return
+    end
+    if (InspectFrame and InspectFrame.IsShown and InspectFrame:IsShown()) then
+        return
+    end
+    local cached = state.cache and state.cache[guid]
+    if (cached and cached.time and (now - cached.time) <= INSPECT_CACHE_TTL) then
+        return
+    end
+    if (state.pendingGUID == guid) then
+        return
+    end
+    if ((now - (state.lastRequestAt or 0)) < INSPECT_REQUEST_INTERVAL) then
+        return
+    end
+
+    local ok = pcall(NotifyInspect, unit)
+    if (ok) then
+        state.pendingGUID = guid
+        state.pendingUnit = unit
+        state.lastRequestAt = now
+    end
+end
+
+do
+    local inspectEventFrame = CreateFrame("Frame")
+    inspectEventFrame:RegisterEvent("INSPECT_READY")
+    inspectEventFrame:SetScript("OnEvent", function(_, event, guid)
+        if (event ~= "INSPECT_READY" or not guid) then return end
+        local state = addon.inspectState
+        if (not state) then return end
+        if (guid ~= state.pendingGUID) then return end
+
+        local unit
+        if (state.pendingUnit and UnitExists and UnitExists(state.pendingUnit) and UnitGUID and UnitGUID(state.pendingUnit) == guid) then
+            unit = state.pendingUnit
+        elseif (UnitExists and UnitGUID and UnitExists("mouseover") and UnitGUID("mouseover") == guid) then
+            unit = "mouseover"
+        elseif (UnitExists and UnitGUID and UnitExists("target") and UnitGUID("target") == guid) then
+            unit = "target"
+        end
+
+        if (unit and C_PaperDollInfo and C_PaperDollInfo.GetInspectItemLevel) then
+            local ok, inspectLevel = pcall(C_PaperDollInfo.GetInspectItemLevel, unit)
+            if (ok and type(inspectLevel) == "number" and inspectLevel > 0) then
+                CacheInspectItemLevel(guid, inspectLevel)
+            end
+        end
+
+        if (ClearInspectPlayer and (not InspectFrame or not InspectFrame.IsShown or not InspectFrame:IsShown())) then
+            pcall(ClearInspectPlayer)
+        end
+        state.pendingGUID = nil
+        state.pendingUnit = nil
+
+        if (GameTooltip and GameTooltip:IsShown() and UnitExists and UnitGUID) then
+            local tooltipUnit = addon:GetTooltipUnit(GameTooltip) or (UnitExists("mouseover") and "mouseover" or nil)
+            if (tooltipUnit and UnitExists(tooltipUnit) and UnitGUID(tooltipUnit) == guid) then
+                pcall(GameTooltip.SetUnit, GameTooltip, tooltipUnit)
+            end
+        end
+    end)
+
+    if (InspectUnit and hooksecurefunc) then
+        hooksecurefunc("InspectUnit", function()
+            local s = addon.inspectState
+            if (not s) then return end
+            local now = GetTime and GetTime() or 0
+            s.suspendedUntil = now + 3
+            s.pendingGUID = nil
+            s.pendingUnit = nil
+        end)
+    end
+end
+
 --字符型数字键转为数字键
 function addon:FixNumericKey(t)
     local key
@@ -586,6 +750,9 @@ function addon:GetUnitInfo(unit)
     local classif = SafeCall(UnitClassification, unit)
     local role = SafeCall(UnitGroupRolesAssigned, unit)
     local mplusScore, mplusColor, mplusBest = GetMythicPlusScore(unit)
+    local isPlayer = SafeBool(UnitIsPlayer, unit)
+    local itemLevel = isPlayer and GetUnitItemLevel(unit)
+    local itemLevelLabel = (self.L and self.L.ItemLevel) or "ItemLevel"
 
     t.raidIcon     = self:GetRaidIcon(unit)
     t.pvpIcon      = self:GetPVPIcon(unit)
@@ -601,6 +768,8 @@ function addon:GetUnitInfo(unit)
     t.gender       = self:GetGender(gender)
     t.realm        = realm or GetRealmName()
     t.levelValue   = (type(level) == "number" and level >= 0) and level or "??"
+    t.itemLevelLabel = isPlayer and itemLevelLabel or nil
+    t.itemLevel = isPlayer and ((type(itemLevel) == "number" and itemLevel > 0) and floor(itemLevel + 0.5) or "??") or nil
     t.className    = className
     t.raceName     = raceName
     t.guildName    = guildName
@@ -617,7 +786,7 @@ function addon:GetUnitInfo(unit)
     t.classifBoss  = (level==-1 or classif == "worldboss") and BOSS
     t.classifElite = classif == "elite" and ELITE
     t.classifRare  = (classif == "rare" or classif == "rareelite") and RARE
-    t.isPlayer     = SafeBool(UnitIsPlayer, unit) and PLAYER
+    t.isPlayer     = isPlayer and PLAYER
     t.moveSpeed    = self:GetUnitSpeed(unit)
     t.zone         = self:GetZone(unit, t.name, t.realm)
     local label = self.L and self.L["Mythic+ Score"] or "M+ Score"
@@ -689,6 +858,8 @@ function addon:GetUnitData(unit, elements, raw)
     end
     for i, v in ipairs(elements) do
         data[i] = {}
+        local hasItemLevelLabel = false
+        local hasItemLevelValue = false
         for ii, e in ipairs(v) do
             config = elements[e]
             if (e == "mount") then
@@ -716,6 +887,8 @@ function addon:GetUnitData(unit, elements, raw)
                     end
                 end
             elseif (self:CheckFilter(config, raw) and raw[e]) then
+                if (e == "itemLevelLabel") then hasItemLevelLabel = true end
+                if (e == "itemLevel") then hasItemLevelValue = true end
                 if (e == "name") then name = #data[i]+1 end   --name位置
                 if (e == "title") then title = #data[i]+1 end --title位置
                 if (config.color and config.wildcard) then
@@ -728,6 +901,17 @@ function addon:GetUnitData(unit, elements, raw)
                     end
                 else
                     tinsert(data[i], raw[e])
+                end
+            end
+        end
+        -- Compatibility fallback: some old/custom layouts may only keep the itemLevel label.
+        if (hasItemLevelLabel and not hasItemLevelValue and raw.itemLevel and elements.itemLevel) then
+            local ilvlConfig = elements.itemLevel
+            if (self:CheckFilter(ilvlConfig, raw)) then
+                if (ilvlConfig.color and ilvlConfig.wildcard) then
+                    tinsert(data[i], self:FormatData(raw.itemLevel, ilvlConfig, raw))
+                else
+                    tinsert(data[i], raw.itemLevel)
                 end
             end
         end
@@ -772,6 +956,21 @@ addon.colorfunc.mplus = function(raw)
         return c.r, c.g, c.b, addon:GetHexColor(c.r, c.g, c.b)
     end
     return 1, 1, 1, "ffffff"
+end
+
+addon.colorfunc.itemLevel = function(raw)
+    local itemLevel = raw and tonumber(raw.itemLevel)
+    if (GetItemLevelColor and raw and raw.unit and UnitIsUnit and UnitIsUnit(raw.unit, "player")) then
+        local ok, r, g, b = pcall(GetItemLevelColor)
+        if (ok and type(r) == "number" and type(g) == "number" and type(b) == "number") then
+            return r, g, b, addon:GetHexColor(r, g, b)
+        end
+    end
+    if (itemLevel and itemLevel > 0) then
+        local color = GetCreatureDifficultyColor(itemLevel)
+        return color.r, color.g, color.b, addon:GetHexColor(color)
+    end
+    return 0.6, 0.6, 0.6, "999999"
 end
 
 addon.colorfunc.level = function(raw)
