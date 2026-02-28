@@ -141,11 +141,12 @@ LibEvent:attachEvent("VARIABLES_LOADED", function()
 end)
 
 LibEvent:attachTrigger("tooltip:cleared, tooltip:hide", function(self, tip)
+    if (addon.db and addon.db.general) then
+        LibEvent:trigger("tooltip.style.bgfile", tip, addon.db.general.bgfile)
+    end
     LibEvent:trigger("tooltip.style.border.color", tip, unpack(addon.db.general.borderColor))
     LibEvent:trigger("tooltip.style.background", tip, unpack(addon.db.general.background))
     if (tip.BigFactionIcon) then tip.BigFactionIcon:Hide() end
-    if (tip.SetBackdrop) then tip:SetBackdrop(nil) end
-    if (tip.NineSlice and addon.SafeHideNineSlice) then addon.SafeHideNineSlice(tip) end
 end)
 
 LibEvent:attachTrigger("tooltip:show", function(self, tip)
