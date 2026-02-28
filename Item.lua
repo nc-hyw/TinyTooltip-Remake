@@ -14,6 +14,18 @@ local function GetItemInfoFromLink(linkOrId)
     }
 end
 
+local function GetTooltipTitleColor(tip)
+    if (not tip or not tip.GetName) then return end
+    local left = _G[tip:GetName() .. "TextLeft1"]
+    if (not left or not left.GetTextColor) then return end
+    local ok, r, g, b = pcall(left.GetTextColor, left)
+    if (not ok) then return end
+    if (type(r) ~= "number" or type(g) ~= "number" or type(b) ~= "number") then
+        return
+    end
+    return r, g, b
+end
+
 local function ColorBorder(tip, r, g, b)
     if (addon.db.item.coloredItemBorder) then
         LibEvent:trigger("tooltip.style.border.color", tip, r, g, b)
@@ -56,6 +68,10 @@ LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
     local itemInfo = GetItemInfoFromLink(link)
     local quality = (itemInfo and itemInfo.itemQuality) or 0
     local r, g, b = GetItemQualityColor(quality)
+    local tr, tg, tb = GetTooltipTitleColor(tip)
+    if (tr and tg and tb) then
+        r, g, b = tr, tg, tb
+    end
     ColorBorder(tip, r, g, b)
     ItemStackCount(tip, itemInfo)
     ItemIcon(tip, itemInfo)
