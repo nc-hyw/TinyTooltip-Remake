@@ -104,8 +104,9 @@ end})
 local L = addon.L
 
 local function CallTrigger(keystring, value)
-    for _, tip in ipairs(addon.tooltips) do
-        if (keystring == "general.mask") then
+    for _, tip in pairs(addon.tooltips) do
+        if (not tip) then
+        elseif (keystring == "general.mask") then
             LibEvent:trigger("tooltip.style.mask", tip, value)
         elseif (keystring == "general.scale") then
             local oldScale = addon._lastScale or value
@@ -1594,7 +1595,7 @@ end
 
 local diytable, diyPlayerTable = {}, {}
 
-local frameDIY = CreateFrame("Frame", nil, framePCScrollFrame)
+local frameDIY = CreateFrame("Frame", nil, framePCScrollFrame, BackdropTemplateMixin and "BackdropTemplate" or nil)
 tinsert(addon.tooltips, frameDIY)
 frameDIY:Show()
 frameDIY:SetFrameStrata("DIALOG")
@@ -1777,6 +1778,12 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
     if (toggleVisible and frameDIY:IsShown()) then
         return frameDIY:Hide()
     end
+    LibEvent:trigger("tooltip.style.init", frameDIY)
+    LibEvent:trigger("tooltip.style.mask", frameDIY, addon.db.general.mask)
+    LibEvent:trigger("tooltip.style.bgfile", frameDIY, addon.db.general.bgfile)
+    LibEvent:trigger("tooltip.style.border.corner", frameDIY, addon.db.general.borderCorner)
+    LibEvent:trigger("tooltip.style.border.size", frameDIY, addon.db.general.borderSize)
+    LibEvent:trigger("tooltip.style.background", frameDIY, unpack(addon.db.general.background))
     local raw = addon:GetUnitInfo(unit)
     local frameWidth, lineWidth, totalLines = 0, 0, 0
     local config, value
@@ -1828,6 +1835,10 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
     end
     addon.ColorUnitBorder(frameDIY, diyPlayerTable, raw)
     addon.ColorUnitBackground(frameDIY, diyPlayerTable, raw)
+    LibEvent:trigger("tooltip.style.border.corner", frameDIY, addon.db.general.borderCorner)
+    if (addon.db.general.borderCorner == "angular") then
+        LibEvent:trigger("tooltip.style.border.size", frameDIY, addon.db.general.borderSize)
+    end
     frameDIY:Show()
 end)
 
