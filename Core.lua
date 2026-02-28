@@ -37,6 +37,77 @@ local C_BattleNet_GetAccountInfoByGUID = C_BattleNet and C_BattleNet.GetAccountI
 
 local addon = TinyTooltip
 
+local function ResolveSpellIdFromSpellToken(spellToken)
+    if (type(spellToken) == "number") then
+        return spellToken
+    end
+    if (type(spellToken) == "string" and spellToken ~= "" and C_Spell and C_Spell.GetSpellInfo) then
+        local okInfo, spellInfo = pcall(C_Spell.GetSpellInfo, spellToken)
+        if (okInfo and type(spellInfo) == "table" and type(spellInfo.spellID) == "number") then
+            return spellInfo.spellID
+        end
+    end
+end
+
+local function ResolveMacroSpellIdFromTooltip(tooltip)
+    if (not tooltip or not tooltip.GetPrimaryTooltipData) then return end
+    local okData, data = pcall(tooltip.GetPrimaryTooltipData, tooltip)
+    if (not okData or type(data) ~= "table") then return end
+    local lines = data.lines
+    if (type(lines) ~= "table" or type(lines[1]) ~= "table") then return end
+    local tooltipID = lines[1].tooltipID
+    if (type(tooltipID) == "number") then
+        return tooltipID
+    end
+end
+
+local function ResolveMacroPayload(tooltip, macroId)
+    local spellId = ResolveMacroSpellIdFromTooltip(tooltip)
+    if (spellId) then
+        return spellId
+    end
+    if (type(macroId) == "number" and GetMacroSpell) then
+        local okMacro, a, b, c = pcall(GetMacroSpell, macroId)
+        if (okMacro) then
+            spellId = ResolveSpellIdFromSpellToken(a) or ResolveSpellIdFromSpellToken(b) or ResolveSpellIdFromSpellToken(c)
+            if (spellId) then
+                return spellId
+            end
+        end
+    end
+    if (type(macroId) == "number" and GetMacroItem) then
+        local okItem, macroItem = pcall(GetMacroItem, macroId)
+        if (okItem and macroItem) then
+            local okInfo, _, itemLink = pcall(GetItemInfo, macroItem)
+            if (okInfo and type(itemLink) == "string" and itemLink ~= "") then
+                return nil, itemLink
+            end
+            if (type(macroItem) == "string" and macroItem ~= "") then
+                return nil, macroItem
+            end
+        end
+    end
+end
+
+local function ResolveActionPayload(tooltip, actionSlot)
+    if (type(actionSlot) ~= "number" or not GetActionInfo) then return end
+    local okAction, actionType, actionId = pcall(GetActionInfo, actionSlot)
+    if (not okAction) then return end
+    if (actionType == "spell") then
+        local spellId = ResolveSpellIdFromSpellToken(actionId)
+        if (spellId) then
+            return spellId
+        end
+    elseif (actionType == "item" and actionId) then
+        local okInfo, _, itemLink = pcall(GetItemInfo, actionId)
+        if (okInfo and type(itemLink) == "string" and itemLink ~= "") then
+            return nil, itemLink
+        end
+    elseif (actionType == "macro") then
+        return ResolveMacroPayload(tooltip, actionId)
+    end
+end
+
 local function SafeHideNineSlice(tip)
     if (not tip or not tip.NineSlice) then return end
     local ns = tip.NineSlice
@@ -1380,12 +1451,20 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
                 local ok, res = pcall(function() return a == b end)
                 return ok and res
             end
+            local function GetTooltipSpellId(tt)
+                if (not tt or not tt.GetSpell) then return end
+                local ok, _, spellId = pcall(tt.GetSpell, tt)
+                if (ok and type(spellId) == "number") then
+                    return spellId
+                end
+            end
             local isAura = SafeEquals(flag, 7)
             if (not isAura and getterName) then
                 isAura = getterName == "GetUnitDebuffByAuraInstanceID"
                     or getterName == "GetUnitBuffByAuraInstanceID"
                     or getterName == "GetUnitAuraByAuraInstanceID"
             end
+            local isMacro = SafeEquals(flag, 25) or getterName == "GetAction" or getterName == "GetMacro"
             --0 物品
             if (SafeEquals(flag, 0)) then
                 local link
@@ -1400,7 +1479,7 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
                 end
             --1 技能
             elseif (SafeEquals(flag, 1)) then
-                LibEvent:trigger("tooltip:spell", self)
+                LibEvent:trigger("tooltip:spell", self, GetTooltipSpellId(self))
                 didTypedBackdropUpdate = true
             --2 角色
             elseif (SafeEquals(flag, 2)) then
@@ -1414,6 +1493,29 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
             elseif (isAura) then
                 LibEvent:trigger("tooltip:aura", self, info.tooltipData.args)
                 didTypedBackdropUpdate = true
+            --25 宏命令
+            elseif (isMacro) then
+                local macroSpellId, macroItemLink
+                if (getterName == "GetAction" and info.tooltipData and type(info.tooltipData.id) == "number") then
+                    macroSpellId, macroItemLink = ResolveActionPayload(self, info.tooltipData.id)
+                elseif (getterName == "GetMacro" and info.tooltipData and type(info.tooltipData.id) == "number") then
+                    macroSpellId, macroItemLink = ResolveMacroPayload(self, info.tooltipData.id)
+                else
+                    local owner = self.GetOwner and self:GetOwner()
+                    local actionSlot = owner and owner.action
+                    if (type(actionSlot) == "number") then
+                        macroSpellId, macroItemLink = ResolveActionPayload(self, actionSlot)
+                    else
+                        macroSpellId, macroItemLink = ResolveMacroPayload(self)
+                    end
+                end
+                if (macroItemLink) then
+                    LibEvent:trigger("tooltip:item", self, macroItemLink)
+                    didTypedBackdropUpdate = true
+                elseif (macroSpellId) then
+                    LibEvent:trigger("tooltip:spell", self, macroSpellId)
+                    didTypedBackdropUpdate = true
+                end
             --4 交互体
             --5 货币
             --9 战宠
@@ -1422,7 +1524,6 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
             --19 玩具
             --21 小地图的点
             --23 任务
-            --25 巨集
             end
             if (not didTypedBackdropUpdate) then
                 ReapplyGlobalBackgroundFile(self)
@@ -1451,7 +1552,14 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     )
     tip:TinyHookScript("OnTooltipSetSpell",
         function(self)
-            LibEvent:trigger("tooltip:spell", self)
+            local spellId
+            if (self.GetSpell) then
+                local ok, _, sid = pcall(self.GetSpell, self)
+                if (ok and type(sid) == "number") then
+                    spellId = sid
+                end
+            end
+            LibEvent:trigger("tooltip:spell", self, spellId)
         end
     )
     tip:TinyHookScript("OnTooltipCleared",
@@ -1525,6 +1633,28 @@ end)
 hooksecurefunc("GameTooltip_SetDefaultAnchor", function(self, parent)
     LibEvent:trigger("tooltip:anchor", self, parent)
 end)
+
+if (GameTooltip and GameTooltip.SetAction and GetActionInfo) then
+    hooksecurefunc(GameTooltip, "SetAction", function(tooltip, slot)
+        local spellId, itemLink = ResolveActionPayload(tooltip, slot)
+        if (itemLink) then
+            LibEvent:trigger("tooltip:item", tooltip, itemLink)
+        elseif (spellId) then
+            LibEvent:trigger("tooltip:spell", tooltip, spellId)
+        end
+    end)
+end
+
+if (GameTooltip and GameTooltip.SetMacro) then
+    hooksecurefunc(GameTooltip, "SetMacro", function(tooltip, macroId)
+        local spellId, itemLink = ResolveMacroPayload(tooltip, macroId)
+        if (itemLink) then
+            LibEvent:trigger("tooltip:item", tooltip, itemLink)
+        elseif (spellId) then
+            LibEvent:trigger("tooltip:spell", tooltip, spellId)
+        end
+    end)
+end
 
 
 -- tooltip:init

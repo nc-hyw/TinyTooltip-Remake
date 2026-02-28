@@ -107,8 +107,8 @@ LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
     ShowLinkIdInfo(tip, link)
 end)
 
-LibEvent:attachTrigger("tooltip:spell", function(self, tip)
-    ShowSpellInfo(tip, GetSpellIdFromTooltip(tip))
+LibEvent:attachTrigger("tooltip:spell", function(self, tip, spellId)
+    ShowSpellInfo(tip, spellId or GetSpellIdFromTooltip(tip))
 end)
 
 LibEvent:attachTrigger("tooltip:aura", function(self, tip, args)

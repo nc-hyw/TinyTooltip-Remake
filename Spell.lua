@@ -17,9 +17,15 @@ local function ColorBackground(tip)
     end
 end
 
-local function SpellIcon(tip)
+local function SpellIcon(tip, spellId)
     if (addon.db.spell.showIcon) then
-        local id = select(2, tip:GetSpell())
+        local id = spellId
+        if ((not id) and tip and tip.GetSpell) then
+            local ok, _, sid = pcall(tip.GetSpell, tip)
+            if (ok and type(sid) == "number") then
+                id = sid
+            end
+        end
         local texture = GetSpellTexture(id or 0)
         local okText, text = pcall(function()
             return addon:GetLine(tip,1):GetText()
@@ -37,7 +43,7 @@ local function SpellIcon(tip)
     end
 end
 
-LibEvent:attachTrigger("tooltip:spell", function(self, tip)
+LibEvent:attachTrigger("tooltip:spell", function(self, tip, spellId)
     if (addon.db and addon.db.general) then
         LibEvent:trigger("tooltip.style.bgfile", tip, addon.db.general.bgfile)
         LibEvent:trigger("tooltip.style.border.corner", tip, addon.db.general.borderCorner)
@@ -45,7 +51,7 @@ LibEvent:attachTrigger("tooltip:spell", function(self, tip)
             LibEvent:trigger("tooltip.style.border.size", tip, addon.db.general.borderSize)
         end
     end
-    SpellIcon(tip)
+    SpellIcon(tip, spellId)
     ColorBorder(tip)
     ColorBackground(tip)
 end)
