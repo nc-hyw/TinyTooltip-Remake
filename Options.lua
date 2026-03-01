@@ -1825,7 +1825,7 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
                     else
                         valuePart = tostring(points)
                     end
-                    value = format("|cffffd100%s：|r %s", label, valuePart)
+                    value = format("|cffffd100%s:|r %s", label, valuePart)
                     handled = true
                 end
                 if (not handled and config.color and config.wildcard) then

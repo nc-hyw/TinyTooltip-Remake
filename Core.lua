@@ -1156,7 +1156,7 @@ function addon:GetUnitData(unit, elements, raw)
             elseif (e == "achievementPoints") then
                 if (self:CheckFilter(config, raw) and raw.achievementPoints ~= nil) then
                     local labelText = (self.L and self.L.Achievement) or "Achievement"
-                    local labelPart = format("|cffffd100%s：|r", labelText)
+                    local labelPart = format("|cffffd100%s:|r", labelText)
                     local pointValue = raw.achievementPoints
                     local valuePart
                     if (tostring(pointValue) == "??") then
