@@ -14,13 +14,17 @@ This remake version which based on original TinyTooltip will be carry on for oth
 ### Check Mount:
 - Now you can check what mount your target are using and if you have collected it
 
+### Equipped Item Level:
+- You can check player's equipped item level in your tooltip now
+
+### Achivements Poitns:
+- You can check player's achivements points in your tooltip now
+
 ## Comming Soon:
 - These features will be implemented in the future (sooner then you expected)
-
-### Equipped Item Level:
-
-- The original TinyTooltip didn't support equipped item level display, so this version doesn't include it either. Since Blizzard's current API for retrieving equipped item level is bugged and returns incorrect data, adding this feature right now would be meaningless. I will consider implementing it once Blizzard fixes the API. For now, if you want to see equipped item level on tooltips, please use other addons that don't rely on Blizzard's API, such as TinyInspect-Remake or ItemInfoOverlay.  
-Once Blizzard fixed their issue showing equipped item level will be introduced into this addon
+    Best Mythic+ Run Dungeon
+    Spec Icon rather than just text
+    Mod key for tooltip display during combat
 
 - And MORE in planning.
 
@@ -49,13 +53,17 @@ As I am interested in maintaining this project from now on and adding more featu
 ### 查看坐骑：
 - 现在你可以查看目标正在使用什么坐骑，以及你是否已经收集了它。
 
+### 实装等级（Equipped Item Level）：
+- 现在你可以在鼠标提示（Tooltip）中查看玩家的实装等级。
+
+### 成就点数（Achievements Points）：
+- 现在你可以在鼠标提示（Tooltip）中查看玩家的成就点数。
+
 ## 即将推出：
 - 以下功能将在未来实现（也许比你预期的要快）：
-
-### 实装等级（Equipped Item Level）：
-
-- 原版 TinyTooltip 不支持显示实装等级，因此本版本目前也未包含此功能。由于暴雪当前用于获取实装等级的 API 存在 Bug，返回的数据不准确，现在添加此功能毫无意义。一旦暴雪修复了 API，我会考虑实现它。目前，如果你希望在鼠标提示上查看实装等级，请使用不依赖暴雪该 API 的其他插件，例如 TinyInspect-Remake 或 ItemInfoOverlay。
-- 暴雪修复相关问题后，本插件将引入实装等级显示功能。
+    最佳大秘境地下城
+    专精图标而不仅仅是纯文本
+    使用修饰键在战斗中显示鼠标提示
 
 - 更多功能正在规划中。
 
