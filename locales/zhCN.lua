@@ -185,9 +185,9 @@ local T = {
     ["about.help.title"] = "提交 Bug / 反馈",
     ["about.credits.title"] = "致谢",
     ["about.credits.content"] = "感谢TinyTooltip原作者 M 及所有贡献者\n",
-    ["wildcard.help"]               = "自定义格式：按回车生效",
-    ["wildcard.help.example"]       = "示例：(%s) 或 [%s]",
-    ["wildcard.help.moveSpeed"]     = "示例：%d%%",
+    ["wildcard.help"]               = "自定义格式:按回车生效",
+    ["wildcard.help.example"]       = "示例:(%s) 或 [%s]",
+    ["wildcard.help.moveSpeed"]     = "示例:%d%%",
 
     ["<Drag element to customize the style>"] = "<拖动元素以自定义样式>",
 
