@@ -4,54 +4,56 @@ if not addon then return end
 local LibEvent = LibStub and LibStub:GetLibrary("LibEvent.7000", true)
 if not LibEvent then return end
 
-local function Debug(msg)
-    if not _G.ttDebug then return end
-    if not _G.ttDebugPrinted then
-        _G.ttDebugPrinted = true
-        local enabledText = "TinyTooltip DialogueUICompat: debug enabled"
-        if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
-            DEFAULT_CHAT_FRAME:AddMessage(enabledText)
-        else
-            print(enabledText)
-        end
-    end
-    local text = "TinyTooltip DialogueUICompat: " .. tostring(msg)
-    if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
-        DEFAULT_CHAT_FRAME:AddMessage(text)
-    else
-        print(text)
-    end
-end
+-- local function Debug(msg)
+--     if not _G.ttDebug then return end
+--     if not _G.ttDebugPrinted then
+--         _G.ttDebugPrinted = true
+--         local enabledText = "TinyTooltip DialogueUICompat: debug enabled"
+--         if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
+--             DEFAULT_CHAT_FRAME:AddMessage(enabledText)
+--         else
+--             print(enabledText)
+--         end
+--     end
+--     local text = "TinyTooltip DialogueUICompat: " .. tostring(msg)
+--     if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
+--         DEFAULT_CHAT_FRAME:AddMessage(text)
+--     else
+--         print(text)
+--     end
+-- end
+-- local function Debug(_)
+-- end
 
-local function Info(msg)
-    local text = "TinyTooltip DialogueUICompat: " .. tostring(msg)
-    if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
-        DEFAULT_CHAT_FRAME:AddMessage(text)
-    else
-        print(text)
-    end
-end
+-- local function Info(msg)
+--     local text = "TinyTooltip DialogueUICompat: " .. tostring(msg)
+--     if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
+--         DEFAULT_CHAT_FRAME:AddMessage(text)
+--     else
+--         print(text)
+--     end
+-- end
 
-Info("loaded (delayed)")
-Info("enable debug: /ttdebug on | off")
-
-SLASH_TINYTOOLTIPDIALOGUEDEBUG1 = "/ttdebug"
-SlashCmdList.TINYTOOLTIPDIALOGUEDEBUG = function(msg)
-    local arg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
-    local enabled = (arg == "on" or arg == "1" or arg == "true")
-    local disabled = (arg == "off" or arg == "0" or arg == "false")
-    if enabled then
-        _G.ttDebug = true
-        _G.ttDebugPrinted = nil
-        Debug("debug enabled")
-    elseif disabled then
-        _G.ttDebug = false
-        _G.ttDebugPrinted = nil
-        Info("debug disabled")
-    else
-        Info("usage: /ttdebug on | off")
-    end
-end
+-- Info("loaded (delayed)")
+-- Info("enable debug: /ttdebug on | off")
+--
+-- SLASH_TINYTOOLTIPDIALOGUEDEBUG1 = "/ttdebug"
+-- SlashCmdList.TINYTOOLTIPDIALOGUEDEBUG = function(msg)
+--     local arg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
+--     local enabled = (arg == "on" or arg == "1" or arg == "true")
+--     local disabled = (arg == "off" or arg == "0" or arg == "false")
+--     if enabled then
+--         _G.ttDebug = true
+--         _G.ttDebugPrinted = nil
+--         Debug("debug enabled")
+--     elseif disabled then
+--         _G.ttDebug = false
+--         _G.ttDebugPrinted = nil
+--         Info("debug disabled")
+--     else
+--         Info("usage: /ttdebug on | off")
+--     end
+-- end
 
 local function ApplyScaledTooltips()
     if not addon.db or not addon.db.general then return end
@@ -65,15 +67,15 @@ local function ApplyScaledTooltips()
 end
 
 local function EnableDialogueScale()
-    Debug("EnableDialogueScale")
+    -- Debug("EnableDialogueScale")
     addon._dialogueActive = true
     addon._dialogueScaleFactor = UIParent and UIParent.GetEffectiveScale and UIParent:GetEffectiveScale() or 1
-    Debug("ScaleFactor=" .. tostring(addon._dialogueScaleFactor))
+    -- Debug("ScaleFactor=" .. tostring(addon._dialogueScaleFactor))
     ApplyScaledTooltips()
 end
 
 local function DisableDialogueScale()
-    Debug("DisableDialogueScale")
+    -- Debug("DisableDialogueScale")
     addon._dialogueActive = nil
     addon._dialogueScaleFactor = nil
     ApplyScaledTooltips()
@@ -85,9 +87,9 @@ local function HookDialogueUI()
     if rtc then
         hooksecurefunc(rtc, "TakeOutGameTooltip", EnableDialogueScale)
         hooksecurefunc(rtc, "RestoreGameTooltip", DisableDialogueScale)
-        Debug("HookDialogueUI: hooked TakeOutGameTooltip/RestoreGameTooltip")
+        -- Debug("HookDialogueUI: hooked TakeOutGameTooltip/RestoreGameTooltip")
     else
-        Debug("HookDialogueUI: RewardTooltipCode not found, using scale-detect fallback")
+        -- Debug("HookDialogueUI: RewardTooltipCode not found, using scale-detect fallback")
     end
 end
 
@@ -102,22 +104,22 @@ local function OnTooltipSetScale(tip, scale)
     if addon._applyingDialogueScale then return end
     local uiScale = UIParent and UIParent.GetEffectiveScale and UIParent:GetEffectiveScale() or 1
     local isDialogue = IsDialogueStack()
-    Debug(("SetScale hook: name=%s scale=%s uiScale=%s isDialogue=%s"):format(
-        (tip and tip.GetName and tip:GetName()) or tostring(tip),
-        tostring(scale),
-        tostring(uiScale),
-        tostring(isDialogue)
-    ))
+    -- Debug(("SetScale hook: name=%s scale=%s uiScale=%s isDialogue=%s"):format(
+    --     (tip and tip.GetName and tip:GetName()) or tostring(tip),
+    --     tostring(scale),
+    --     tostring(uiScale),
+    --     tostring(isDialogue)
+    -- ))
     if isDialogue and scale and math.abs(scale - uiScale) < 0.0001 then
         if not addon._dialogueActive then
-            Debug("Fallback: detected DialogueUI scale apply")
+            -- Debug("Fallback: detected DialogueUI scale apply")
             EnableDialogueScale()
         end
         return
     end
     if isDialogue and scale and math.abs(scale - 1) < 0.0001 then
         if addon._dialogueActive then
-            Debug("Fallback: detected DialogueUI restore")
+            -- Debug("Fallback: detected DialogueUI restore")
             DisableDialogueScale()
         end
     end
@@ -131,7 +133,7 @@ local function HookTooltipScaleDetect()
             hooksecurefunc(tip, "SetScale", function(self, scale)
                 OnTooltipSetScale(self, scale)
             end)
-            Debug("HookTooltipScaleDetect: hooked " .. ((tip.GetName and tip:GetName()) or tostring(tip)))
+            -- Debug("HookTooltipScaleDetect: hooked " .. ((tip.GetName and tip:GetName()) or tostring(tip)))
         end
     end
 end
@@ -160,13 +162,13 @@ local f = CreateFrame("Frame")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, name)
     if name ~= "DialogueUI" then return end
-    Debug("ADDON_LOADED DialogueUI")
+    -- Debug("ADDON_LOADED DialogueUI")
     HookTooltipScaleDetect()
     HookDialogueUI()
 end)
 
 if IsAddOnLoaded and IsAddOnLoaded("DialogueUI") then
-    Debug("DialogueUI already loaded")
+    -- Debug("DialogueUI already loaded")
     HookTooltipScaleDetect()
     HookDialogueUI()
 end

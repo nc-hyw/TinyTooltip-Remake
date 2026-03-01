@@ -222,15 +222,35 @@ end
 
 
 local function PlayerCharacter(tip, unit, config, raw)
+    local unitGuid = UnitGUID and UnitGUID(unit)
     local specLine = GetOriginalSpecLine(tip, raw and raw.className)
     if (specLine) then
         raw.className = specLine
         HideOriginalSpecLine(tip, specLine)
+        if (tip and unitGuid) then
+            tip._tinySpecGUID = unitGuid
+            tip._tinySpecLine = specLine
+        end
+    elseif (tip and raw and unitGuid and tip._tinySpecGUID == unitGuid and type(tip._tinySpecLine) == "string" and tip._tinySpecLine ~= "") then
+        -- Keep specialization text during async inspect refresh.
+        raw.className = tip._tinySpecLine
     end
     raw.mountName = nil
     raw.mountCollected = nil
     if (config and config.elements and config.elements.mount and config.elements.mount.enable) then
         raw.mountName, raw.mountCollected = GetMountInfo(unit)
+    end
+    if (config and config.elements and addon.RequestInspectItemLevel) then
+        local showItemLevel = (config.elements.itemLevel and config.elements.itemLevel.enable)
+        if (showItemLevel and raw and raw.itemLevel == "??") then
+            addon:RequestInspectItemLevel(unit)
+        end
+    end
+    if (config and config.elements and addon.RequestInspectAchievementPoints) then
+        local showAchievementPoints = (config.elements.achievementPoints and config.elements.achievementPoints.enable)
+        if (showAchievementPoints and raw and raw.achievementPoints == "??") then
+            addon:RequestInspectAchievementPoints(unit)
+        end
     end
     local data = addon:GetUnitData(unit, config.elements, raw)
     addon:HideLines(tip, 2, 3)
@@ -304,11 +324,28 @@ end
 
 LibEvent:attachTrigger("tooltip:unit", function(self, tip, unit)
     if (not unit or not SafeBool(UnitExists, unit)) then return end
+    if (tip and UnitGUID) then
+        local previousGuid = tip._tinyUnitGUID
+        local okGuid, guid = pcall(UnitGUID, unit)
+        tip._tinyUnitGUID = okGuid and guid or nil
+        if (previousGuid and tip._tinyUnitGUID and previousGuid ~= tip._tinyUnitGUID) then
+            tip._tinySpecGUID = nil
+            tip._tinySpecLine = nil
+        end
+    end
     local raw = addon:GetUnitInfo(unit)
     if (SafeBool(UnitIsPlayer, unit)) then
         PlayerCharacter(tip, unit, addon.db.unit.player, raw)
     else
         NonPlayerCharacter(tip, unit, addon.db.unit.npc, raw)
+    end
+end)
+
+LibEvent:attachTrigger("tooltip:item, tooltip:spell, tooltip:aura, tooltip:hide, tooltip:cleared", function(self, tip)
+    if (tip) then
+        tip._tinyUnitGUID = nil
+        tip._tinySpecGUID = nil
+        tip._tinySpecLine = nil
     end
 end)
 

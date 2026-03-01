@@ -267,7 +267,8 @@ local function RefreshWidget(widget, config)
             local color = GetVariable(config.keystring..".color")
             RefreshColorPick(widget.colorpick, color)
             if (widget.colordropdown) then
-                if (IsInList(widgets.colorDropdata, color)) then
+                local dropdata = widget.colorDropdata or widgets.colorDropdata
+                if (IsInList(dropdata, color)) then
                     RefreshDropdown(widget.colordropdown, color)
                 else
                     UIDropDownMenu_SetSelectedValue(widget.colordropdown, nil)
@@ -425,7 +426,7 @@ function widgets:editbox(parent, config)
     frame.keystring = config.keystring
     frame:SetAutoFocus(false)
     frame:SetSize(88, 14)
-    frame:SetText(GetVariable(config.keystring))
+    frame:SetText(GetVariable(config.keystring) or "")
     frame:SetCursorPosition(0)
     frame:SetScript("OnEnterPressed", function(self)
         SetVariable(self.keystring, self:GetText())
@@ -921,9 +922,11 @@ function widgets:element(parent, config)
     frame.checkbox = self:checkbox(frame, {keystring=config.keystring..".enable"}, L[config.keystring])
     frame.checkbox:SetPoint("LEFT", 5, 0)
     if (config.color) then
+        local colorDropdata = config.numeric and self.numericColorDropdata or self.colorDropdata
+        frame.colorDropdata = colorDropdata
         frame.colorpick = self:colorpick(frame, {keystring=config.keystring..".color",colortype="hex",hidetitle=true})
         frame.colorpick:SetPoint("LEFT", 285, 0)
-        frame.colordropdown = self:dropdown(frame, {keystring=config.keystring..".color",dropdata=self.colorDropdata,displayMode="MENU"}, "")
+        frame.colordropdown = self:dropdown(frame, {keystring=config.keystring..".color",dropdata=colorDropdata,displayMode="MENU"}, "")
         frame.colordropdown:SetScale(0.87)
         frame.colordropdown:SetPoint("LEFT", 200, -1)
     end
@@ -1125,6 +1128,7 @@ end
 
 widgets.filterDropdata = {"none","ininstance","incombat","inraid","samerealm","samecrossrealm","inpvp","inarena","reaction5","reaction6","not ininstance","not incombat","not inraid","not samerealm","not samecrossrealm","not inpvp","not inarena","not reaction5","not reaction6",}
 widgets.colorDropdata = {"default","class","level","reaction","itemQuality","selection","faction",}
+widgets.numericColorDropdata = {"default","class","level","reaction","itemQuality","selection","faction","itemLevel",}
 widgets.bgfileDropdata = {"gradual","dark","alpha","rock","marble",}
 widgets.borderDropdata = {"default","angular",}
 widgets.fontDropdata = {"default", "ChatFontNormal", "GameFontNormal", "QuestFont", "CombatLogFont",}
@@ -1218,17 +1222,19 @@ local options = {
         { keystring = "unit.player.elements.statusDND",   type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.statusDC",    type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.guildName",   type = "element", color = true, wildcard = true, filter = true, },
-        { keystring = "unit.player.elements.guildIndex",  type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.guildIndex",  type = "element", color = true, wildcard = true, filter = true, numeric = true, },
         { keystring = "unit.player.elements.guildRank",   type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.guildRealm",  type = "element", color = true, wildcard = true, filter = true, },
-        { keystring = "unit.player.elements.levelValue",  type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.levelValue",  type = "element", color = true, wildcard = true, filter = true, numeric = true, },
+        { keystring = "unit.player.elements.itemLevel",   type = "element", color = true, wildcard = true, filter = true, numeric = true, },
+        { keystring = "unit.player.elements.achievementPoints", type = "element", color = true, wildcard = true, filter = true, numeric = true, },
         { keystring = "unit.player.elements.factionName", type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.gender",      type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.raceName",    type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.className",   type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.isPlayer",    type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.role",        type = "element", color = true, wildcard = true, filter = true, },
-        { keystring = "unit.player.elements.moveSpeed",   type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.moveSpeed",   type = "element", color = true, wildcard = true, filter = true, numeric = true, },
         { keystring = "unit.player.elements.mplusScore",  type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.zone",        type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.mount",       type = "element", color = true, wildcard = true, filter = true, },
@@ -1247,13 +1253,13 @@ local options = {
         { keystring = "unit.npc.elements.questIcon",    type = "element", filter = true, },
         { keystring = "unit.npc.elements.npcTitle",     type = "element", color = true, wildcard = true, },
         { keystring = "unit.npc.elements.name",         type = "element", color = true, wildcard = true, filter = true, },
-        { keystring = "unit.npc.elements.levelValue",   type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.npc.elements.levelValue",   type = "element", color = true, wildcard = true, filter = true, numeric = true, },
         { keystring = "unit.npc.elements.classifBoss",  type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.npc.elements.classifElite", type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.npc.elements.classifRare",  type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.npc.elements.creature",     type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.npc.elements.reactionName", type = "element", color = true, wildcard = true, filter = true, },
-        { keystring = "unit.npc.elements.moveSpeed",    type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.npc.elements.moveSpeed",    type = "element", color = true, wildcard = true, filter = true, numeric = true, },
     },
     statusbar = {
         { keystring = "general.statusbarText",      type = "checkbox" },
@@ -1771,6 +1777,7 @@ local placeholder = {
     roleIcon   = addon.icons.DAMAGER,
     raidIcon   = ICON_LIST[8] .. "0|t",
     mount      = L["mount"] or "mount",
+    achievementPoints = 12345,
 }
 setmetatable(placeholder, {__index = function(_, k) return k end})
 
@@ -1797,8 +1804,32 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
                 frameDIY.elements[e]:Hide()
             else
                 value = raw[e] or placeholder[e]
-                if (config.color and config.wildcard) then
-                    value = addon:FormatData(value, config, raw)
+                local handled = false
+                if (e == "itemLevel") then
+                    local label = (L and L.ItemLevel) or "ItemLevel"
+                    local ilvl = raw.itemLevel or value or "??"
+                    local valuePart
+                    if (config.color and config.wildcard) then
+                        valuePart = addon:FormatData(ilvl, config, raw, ilvl)
+                    else
+                        valuePart = tostring(ilvl)
+                    end
+                    value = format("|cffffd100%s:|r %s", label, valuePart)
+                    handled = true
+                elseif (e == "achievementPoints") then
+                    local label = (L and L.Achievement) or "Achievement"
+                    local points = raw.achievementPoints or value or "??"
+                    local valuePart
+                    if (config.color and config.wildcard) then
+                        valuePart = addon:FormatData(points, config, raw, points)
+                    else
+                        valuePart = tostring(points)
+                    end
+                    value = format("|cffffd100%s:|r %s", label, valuePart)
+                    handled = true
+                end
+                if (not handled and config.color and config.wildcard) then
+                    value = addon:FormatData(value, config, raw, value)
                 end
                 frameDIY.elements[e]:Show()
                 frameDIY.elements[e]:SetText(value)

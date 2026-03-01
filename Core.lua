@@ -171,11 +171,27 @@ addon.bgs = {
 --配置 (对elements鍵的值进行合并校验,不含factionBig,npcTitle键)
 local function AutoValidateElements(src, dst)
     local keys = {}
+    local hasItemLevel = false
+    local hasAchievementPoints = false
     for k, v in ipairs(dst) do
         keys[k] = true
         for i = #v, 1, -1 do
             if (not src[v[i]]) then
                 tremove(v, i)
+            elseif (v[i] == "itemLevel") then
+                if (hasItemLevel) then
+                    tremove(v, i)
+                else
+                    hasItemLevel = true
+                    keys[v[i]] = true
+                end
+            elseif (v[i] == "achievementPoints") then
+                if (hasAchievementPoints) then
+                    tremove(v, i)
+                else
+                    hasAchievementPoints = true
+                    keys[v[i]] = true
+                end
             else
                 keys[v[i]] = true
             end
@@ -184,11 +200,17 @@ local function AutoValidateElements(src, dst)
     for k, v in pairs(src) do
         if (type(k) ~= "number" and not dst[k]) then
             dst[k] = v
-            if (k == "factionBig" or k == "npcTitle") then
+            if (k == "factionBig" or k == "npcTitle" or k == "itemLevel" or k == "achievementPoints") then
             elseif (not keys[k]) then
                 tinsert(dst[1], 1, k)
             end
         end
+    end
+    if (src.itemLevel and not hasItemLevel) then
+        tinsert(dst, { "itemLevel" })
+    end
+    if (src.achievementPoints and not hasAchievementPoints) then
+        tinsert(dst, { "achievementPoints" })
     end
     return dst
 end
@@ -218,6 +240,385 @@ local function GetMythicPlusScore(unit)
             return score, color, bestLevel
         end
     end
+end
+
+local INSPECT_CACHE_TTL = 900
+local INSPECT_REQUEST_INTERVAL = 1.2
+addon.inspectState = addon.inspectState or {
+    cache = {},
+    pendingGUID = nil,
+    pendingUnit = nil,
+    lastRequestAt = 0,
+    suspendedUntil = 0,
+}
+
+local ACHIEVEMENT_CACHE_TTL = 900
+local ACHIEVEMENT_REQUEST_INTERVAL = 1.2
+addon.achievementInspectState = addon.achievementInspectState or {
+    cache = {},
+    pendingGUID = nil,
+    lastRequestAt = 0,
+    suspendedUntil = 0,
+}
+local achievementSummaryGuardInstalled = false
+
+local function EnsureAchievementComparisonSummaryGuard()
+    if (achievementSummaryGuardInstalled) then return end
+    if (type(AchievementFrameComparison_UpdateStatusBars) ~= "function") then return end
+    local original = AchievementFrameComparison_UpdateStatusBars
+    AchievementFrameComparison_UpdateStatusBars = function(id, ...)
+        if (id == "summary") then
+            return
+        end
+        return original(id, ...)
+    end
+    achievementSummaryGuardInstalled = true
+end
+
+local function GetCachedInspectItemLevel(unit)
+    local state = addon.inspectState
+    if (not state or not state.cache or not unit or not UnitGUID) then return end
+    local guid = UnitGUID(unit)
+    if (not guid) then return end
+    local cached = state.cache[guid]
+    if (not cached or type(cached.level) ~= "number" or type(cached.time) ~= "number") then return end
+    local now = GetTime and GetTime() or 0
+    if ((now - cached.time) > INSPECT_CACHE_TTL) then
+        state.cache[guid] = nil
+        return
+    end
+    return cached.level
+end
+
+local function CacheInspectItemLevel(guid, level)
+    if (not guid or type(level) ~= "number" or level <= 0) then return end
+    local state = addon.inspectState
+    if (not state or not state.cache) then return end
+    state.cache[guid] = {
+        level = floor(level + 0.5),
+        time = GetTime and GetTime() or 0,
+    }
+end
+
+local function GetCachedAchievementPoints(unit)
+    local state = addon.achievementInspectState
+    if (not state or not state.cache or not unit or not UnitGUID) then return end
+    local guid = UnitGUID(unit)
+    if (not guid) then return end
+    local cached = state.cache[guid]
+    if (not cached or type(cached.points) ~= "number" or type(cached.time) ~= "number") then return end
+    local now = GetTime and GetTime() or 0
+    if ((now - cached.time) > ACHIEVEMENT_CACHE_TTL) then
+        state.cache[guid] = nil
+        return
+    end
+    return cached.points
+end
+
+local function CacheAchievementPoints(guid, points)
+    if (not guid or type(points) ~= "number" or points < 0) then return end
+    local state = addon.achievementInspectState
+    if (not state or not state.cache) then return end
+    state.cache[guid] = {
+        points = floor(points + 0.5),
+        time = GetTime and GetTime() or 0,
+    }
+end
+
+local function GetUnitItemLevel(unit)
+    local function SafeCall(fn, ...)
+        local ok, a, b, c = pcall(fn, ...)
+        if ok then return a, b, c end
+    end
+    if (not unit or not UnitIsPlayer or not SafeCall(UnitIsPlayer, unit)) then return end
+
+    if (UnitIsUnit and SafeCall(UnitIsUnit, unit, "player") and GetAverageItemLevel) then
+        local average, equipped = SafeCall(GetAverageItemLevel)
+        if (type(equipped) == "number" and equipped > 0) then
+            return equipped
+        end
+        if (type(average) == "number" and average > 0) then
+            return average
+        end
+    end
+
+    local cachedInspectLevel = GetCachedInspectItemLevel(unit)
+    if (type(cachedInspectLevel) == "number" and cachedInspectLevel > 0) then
+        return cachedInspectLevel
+    end
+
+    if (C_PaperDollInfo and C_PaperDollInfo.GetInspectItemLevel) then
+        local inspectLevel = SafeCall(C_PaperDollInfo.GetInspectItemLevel, unit)
+        if (type(inspectLevel) == "number" and inspectLevel > 0) then
+            if (UnitGUID) then
+                CacheInspectItemLevel(UnitGUID(unit), inspectLevel)
+            end
+            return inspectLevel
+        end
+    end
+end
+
+local function GetUnitAchievementPoints(unit)
+    local function SafeCall(fn, ...)
+        local ok, a, b, c = pcall(fn, ...)
+        if ok then return a, b, c end
+    end
+    if (not unit) then return end
+
+    local isSelf = false
+    if (UnitGUID) then
+        local unitGUID = SafeCall(UnitGUID, unit)
+        local playerGUID = SafeCall(UnitGUID, "player")
+        if (unitGUID and playerGUID and unitGUID == playerGUID) then
+            isSelf = true
+        end
+    end
+    if ((not isSelf) and UnitIsUnit and SafeCall(UnitIsUnit, unit, "player")) then
+        isSelf = true
+    end
+
+    if (isSelf) then
+        local points = SafeCall(GetTotalAchievementPoints)
+        if (type(points) == "number" and points >= 0) then
+            return points
+        end
+    end
+
+    if (not SafeCall(UnitIsPlayer, unit)) then return end
+
+    local cachedPoints = GetCachedAchievementPoints(unit)
+    if (type(cachedPoints) == "number" and cachedPoints >= 0) then
+        return cachedPoints
+    end
+
+    -- Other players are filled asynchronously via INSPECT_ACHIEVEMENT_READY cache.
+end
+
+function addon:RequestInspectItemLevel(unit)
+    local function SafeBool(fn, ...)
+        local ok, value = pcall(fn, ...)
+        if (ok and value == true) then
+            return true
+        end
+        return false
+    end
+    if (not unit or not NotifyInspect or not CanInspect) then return end
+    if (not SafeBool(UnitExists, unit)) then return end
+    if (not SafeBool(UnitIsPlayer, unit)) then return end
+    if (SafeBool(UnitIsUnit, unit, "player")) then return end
+    if (not SafeBool(CanInspect, unit)) then return end
+
+    local guid = UnitGUID and UnitGUID(unit)
+    if (not guid) then return end
+
+    local state = self.inspectState
+    if (not state) then return end
+    local now = GetTime and GetTime() or 0
+    if ((state.suspendedUntil or 0) > now) then
+        return
+    end
+    if (InspectFrame and InspectFrame.IsShown and InspectFrame:IsShown()) then
+        return
+    end
+    local cached = state.cache and state.cache[guid]
+    if (cached and cached.time and (now - cached.time) <= INSPECT_CACHE_TTL) then
+        return
+    end
+    if (state.pendingGUID == guid) then
+        return
+    end
+    if ((now - (state.lastRequestAt or 0)) < INSPECT_REQUEST_INTERVAL) then
+        return
+    end
+
+    local ok = pcall(NotifyInspect, unit)
+    if (ok) then
+        state.pendingGUID = guid
+        state.pendingUnit = unit
+        state.lastRequestAt = now
+    end
+end
+
+function addon:RequestInspectAchievementPoints(unit)
+    local function SafeBool(fn, ...)
+        local ok, value = pcall(fn, ...)
+        if (ok and value == true) then
+            return true
+        end
+        return false
+    end
+    if (not unit) then return end
+    if (not SafeBool(UnitExists, unit)) then return end
+    if (not SafeBool(UnitIsPlayer, unit)) then return end
+    if (SafeBool(UnitIsUnit, unit, "player")) then return end
+    if (not SafeBool(CanInspect, unit)) then return end
+
+    local guid = UnitGUID and UnitGUID(unit)
+    if (not guid) then return end
+    local playerGUID = UnitGUID and UnitGUID("player")
+    if (playerGUID and guid == playerGUID) then return end
+
+    local state = self.achievementInspectState
+    if (not state) then return end
+    local now = GetTime and GetTime() or 0
+    if ((state.suspendedUntil or 0) > now) then
+        return
+    end
+    local cached = state.cache and state.cache[guid]
+    if (cached and cached.time and (now - cached.time) <= ACHIEVEMENT_CACHE_TTL) then
+        return
+    end
+    if (state.pendingGUID == guid) then
+        return
+    end
+    if ((now - (state.lastRequestAt or 0)) < ACHIEVEMENT_REQUEST_INTERVAL) then
+        return
+    end
+
+    EnsureAchievementComparisonSummaryGuard()
+
+    if (AchievementFrameComparison and AchievementFrameComparison.UnregisterEvent) then
+        pcall(AchievementFrameComparison.UnregisterEvent, AchievementFrameComparison, "INSPECT_ACHIEVEMENT_READY")
+    end
+    if (AchievementFrame and AchievementFrame.isComparison) then
+        return
+    end
+    if (ClearAchievementComparisonUnit) then
+        pcall(ClearAchievementComparisonUnit)
+    end
+
+    local ok, result = pcall(SetAchievementComparisonUnit, unit)
+    if (ok) then
+        if (result ~= false) then
+            state.pendingGUID = guid
+            state.lastRequestAt = now
+        end
+    end
+end
+
+local function GetUnitGuidSafe(unit)
+    if (not unit or not UnitExists or not UnitGUID) then return end
+    local okExists, exists = pcall(UnitExists, unit)
+    if (not okExists or not exists) then return end
+    local okGuid, value = pcall(UnitGUID, unit)
+    if (okGuid) then
+        return value
+    end
+end
+
+local function SafeGuidEquals(left, right)
+    if (not left or not right) then
+        return false
+    end
+    local ok, same = pcall(function()
+        return left == right
+    end)
+    return ok and same == true
+end
+
+local function ResolveAsyncTooltipRefreshUnit(guid)
+    if (not guid or not GameTooltip or not GameTooltip.IsShown or not GameTooltip:IsShown()) then
+        return
+    end
+
+    local mouseoverGuid = GetUnitGuidSafe("mouseover")
+    if (SafeGuidEquals(mouseoverGuid, guid)) then
+        return "mouseover"
+    end
+    local currentGuid = GameTooltip._tinyUnitGUID
+    if (SafeGuidEquals(currentGuid, guid)) then
+        return false
+    end
+end
+
+do
+    local inspectEventFrame = CreateFrame("Frame")
+    inspectEventFrame:RegisterEvent("INSPECT_READY")
+    inspectEventFrame:SetScript("OnEvent", function(_, event, guid)
+        if (event ~= "INSPECT_READY" or not guid) then return end
+        local state = addon.inspectState
+        if (not state) then return end
+        if (not SafeGuidEquals(guid, state.pendingGUID)) then return end
+
+        local unit
+        if (state.pendingUnit and SafeGuidEquals(GetUnitGuidSafe(state.pendingUnit), guid)) then
+            unit = state.pendingUnit
+        elseif (SafeGuidEquals(GetUnitGuidSafe("mouseover"), guid)) then
+            unit = "mouseover"
+        elseif (SafeGuidEquals(GetUnitGuidSafe("target"), guid)) then
+            unit = "target"
+        end
+
+        if (unit and C_PaperDollInfo and C_PaperDollInfo.GetInspectItemLevel) then
+            local ok, inspectLevel = pcall(C_PaperDollInfo.GetInspectItemLevel, unit)
+            if (ok and type(inspectLevel) == "number" and inspectLevel > 0) then
+                CacheInspectItemLevel(guid, inspectLevel)
+            end
+        end
+
+        if (ClearInspectPlayer and (not InspectFrame or not InspectFrame.IsShown or not InspectFrame:IsShown())) then
+            pcall(ClearInspectPlayer)
+        end
+        state.pendingGUID = nil
+        state.pendingUnit = nil
+
+        local refreshUnit = ResolveAsyncTooltipRefreshUnit(guid)
+        if (refreshUnit) then
+            LibEvent:trigger("tooltip:unit", GameTooltip, refreshUnit)
+        elseif (refreshUnit == false) then
+            pcall(GameTooltip.Hide, GameTooltip)
+        end
+    end)
+
+    if (InspectUnit and hooksecurefunc) then
+        hooksecurefunc("InspectUnit", function()
+            local s = addon.inspectState
+            if (not s) then return end
+            local now = GetTime and GetTime() or 0
+            s.suspendedUntil = now + 3
+            s.pendingGUID = nil
+            s.pendingUnit = nil
+            local a = addon.achievementInspectState
+            if (a) then
+                a.suspendedUntil = now + 3
+                a.pendingGUID = nil
+            end
+        end)
+    end
+end
+
+do
+    local achievementEventFrame = CreateFrame("Frame")
+    achievementEventFrame:RegisterEvent("INSPECT_ACHIEVEMENT_READY")
+    achievementEventFrame:SetScript("OnEvent", function(_, event, guid)
+        if (event ~= "INSPECT_ACHIEVEMENT_READY") then return end
+        local state = addon.achievementInspectState
+        if (not state or not state.pendingGUID) then return end
+        if (guid and not SafeGuidEquals(guid, state.pendingGUID)) then return end
+
+        local resolvedGUID = guid or state.pendingGUID
+
+        local points
+        local ok, value = pcall(GetComparisonAchievementPoints)
+        if (ok and type(value) == "number" and value >= 0) then
+            points = value
+        end
+        if (type(points) == "number" and points >= 0) then
+            CacheAchievementPoints(resolvedGUID, points)
+        end
+
+        if (ClearAchievementComparisonUnit) then
+            pcall(ClearAchievementComparisonUnit)
+        end
+        state.pendingGUID = nil
+
+        local refreshUnit = ResolveAsyncTooltipRefreshUnit(resolvedGUID)
+        if (refreshUnit) then
+            LibEvent:trigger("tooltip:unit", GameTooltip, refreshUnit)
+        elseif (refreshUnit == false) then
+            pcall(GameTooltip.Hide, GameTooltip)
+        end
+    end)
 end
 
 --字符型数字键转为数字键
@@ -586,6 +987,9 @@ function addon:GetUnitInfo(unit)
     local classif = SafeCall(UnitClassification, unit)
     local role = SafeCall(UnitGroupRolesAssigned, unit)
     local mplusScore, mplusColor, mplusBest = GetMythicPlusScore(unit)
+    local isPlayer = SafeBool(UnitIsPlayer, unit)
+    local itemLevel = isPlayer and GetUnitItemLevel(unit)
+    local achievementPoints = isPlayer and GetUnitAchievementPoints(unit)
 
     t.raidIcon     = self:GetRaidIcon(unit)
     t.pvpIcon      = self:GetPVPIcon(unit)
@@ -601,6 +1005,8 @@ function addon:GetUnitInfo(unit)
     t.gender       = self:GetGender(gender)
     t.realm        = realm or GetRealmName()
     t.levelValue   = (type(level) == "number" and level >= 0) and level or "??"
+    t.itemLevel = isPlayer and ((type(itemLevel) == "number" and itemLevel > 0) and floor(itemLevel + 0.5) or "??") or nil
+    t.achievementPoints = isPlayer and ((type(achievementPoints) == "number" and achievementPoints >= 0) and floor(achievementPoints + 0.5) or "??") or nil
     t.className    = className
     t.raceName     = raceName
     t.guildName    = guildName
@@ -617,7 +1023,7 @@ function addon:GetUnitInfo(unit)
     t.classifBoss  = (level==-1 or classif == "worldboss") and BOSS
     t.classifElite = classif == "elite" and ELITE
     t.classifRare  = (classif == "rare" or classif == "rareelite") and RARE
-    t.isPlayer     = SafeBool(UnitIsPlayer, unit) and PLAYER
+    t.isPlayer     = isPlayer and PLAYER
     t.moveSpeed    = self:GetUnitSpeed(unit)
     t.zone         = self:GetZone(unit, t.name, t.realm)
     local label = self.L and self.L["Mythic+ Score"] or "M+ Score"
@@ -667,10 +1073,18 @@ function addon:CheckFilter(config, raw)
 end
 
 -- 格式化數據
-function addon:FormatData(value, config, raw)
+function addon:FormatData(value, config, raw, numericValue)
     local color, wildcard = config.color, config.wildcard
+    local prevNumericValue
+    if (raw and numericValue ~= nil) then
+        prevNumericValue = raw._numericColorValue
+        raw._numericColorValue = numericValue
+    end
     if (self.colorfunc[color]) then
         color = select(4, self.colorfunc[color](raw))
+    end
+    if (raw and numericValue ~= nil) then
+        raw._numericColorValue = prevNumericValue
     end
     if (color == "" or color == "default" or color == "none") then
         return (wildcard):format(value)
@@ -715,16 +1129,64 @@ function addon:GetUnitData(unit, elements, raw)
                         tinsert(data[i], format("%s %s", label, nameText))
                     end
                 end
+            elseif (e == "itemLevel") then
+                if (self:CheckFilter(config, raw) and raw.itemLevel) then
+                    local labelText = (self.L and self.L.ItemLevel) or "ItemLevel"
+                    local labelPart = format("|cffffd100%s:|r", labelText)
+                    local itemLevelValue = raw.itemLevel
+                    local valuePart
+                    if (tostring(itemLevelValue) == "??") then
+                        local unknownText = "??"
+                        if (config and config.wildcard) then
+                            local ok, formatted = pcall(function()
+                                return (config.wildcard):format("??")
+                            end)
+                            if (ok and type(formatted) == "string" and formatted ~= "") then
+                                unknownText = formatted
+                            end
+                        end
+                        valuePart = "|cff999999" .. unknownText .. "|r"
+                    elseif (config and config.color and config.wildcard) then
+                        valuePart = self:FormatData(raw.itemLevel, config, raw, raw.itemLevel)
+                    else
+                        valuePart = tostring(itemLevelValue)
+                    end
+                    tinsert(data[i], format("%s %s", labelPart, valuePart))
+                end
+            elseif (e == "achievementPoints") then
+                if (self:CheckFilter(config, raw) and raw.achievementPoints ~= nil) then
+                    local labelText = (self.L and self.L.Achievement) or "Achievement"
+                    local labelPart = format("|cffffd100%s:|r", labelText)
+                    local pointValue = raw.achievementPoints
+                    local valuePart
+                    if (tostring(pointValue) == "??") then
+                        local unknownText = "??"
+                        if (config and config.wildcard) then
+                            local ok, formatted = pcall(function()
+                                return (config.wildcard):format("??")
+                            end)
+                            if (ok and type(formatted) == "string" and formatted ~= "") then
+                                unknownText = formatted
+                            end
+                        end
+                        valuePart = "|cff999999" .. unknownText .. "|r"
+                    elseif (config and config.color and config.wildcard) then
+                        valuePart = self:FormatData(pointValue, config, raw, pointValue)
+                    else
+                        valuePart = tostring(pointValue)
+                    end
+                    tinsert(data[i], format("%s %s", labelPart, valuePart))
+                end
             elseif (self:CheckFilter(config, raw) and raw[e]) then
                 if (e == "name") then name = #data[i]+1 end   --name位置
                 if (e == "title") then title = #data[i]+1 end --title位置
                 if (config.color and config.wildcard) then
                     if (e == "title" and name == #data[i] and raw.titleIsPrefix) then
-                        tinsert(data[i], name, self:FormatData(raw[e], config, raw))
+                        tinsert(data[i], name, self:FormatData(raw[e], config, raw, raw[e]))
                     elseif (e == "name" and title == #data[i] and not raw.titleIsPrefix) then
-                        tinsert(data[i], title, self:FormatData(raw[e], config, raw))
+                        tinsert(data[i], title, self:FormatData(raw[e], config, raw, raw[e]))
                     else
-                        tinsert(data[i], self:FormatData(raw[e], config, raw))
+                        tinsert(data[i], self:FormatData(raw[e], config, raw, raw[e]))
                     end
                 else
                     tinsert(data[i], raw[e])
@@ -770,6 +1232,25 @@ addon.colorfunc.mplus = function(raw)
     local c = raw and raw.mplusScoreColor
     if (c and c.r and c.g and c.b) then
         return c.r, c.g, c.b, addon:GetHexColor(c.r, c.g, c.b)
+    end
+    return 1, 1, 1, "ffffff"
+end
+
+addon.colorfunc.itemLevel = function(raw)
+    local value = raw and tonumber(raw._numericColorValue or raw.itemLevel)
+    if (not value) then
+        return 0.6, 0.6, 0.6, "999999"
+    end
+    local color
+    if (value >= 233) then
+        color = ITEM_QUALITY_COLORS[4]
+    elseif (value >= 220) then
+        color = ITEM_QUALITY_COLORS[3]
+    elseif (value >= 0) then
+        color = ITEM_QUALITY_COLORS[2]
+    end
+    if (color and color.r and color.g and color.b) then
+        return color.r, color.g, color.b, addon:GetHexColor(color)
     end
     return 1, 1, 1, "ffffff"
 end
