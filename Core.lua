@@ -66,7 +66,7 @@ local function ResolveMacroPayload(tooltip, macroId)
     if (spellId) then
         return spellId
     end
-    if (type(macroId) == "number" and GetMacroSpell) then
+    if (type(macroId) == "number" and type(GetMacroSpell) == "function") then
         local okMacro, a, b, c = pcall(GetMacroSpell, macroId)
         if (okMacro) then
             spellId = ResolveSpellIdFromSpellToken(a) or ResolveSpellIdFromSpellToken(b) or ResolveSpellIdFromSpellToken(c)
@@ -75,7 +75,7 @@ local function ResolveMacroPayload(tooltip, macroId)
             end
         end
     end
-    if (type(macroId) == "number" and GetMacroItem) then
+    if (type(macroId) == "number" and type(GetMacroItem) == "function") then
         local okItem, macroItem = pcall(GetMacroItem, macroId)
         if (okItem and macroItem) then
             local okInfo, _, itemLink = pcall(GetItemInfo, macroItem)
@@ -89,22 +89,53 @@ local function ResolveMacroPayload(tooltip, macroId)
     end
 end
 
-local function ResolveActionPayload(tooltip, actionSlot)
-    if (type(actionSlot) ~= "number" or not GetActionInfo) then return end
-    local okAction, actionType, actionId = pcall(GetActionInfo, actionSlot)
-    if (not okAction) then return end
-    if (actionType == "spell") then
-        local spellId = ResolveSpellIdFromSpellToken(actionId)
+local function ResolveTooltipSpellId(tooltip)
+    if (not tooltip or type(tooltip.GetSpell) ~= "function") then return end
+    local okSpell, _, spellToken = pcall(tooltip.GetSpell, tooltip)
+    if (okSpell) then
+        local spellId = ResolveSpellIdFromSpellToken(spellToken)
         if (spellId) then
             return spellId
         end
-    elseif (actionType == "item" and actionId) then
-        local okInfo, _, itemLink = pcall(GetItemInfo, actionId)
-        if (okInfo and type(itemLink) == "string" and itemLink ~= "") then
-            return nil, itemLink
+    end
+    return ResolveMacroSpellIdFromTooltip(tooltip)
+end
+
+local function ResolveTooltipItemLink(tooltip)
+    if (not tooltip or type(tooltip.GetItem) ~= "function") then return end
+    local okItem, _, itemLink = pcall(tooltip.GetItem, tooltip)
+    if (okItem and type(itemLink) == "string" and itemLink ~= "") then
+        return itemLink
+    end
+end
+
+local function ResolveActionPayload(tooltip, actionSlot)
+    if (type(actionSlot) == "number" and type(GetActionInfo) == "function") then
+        local okAction, actionType, actionId = pcall(GetActionInfo, actionSlot)
+        if (okAction and actionType == "spell") then
+            local spellId = ResolveSpellIdFromSpellToken(actionId)
+            if (spellId) then
+                return spellId
+            end
+        elseif (okAction and actionType == "item" and actionId) then
+            local okInfo, _, itemLink = pcall(GetItemInfo, actionId)
+            if (okInfo and type(itemLink) == "string" and itemLink ~= "") then
+                return nil, itemLink
+            end
+        elseif (okAction and actionType == "macro") then
+            return ResolveMacroPayload(tooltip, actionId)
         end
-    elseif (actionType == "macro") then
-        return ResolveMacroPayload(tooltip, actionId)
+    end
+
+    -- Some action kinds (e.g. mount/flyout style actions) don't provide a direct spell id via GetActionInfo.
+    -- In those cases, read the resolved tooltip payload after SetAction has populated it.
+    local tooltipSpellId = ResolveTooltipSpellId(tooltip)
+    if (tooltipSpellId) then
+        return tooltipSpellId
+    end
+    local tooltipItemLink = ResolveTooltipItemLink(tooltip)
+    if (tooltipItemLink) then
+        return nil, tooltipItemLink
     end
 end
 
@@ -1384,6 +1415,51 @@ local NINE_SLICE_BORDER_PARTS = {
     "RightEdge",
 }
 
+local function IsNoBorderCorner(corner)
+    if (type(corner) ~= "string") then return false end
+    local lowered = string.lower(corner)
+    return lowered == "none" or lowered == "off" or lowered == "disabled"
+end
+
+local function ShouldHideNativeNineSliceBorder(corner)
+    if (IsNoBorderCorner(corner)) then
+        return true
+    end
+    if (corner == "angular") then
+        return true
+    end
+    if (corner ~= "default" and LibMedia and LibMedia:IsValid("border", corner)) then
+        return true
+    end
+    return false
+end
+
+local function SetNineSliceBorderShown(tip, shown)
+    local ns = tip and tip.NineSlice
+    if (not ns) then return end
+    if (ns.SetBorderShown) then
+        pcall(ns.SetBorderShown, ns, shown)
+    end
+    if (ns.SetBorderVisible) then
+        pcall(ns.SetBorderVisible, ns, shown)
+    end
+    for _, regionName in ipairs(NINE_SLICE_BORDER_PARTS) do
+        local region = ns[regionName]
+        if (region) then
+            if (region.SetShown) then
+                pcall(region.SetShown, region, shown)
+            elseif (shown and region.Show) then
+                pcall(region.Show, region)
+            elseif (not shown and region.Hide) then
+                pcall(region.Hide, region)
+            end
+            if (region.SetAlpha) then
+                pcall(region.SetAlpha, region, shown and 1 or 0)
+            end
+        end
+    end
+end
+
 local function CopyBackdropInfo(src)
     if (CopyTable) then
         return CopyTable(src)
@@ -1601,28 +1677,60 @@ local function ApplyBorderCorner(tip, corner)
     EnsureNativeStyleData(tip)
     local backdrop = GetStyleBackdrop(tip)
     if (not backdrop) then return end
-    tip._tinyBorderCorner = corner or "default"
+    if (type(corner) == "string" and corner ~= "") then
+        tip._tinyBorderCorner = corner
+    else
+        tip._tinyBorderCorner = "default"
+    end
+    local insets = backdrop.insets
+    if (type(insets) ~= "table") then
+        insets = {}
+        backdrop.insets = insets
+    end
     if (tip._tinyBorderCorner == "angular") then
         local size = tonumber(tip._tinyBorderSize) or 1
         backdrop.edgeFile = "Interface\\Buttons\\WHITE8X8"
         backdrop.edgeSize = size
-        backdrop.insets.top = size
-        backdrop.insets.left = size
-        backdrop.insets.right = size
-        backdrop.insets.bottom = size
+        insets.top = size
+        insets.left = size
+        insets.right = size
+        insets.bottom = size
         local mask = EnsureStyleMask(tip)
         if (mask) then
             mask:ClearAllPoints()
             mask:SetPoint("TOPLEFT", 1, -1)
             mask:SetPoint("BOTTOMRIGHT", tip, "TOPRIGHT", -1, -32)
         end
-    elseif (LibMedia and LibMedia:IsValid("border", tip._tinyBorderCorner)) then
-        backdrop.edgeFile = LibMedia:Fetch("border", tip._tinyBorderCorner)
-        backdrop.edgeSize = 14
-        backdrop.insets.top = 3
-        backdrop.insets.left = 3
-        backdrop.insets.right = 3
-        backdrop.insets.bottom = 3
+    elseif (IsNoBorderCorner(tip._tinyBorderCorner)) then
+        backdrop.edgeFile = nil
+        backdrop.edgeSize = 0
+        insets.top = 0
+        insets.left = 0
+        insets.right = 0
+        insets.bottom = 0
+        local mask = EnsureStyleMask(tip)
+        if (mask) then
+            mask:ClearAllPoints()
+            mask:SetPoint("TOPLEFT", 0, 0)
+            mask:SetPoint("BOTTOMRIGHT", tip, "TOPRIGHT", 0, -32)
+        end
+    elseif (tip._tinyBorderCorner ~= "default" and LibMedia and LibMedia:IsValid("border", tip._tinyBorderCorner)) then
+        local mediaBorder = LibMedia:Fetch("border", tip._tinyBorderCorner)
+        if (mediaBorder and mediaBorder ~= "") then
+            backdrop.edgeFile = mediaBorder
+            backdrop.edgeSize = 14
+            insets.top = 3
+            insets.left = 3
+            insets.right = 3
+            insets.bottom = 3
+        else
+            backdrop.edgeFile = nil
+            backdrop.edgeSize = 0
+            insets.top = 0
+            insets.left = 0
+            insets.right = 0
+            insets.bottom = 0
+        end
         local mask = EnsureStyleMask(tip)
         if (mask) then
             mask:ClearAllPoints()
@@ -1632,10 +1740,10 @@ local function ApplyBorderCorner(tip, corner)
     else
         backdrop.edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border"
         backdrop.edgeSize = 14
-        backdrop.insets.top = 3
-        backdrop.insets.left = 3
-        backdrop.insets.right = 3
-        backdrop.insets.bottom = 3
+        insets.top = 3
+        insets.left = 3
+        insets.right = 3
+        insets.bottom = 3
         local mask = EnsureStyleMask(tip)
         if (mask) then
             mask:ClearAllPoints()
@@ -1651,6 +1759,7 @@ local function ApplyNativeBackdrop(tip)
     SyncGlobalBackgroundFile(tip)
     local hasBackdropSupport = EnsureBackdropSupport(tip)
     local hasNineSliceBackdrop = tip.NineSlice and tip.NineSlice.SetBackdrop
+    local shouldHideNativeNineSliceBorder = ShouldHideNativeNineSliceBorder(tip._tinyBorderCorner)
     if (tip._tinyApplyingNativeBackdrop) then return false end
     tip._tinyApplyingNativeBackdrop = true
 
@@ -1677,6 +1786,7 @@ local function ApplyNativeBackdrop(tip)
         if (tip.NineSlice.SetBackdropBorderColor) then
             pcall(tip.NineSlice.SetBackdropBorderColor, tip.NineSlice, rr, gg, bb, aa)
         end
+        SetNineSliceBorderShown(tip, not shouldHideNativeNineSliceBorder)
     end
     TintNineSliceBackground(tip)
     TintNineSliceBorder(tip, rr, gg, bb, aa)
@@ -1945,7 +2055,7 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
                     or getterName == "GetUnitBuffByAuraInstanceID"
                     or getterName == "GetUnitAuraByAuraInstanceID"
             end
-            local isMacro = SafeEquals(flag, 25) or getterName == "GetAction" or getterName == "GetMacro"
+            local isMacro = getterName == "GetMacro"
             --0 物品
             if (SafeEquals(flag, 0)) then
                 local link
@@ -1977,18 +2087,10 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
             --25 宏命令
             elseif (isMacro) then
                 local macroSpellId, macroItemLink
-                if (getterName == "GetAction" and info.tooltipData and type(info.tooltipData.id) == "number") then
-                    macroSpellId, macroItemLink = ResolveActionPayload(self, info.tooltipData.id)
-                elseif (getterName == "GetMacro" and info.tooltipData and type(info.tooltipData.id) == "number") then
+                if (info.tooltipData and type(info.tooltipData.id) == "number") then
                     macroSpellId, macroItemLink = ResolveMacroPayload(self, info.tooltipData.id)
                 else
-                    local owner = self.GetOwner and self:GetOwner()
-                    local actionSlot = owner and owner.action
-                    if (type(actionSlot) == "number") then
-                        macroSpellId, macroItemLink = ResolveActionPayload(self, actionSlot)
-                    else
-                        macroSpellId, macroItemLink = ResolveMacroPayload(self)
-                    end
+                    macroSpellId, macroItemLink = ResolveMacroPayload(self)
                 end
                 if (macroItemLink) then
                     LibEvent:trigger("tooltip:item", self, macroItemLink)
@@ -2115,7 +2217,7 @@ hooksecurefunc("GameTooltip_SetDefaultAnchor", function(self, parent)
     LibEvent:trigger("tooltip:anchor", self, parent)
 end)
 
-if (GameTooltip and GameTooltip.SetAction and GetActionInfo) then
+if (GameTooltip and type(GameTooltip.SetAction) == "function") then
     hooksecurefunc(GameTooltip, "SetAction", function(tooltip, slot)
         local spellId, itemLink = ResolveActionPayload(tooltip, slot)
         if (itemLink) then
@@ -2126,7 +2228,7 @@ if (GameTooltip and GameTooltip.SetAction and GetActionInfo) then
     end)
 end
 
-if (GameTooltip and GameTooltip.SetMacro) then
+if (GameTooltip and type(GameTooltip.SetMacro) == "function") then
     hooksecurefunc(GameTooltip, "SetMacro", function(tooltip, macroId)
         local spellId, itemLink = ResolveMacroPayload(tooltip, macroId)
         if (itemLink) then

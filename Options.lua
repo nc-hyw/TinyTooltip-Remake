@@ -1130,7 +1130,7 @@ widgets.filterDropdata = {"none","ininstance","incombat","inraid","samerealm","s
 widgets.colorDropdata = {"default","class","level","reaction","itemQuality","selection","faction",}
 widgets.numericColorDropdata = {"default","class","level","reaction","itemQuality","selection","faction","itemLevel",}
 widgets.bgfileDropdata = {"gradual","dark","alpha","rock","marble",}
-widgets.borderDropdata = {"default","angular",}
+widgets.borderDropdata = {"default","angular","none",}
 widgets.fontDropdata = {"default", "ChatFontNormal", "GameFontNormal", "QuestFont", "CombatLogFont",}
 widgets.barDropdata = {"Interface\\AddOns\\"..addonName.."\\texture\\StatusBar",}
 
