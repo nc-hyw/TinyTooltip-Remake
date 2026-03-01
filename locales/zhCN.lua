@@ -67,8 +67,8 @@ local T = {
     ["unit.player.elements.guildRank"]      = "公会阶级名称",
     ["unit.player.elements.guildRealm"]     = "公会服务器",
     ["unit.player.elements.levelValue"]     = "等级",
-    ["unit.player.elements.itemLevelLabel"] = "物品等级前缀",
     ["unit.player.elements.itemLevel"]      = "物品等级",
+    ["unit.player.elements.achievementPoints"] = "成就点数",
     ["unit.player.elements.factionName"]    = "阵营",
     ["unit.player.elements.gender"]         = "性别",
     ["unit.player.elements.raceName"]       = "种族",
@@ -161,6 +161,7 @@ local T = {
     
     ["TargetBy"] = "被关注",
     ["ItemLevel"] = "物品等级",
+    ["Achievement"] = "成就",
     ["unit.player.elements.mount"] = "坐骑",
     ["mount"] = "坐骑",
     ["Mount"] = "坐骑",
