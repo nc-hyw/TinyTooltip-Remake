@@ -8,7 +8,17 @@ Due to how TinyTooltip was disgned, gem and slot icon on item display may not be
 When anchor point selected to bottom and set to anchor to mouse, custom is not allowed as 
 it will causing jittering due to anchor competition with blizzard UI system
 
-I will try to rebuilt this addon entireley if I have the time and after the game become stable.  
+## [v1.3.0] - 2026-03-01
+New Feature:
+- Now you can get achivement points in tooltip
+- Now you can get equipped item level in tooltip
+
+Fix:
+- Refactored how tooltip style is applied to solve numerous error
+- Added compatability support for DialogueUI
+- Fxied an issue where macro does not display icon, spell id and icon id
+- Fixed an issue where if Blizzard is reporting incorrect item quality the border quality will be coloured incorrect too.
+
 ## [v1.2.0] - 2026-02-06
 New Feature:
 - Now id info also shows iconID and spellID, itemID has been localized in simplified Chinese
