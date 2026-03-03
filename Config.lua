@@ -21,7 +21,7 @@ addon.db = {
         statusbarPercent  = true,                  --HP百分比
         statusbarHide     = false,                  --隱藏狀態條
         statusbarColor    = "auto",                 --HP顔色 default|auto|smooth
-        statusbarTexture  = "Interface\\AddOns\\TinyTooltip\\texture\\StatusBar", --HP材質
+        statusbarTexture  = "Interface\\AddOns\\TinyTooltip-Remake\\texture\\StatusBar", --HP材質
         anchor            = { position = "cursorRight", hiddenInCombat = false, returnInCombat = true, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", }, --鼠標位置 default|cursor|static|cursorRight
         alwaysShowIdInfo  = true,
         skinMoreFrames    = true,
