@@ -692,16 +692,40 @@ end
 --自动调整宽度
 function addon:AutoSetTooltipWidth(tooltip)
     local width, w = 80
+    local measuredLines = 0
+    local totalLines = tooltip:NumLines()
+    local currentMinWidth
+    if (tooltip.GetMinimumWidth) then
+        local okMin, minValue = pcall(tooltip.GetMinimumWidth, tooltip)
+        if (okMin and type(minValue) == "number" and not (issecretvalue and issecretvalue(minValue))) then
+            currentMinWidth = minValue
+        end
+    end
     for i = 1, tooltip:NumLines() do
         local line = _G[tooltip:GetName() .. "TextLeft" .. i]
         local ok, value = pcall(function()
-            return line and line:GetWidth()
+            if (not line) then return end
+            local frameWidth
+            if (line.GetWidth) then
+                frameWidth = line:GetWidth()
+            end
+            if (type(frameWidth) == "number" and not (issecretvalue and issecretvalue(frameWidth))) then
+                return frameWidth
+            end
+            local strWidth
+            if (line.GetStringWidth) then
+                strWidth = line:GetStringWidth()
+            end
+            if (type(strWidth) == "number" and not (issecretvalue and issecretvalue(strWidth))) then
+                return strWidth
+            end
         end)
         if (ok) then
             local okType, isNum = pcall(function()
                 return type(value) == "number"
             end)
-            if (okType and isNum) then
+            if (okType and isNum and not (issecretvalue and issecretvalue(value))) then
+                measuredLines = measuredLines + 1
                 local okMax, newWidth = pcall(function()
                     return max(width, value)
                 end)
@@ -712,6 +736,20 @@ function addon:AutoSetTooltipWidth(tooltip)
         end
     end
     width = width + 6
+    local showFactionBig = false
+    if (tooltip and tooltip.BigFactionIcon and tooltip.BigFactionIcon.IsShown) then
+        local okShown, isShown = pcall(tooltip.BigFactionIcon.IsShown, tooltip.BigFactionIcon)
+        showFactionBig = okShown and isShown == true
+    end
+    if (showFactionBig) then
+        width = width + 30
+    end
+    if (measuredLines == 0) then
+        return currentMinWidth or width
+    end
+    if (measuredLines < totalLines and type(currentMinWidth) == "number") then
+        width = max(width, currentMinWidth)
+    end
     tooltip:SetMinimumWidth(width)
     tooltip:Show()
     return width
