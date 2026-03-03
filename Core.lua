@@ -1573,10 +1573,6 @@ local function TintNineSliceBackground(tip)
     local r, g, b, a = GetStyleBackdropColor(tip)
     local alpha = min(1, max(0, tonumber(a) or 1))
     local tintR, tintG, tintB = r, g, b
-    -- Preserve texture detail when color is pure black.
-    if (math.abs(tonumber(r) or 0) <= 0.001 and math.abs(tonumber(g) or 0) <= 0.001 and math.abs(tonumber(b) or 0) <= 0.001) then
-        tintR, tintG, tintB = 1, 1, 1
-    end
 
     local center = ns.Center
     if (not center) then
