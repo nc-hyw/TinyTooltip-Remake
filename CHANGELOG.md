@@ -8,6 +8,10 @@ Due to how TinyTooltip was disgned, gem and slot icon on item display may not be
 When anchor point selected to bottom and set to anchor to mouse, custom is not allowed as 
 it will causing jittering due to anchor competition with blizzard UI system
 
+
+## [v1.3.2] - 2026-03-03
+- Fixed issue that incorrectly colouring LibOtip pure black background tooltip to grey
+
 ## [v1.3.1] - 2026-03-02
 - Fixed issues that mouseover to native random mount macro will crash the game
 - Fixed issues that system  border will always be displayed 
