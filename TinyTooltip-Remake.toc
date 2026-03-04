@@ -19,6 +19,7 @@ Target.lua
 Item.lua
 Spell.lua
 Quest.lua
+ChatHover.lua
 LinkID.lua
 Mount.lua
 SkinFrames.lua

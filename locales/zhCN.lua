@@ -29,7 +29,11 @@ local T = {
     ["general.anchor.returnInCombat"]       = "战斗时固定至默认位置",
     ["general.anchor.hiddenInCombat"]       = "战斗时隐藏",
     ["general.anchor.returnOnUnitFrame"]    = "单位框体时固定至默认位置",
-    ["general.alwaysShowIdInfo"]            = "始终显示id信息(关闭后按住alt/shift显示)",
+    ["general.alwaysShowIdInfo"]            = "始终显示id信息",
+    ["general.alwaysShowIdInfo.short"]       = "始终显示ID信息",
+    ["general.alwaysShowIdInfo.hint"]        = "关闭后按住ALT/SHIFT显示",
+    ["general.idInfoMode.spellItem"]        = "显示法术/物品ID",
+    ["general.idInfoMode.icon"]             = "显示图标ID",
     ["general.skinMoreFrames"]              = "样式应用于更多框架 |cffcccc33(重载生效)|r",
     ["general.SavedVariablesPerCharacter"]  = "为每个角色保存独立配置",
     ["general.hideUnitFrameHint"]            = "隐藏头像框右键设置提示",
@@ -199,6 +203,8 @@ local T = {
     ["id.spell"]                            = "法术ID",
     ["id.icon"]                             = "图标ID",
     ["id.maxStack"]                         = "最大堆叠数",
+    ["id.display.none"]                     = "无",
+    ["id.display.both"]                     = "全部",
 }
 for k, v in pairs(T) do
     L[k] = v
