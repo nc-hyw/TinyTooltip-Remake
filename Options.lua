@@ -236,6 +236,11 @@ local function RefreshWidget(widget, config)
     local t = config.type
     if (t == "checkbox") then
         widget:SetChecked(GetVariable(config.keystring))
+    elseif (t == "idinfo") then
+        widget.checkbox:SetChecked(GetVariable(config.keystring))
+        if (widget._updateIdInfoLayout) then
+            widget:_updateIdInfoLayout()
+        end
     elseif (t == "slider") then
         local v = GetVariable(config.keystring) or 0
         widget:SetValue(v)
@@ -318,11 +323,167 @@ end
 function widgets:checkbox(parent, config, labelText)
     local frame = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
     frame.keystring = config.keystring
-    frame.tooltipText = labelText or L[config.keystring]
+    local text = labelText or L[config.keystring]
+    frame.tooltipText = text
+    if (config.keystring == "general.alwaysShowIdInfo") then
+        text = labelText or L["general.alwaysShowIdInfo.short"] or L[config.keystring]
+        frame.tooltipText = L["general.alwaysShowIdInfo.hint"] or "If disabled, hold SHIFT/ALT to display."
+        frame:HookScript("OnEnter", function(self)
+            if (self.tooltipText and self.tooltipText ~= "") then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText(self.tooltipText, 1, 1, 1, 1)
+                GameTooltip:Show()
+            end
+        end)
+        frame:HookScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+    end
     frame.Text:SetWidth(0)
-    frame.Text:SetText(labelText or L[config.keystring])
+    frame.Text:SetText(text)
     frame:SetChecked(GetVariable(config.keystring))
     frame:SetScript("OnClick", function(self) SetVariable(self.keystring, self:GetChecked()) end)
+    return frame
+end
+
+function widgets:idinfo(parent, config)
+    local frame = CreateFrame("Frame", nil, parent)
+    local parentWidth = parent and parent.anchor and parent.anchor:GetWidth()
+    frame:SetSize(parentWidth or 400, LAYOUT.ROW_HEIGHT)
+    frame.checkbox = self:checkbox(frame, {keystring = config.keystring}, L[config.keystring])
+    -- Keep the right-side dropdown aligned with other dropdown rows,
+    -- while restoring the checkbox/text column alignment with normal checkbox rows.
+    frame.checkbox:SetPoint("LEFT", 15, 0)
+
+    frame.optionButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    frame.optionButton:SetSize(220, 22)
+    frame.optionButton:SetPoint("RIGHT", frame, "RIGHT", -10, -1)
+    if (frame.optionButton.Text) then
+        frame.optionButton.Text:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+        frame.optionButton.Text:ClearAllPoints()
+        frame.optionButton.Text:SetPoint("LEFT", 10, 0)
+        frame.optionButton.Text:SetPoint("RIGHT", -22, 0)
+        frame.optionButton.Text:SetJustifyH("LEFT")
+    end
+    frame.optionButton.arrow = frame.optionButton:CreateTexture(nil, "ARTWORK")
+    frame.optionButton.arrow:SetSize(16, 16)
+    frame.optionButton.arrow:SetPoint("RIGHT", -6, 0)
+    frame.optionButton.arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+    frame.optionButton.arrow:SetTexCoord(0, 1, 0, 1)
+
+    frame.optionPanel = CreateFrame("Frame", nil, frame, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    frame.optionPanel:SetBackdrop({
+        bgFile   = "Interface\\Tooltips\\UI-Tooltip-Background",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12,
+        insets   = {left = 4, right = 4, top = 4, bottom = 4},
+    })
+    frame.optionPanel:SetBackdropColor(0, 0, 0, 0.85)
+    frame.optionPanel:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.8)
+    frame.optionPanel:SetPoint("TOPLEFT", frame.optionButton, "BOTTOMLEFT", 0, -2)
+    frame.optionPanel:SetPoint("TOPRIGHT", frame.optionButton, "BOTTOMRIGHT", 0, -2)
+    frame.optionPanel:SetFrameStrata("DIALOG")
+    frame.optionPanel:SetFrameLevel(frame:GetFrameLevel() + 10)
+    frame.optionPanel:Hide()
+
+    frame.checkboxSpellItem = CreateFrame("CheckButton", nil, frame.optionPanel, "InterfaceOptionsCheckButtonTemplate")
+    frame.checkboxSpellItem.Text:SetWidth(0)
+    frame.checkboxSpellItem.Text:SetText(L["general.idInfoMode.spellItem"] or "Show Spell/Item ID")
+    frame.checkboxSpellItem:SetPoint("TOPLEFT", 8, -6)
+    frame.checkboxIcon = CreateFrame("CheckButton", nil, frame.optionPanel, "InterfaceOptionsCheckButtonTemplate")
+    frame.checkboxIcon.Text:SetWidth(0)
+    frame.checkboxIcon.Text:SetText(L["general.idInfoMode.icon"] or "Show Icon ID")
+    frame.checkboxIcon:SetPoint("TOPLEFT", frame.checkboxSpellItem, "BOTTOMLEFT", 0, -6)
+
+    local modeKey = config.modeKeystring
+    local function GetModeTable()
+        local mode = GetVariable(modeKey)
+        if (type(mode) ~= "table") then
+            mode = {}
+        end
+        if (mode.spellItem == nil) then mode.spellItem = true end
+        if (mode.icon == nil) then mode.icon = true end
+        return mode
+    end
+    local function SetModeValue(key, enabled)
+        local mode = GetModeTable()
+        mode[key] = enabled and true or false
+        SetVariable(modeKey, mode)
+    end
+
+    local function UpdateOptionSummary()
+        local mode = GetModeTable()
+        local selections = {}
+        if (mode.spellItem) then
+            tinsert(selections, L["general.idInfoMode.spellItem"] or "Show Spell/Item ID")
+        end
+        if (mode.icon) then
+            tinsert(selections, L["general.idInfoMode.icon"] or "Show Icon ID")
+        end
+        local summary
+        if (#selections == 0) then
+            summary = L["id.display.none"] or L["dropdown.none"] or NONE
+        elseif (#selections == 2) then
+            summary = L["id.display.both"] or table.concat(selections, ", ")
+        else
+            summary = selections[1]
+        end
+        local text = summary
+        local fontString = frame.optionButton.Text
+        if (fontString and frame.optionButton.GetWidth) then
+            local maxWidth = frame.optionButton:GetWidth() - 36
+            if (maxWidth < 40) then maxWidth = 40 end
+            local function TruncateToFit(value)
+                fontString:SetText(value)
+                if (fontString:GetStringWidth() <= maxWidth) then
+                    return value
+                end
+                local ellipsis = "..."
+                local low, high = 0, #value
+                while (low < high) do
+                    local mid = math.floor((low + high) / 2)
+                    local candidate = value:sub(1, mid) .. ellipsis
+                    fontString:SetText(candidate)
+                    if (fontString:GetStringWidth() <= maxWidth) then
+                        low = mid + 1
+                    else
+                        high = mid
+                    end
+                end
+                local finalLen = math.max(0, low - 1)
+                return value:sub(1, finalLen) .. ellipsis
+            end
+            text = TruncateToFit(text)
+        end
+        frame.optionButton:SetText(text)
+    end
+
+    local function UpdatePanelLayout()
+        local mode = GetModeTable()
+        frame.checkboxSpellItem:SetChecked(mode.spellItem)
+        frame.checkboxIcon:SetChecked(mode.icon)
+        UpdateOptionSummary()
+        frame.optionPanel:SetHeight((LAYOUT.ROW_HEIGHT * 2) + 10)
+        frame.optionPanel:SetWidth(frame.optionButton:GetWidth())
+        frame:SetHeight(LAYOUT.ROW_HEIGHT)
+    end
+
+    frame.checkboxSpellItem:SetScript("OnClick", function(self)
+        SetModeValue("spellItem", self:GetChecked())
+        UpdatePanelLayout()
+    end)
+    frame.checkboxIcon:SetScript("OnClick", function(self)
+        SetModeValue("icon", self:GetChecked())
+        UpdatePanelLayout()
+    end)
+    frame.optionButton:SetScript("OnClick", function()
+        frame.optionPanel:SetShown(not frame.optionPanel:IsShown())
+        UpdatePanelLayout()
+    end)
+
+    frame:HookScript("OnShow", UpdatePanelLayout)
+    frame._updateIdInfoLayout = UpdatePanelLayout
+    UpdatePanelLayout()
     return frame
 end
 
@@ -1160,6 +1321,7 @@ LAYOUT = {
     OFFSET_X = {
         checkbox = 0, colorpick = 5, slider = 15,
         dropdown = -15, dropdownslider = -15, anchor = -15,
+        idinfo = -15,
         element = 0,
     },
     -- Variables / DIY 面板
@@ -1196,7 +1358,7 @@ local options = {
         { keystring = "item.coloredItemBorder",     type = "checkbox" },
         { keystring = "item.showItemIcon",          type = "checkbox" },
         { keystring = "quest.coloredQuestBorder",   type = "checkbox" },
-        { keystring = "general.alwaysShowIdInfo",   type = "checkbox" },
+        { keystring = "general.alwaysShowIdInfo",   type = "idinfo", modeKeystring = "general.idInfoDisplay", dropdata = {"spellItem", "icon"} },
         { keystring = "general.SavedVariablesPerCharacter",   type = "checkbox" },
         { keystring = "general.hideUnitFrameHint",  type = "checkbox" },
     },
