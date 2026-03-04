@@ -8,7 +8,11 @@ local T = {
     ["general.statusbarOffsetY"] = "Statusbar Offset Y (0:Default)",
     ["general.statusbarPercent"] = "Show Health Percentage",
     ["general.statusbarHide"]   = "Hide Status Bar",
-    ["general.alwaysShowIdInfo"] = "Always Show Id Info (Otherwise hold down SHIFT/ALT)",
+    ["general.alwaysShowIdInfo"] = "Always Show ID Info",
+    ["general.alwaysShowIdInfo.short"] = "Always Show ID Info",
+    ["general.alwaysShowIdInfo.hint"] = "If disabled, hold SHIFT/ALT to display.",
+    ["general.idInfoMode.spellItem"] = "Show Spell/Item ID",
+    ["general.idInfoMode.icon"] = "Show Icon ID",
     ["general.skinMoreFrames"]   = "Skin More Frames |cffcccc33(need to /reload)|r",
     ["general.hideUnitFrameHint"] = "Hide Unit Frame Right-Click Setup Hint",
     ["dropdown.inherit"]        = "|cffffee00inherit|r",
@@ -69,6 +73,8 @@ local T = {
     ["id.spell"]                = "Spell ID",
     ["id.icon"]                 = "Icon ID",
     ["id.maxStack"]             = "Max Stack Count",
+    ["id.display.none"]         = "None",
+    ["id.display.both"]         = "All",
 }   
 for k, v in pairs(T) do
     L[k] = v

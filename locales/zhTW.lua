@@ -27,7 +27,11 @@ local T = {
     ["general.anchor.returnInCombat"]       = "戰鬥時固定",
     ["general.anchor.hiddenInCombat"]       = "戰鬥時隱藏",
     ["general.anchor.returnOnUnitFrame"]    = "UnitFrame上固定",
-    ["general.alwaysShowIdInfo"]            = "始終顯示id信息(關閉後按住alt/shift顯示)",
+    ["general.alwaysShowIdInfo"]            = "始終顯示ID信息",
+    ["general.alwaysShowIdInfo.short"]      = "始終顯示ID信息",
+    ["general.alwaysShowIdInfo.hint"]       = "關閉後按住ALT/SHIFT顯示",
+    ["general.idInfoMode.spellItem"]        = "顯示法術/物品ID",
+    ["general.idInfoMode.icon"]             = "顯示圖標ID",
     ["general.skinMoreFrames"]              = "樣式應用于更多框架 |cffcccc33(重載生效)|r",
     ["general.SavedVariablesPerCharacter"]  = "為每個角色保存獨立配置",
     ["general.hideUnitFrameHint"]            = "隱藏頭像框右鍵設置提示",
@@ -160,6 +164,8 @@ local T = {
     ["menu.spell"] = "法術",
     ["menu.font"] = "字體",
     ["menu.variables"] = "變量",
+    ["id.display.none"] = "無",
+    ["id.display.both"] = "全部",
     
 }
 for k, v in pairs(T) do
