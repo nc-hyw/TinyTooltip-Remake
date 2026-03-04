@@ -24,6 +24,29 @@ local function ShowId(tooltip, name, value, noBlankLine)
     end
 end
 
+local function IsIdInfoDisplayEnabled(key)
+    if (IsShiftKeyDown() or IsControlKeyDown() or IsAltKeyDown()) then
+        -- Modifier reveal should always show all ID info, ignoring filter dropdown.
+        return true
+    end
+    local general = addon and addon.db and addon.db.general
+    if (not general or not general.alwaysShowIdInfo) then
+        -- When "always show" is off, SHIFT/ALT reveal should always show all ID info.
+        return true
+    end
+    local display = general and general.idInfoDisplay
+    if (type(display) ~= "table") then
+        return true
+    end
+    if (display.spellItem == nil and display.icon == nil) then
+        return true
+    end
+    if (display[key] == nil) then
+        return true
+    end
+    return display[key] and true or false
+end
+
 local function GetSpellIconId(spellId)
     if (not spellId or not C_Spell or not C_Spell.GetSpellTexture) then return end
     local icon = C_Spell.GetSpellTexture(spellId)
@@ -50,9 +73,11 @@ end
 
 local function ShowSpellInfo(tooltip, spellId)
     if (not spellId) then return end
-    ShowId(tooltip, L["id.spell"] or "Spell ID", spellId)
+    if (IsIdInfoDisplayEnabled("spellItem")) then
+        ShowId(tooltip, L["id.spell"] or "Spell ID", spellId)
+    end
     local iconId = GetSpellIconId(spellId)
-    if (iconId) then
+    if (iconId and IsIdInfoDisplayEnabled("icon")) then
         ShowId(tooltip, L["id.icon"] or "Icon ID", iconId, true)
     end
 end
@@ -60,13 +85,15 @@ end
 local function ShowItemInfo(tooltip, linkOrId)
     if (not linkOrId) then return end
     local _, itemId = ParseHyperLink(linkOrId)
-    ShowId(tooltip, L["id.item"] or "Item ID", itemId)
+    if (IsIdInfoDisplayEnabled("spellItem")) then
+        ShowId(tooltip, L["id.item"] or "Item ID", itemId)
+    end
     local iconId = GetItemIconId(linkOrId)
-    if (iconId) then
+    if (iconId and IsIdInfoDisplayEnabled("icon")) then
         ShowId(tooltip, L["id.icon"] or "Icon ID", iconId, true)
     end
     local maxStack = GetItemMaxStack(linkOrId)
-    if (maxStack) then
+    if (maxStack and IsIdInfoDisplayEnabled("spellItem")) then
         ShowId(tooltip, L["id.maxStack"] or "Max Stack Count", maxStack, true)
     end
 end

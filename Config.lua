@@ -24,6 +24,7 @@ addon.db = {
         statusbarTexture  = "Interface\\AddOns\\TinyTooltip-Remake\\texture\\StatusBar", --HP材質
         anchor            = { position = "cursorRight", hiddenInCombat = false, returnInCombat = true, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", }, --鼠標位置 default|cursor|static|cursorRight
         alwaysShowIdInfo  = true,
+        idInfoDisplay     = { spellItem = true, icon = true, },
         skinMoreFrames    = true,
         headerFont        = "default",
         headerFontSize    = "default",
