@@ -8,6 +8,20 @@ Due to how TinyTooltip was disgned, gem and slot icon on item display may not be
 When anchor point selected to bottom and set to anchor to mouse, custom is not allowed as 
 it will causing jittering due to anchor competition with blizzard UI system
 
+Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.
+
+## [v1.4.0] - 2026-03-06
+New Feature: 
+ - Added Expansion information in item tooltip
+ - Added Quick Focus feature, this feature is defaulted to be off
+
+Other Improvements: 
+ - Changed how chat frame tooltip was anchored
+        Now it will always anchored to mourse cursor as it is more reasonable
+- Refactored Item and Spell setting page so that you have more freedom to decided what should be turned on and what should be turned off
+
+- Improved how setting profile was merged when new features was introduced
+
 ## [v1.3.3] - 2026-03-04
 - Added new setting menue for spell/item/icon id display
 - Added feature to direct generate toollink from chat frame

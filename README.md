@@ -20,6 +20,9 @@ This remake version which based on original TinyTooltip will be carry on for oth
 ### Achivements Poitns:
 - You can check player's achivements points in your tooltip now
 
+### Quick Focus
+- Now you can quickly set a target to focus when you click them with a mod key pressed
+
 ## Comming Soon:
 - These features will be implemented in the future (sooner then you expected)
     Best Mythic+ Run Dungeon
