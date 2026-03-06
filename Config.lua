@@ -24,7 +24,6 @@ addon.db = {
         statusbarTexture  = "Interface\\AddOns\\TinyTooltip-Remake\\texture\\StatusBar", --HP材質
         anchor            = { position = "cursorRight", hiddenInCombat = false, returnInCombat = true, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", }, --鼠標位置 default|cursor|static|cursorRight
         alwaysShowIdInfo  = true,
-        idInfoDisplay     = { spellItem = true, icon = true, },
         skinMoreFrames    = true,
         headerFont        = "default",
         headerFontSize    = "default",
@@ -114,13 +113,21 @@ addon.db = {
         },
     },
     item = {
+        modifierShowAll = false,
         coloredItemBorder = true,  --邊框按品質染色
-        showItemIcon = false,      --物品圖標
+        showItemIcon = true,       --物品圖標
+        showItemId = true,
+        showItemMaxStack = true,
+        showItemIconId = true,
+        showItemExpansion = true,
     },
     spell = {
         borderColor = {0.6, 0.6, 0.6, 0.8},
         background = {0, 0, 0, 0.8},
+        modifierShowAll = false,
         showIcon = true,
+        showSpellId = true,
+        showSpellIconId = true,
     },
     quest = {
         coloredQuestBorder = true,  --任務按等差染色

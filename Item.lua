@@ -56,47 +56,45 @@ local function ItemStackCount(tip, itemInfo)
 end
 
 LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
-    if (addon.db and addon.db.general) then
-        LibEvent:trigger("tooltip.style.bgfile", tip, addon.db.general.bgfile)
-        if (addon.db.general.background) then
-            LibEvent:trigger("tooltip.style.background", tip, unpack(addon.db.general.background))
-        end
-        LibEvent:trigger("tooltip.style.border.corner", tip, addon.db.general.borderCorner)
-        if (addon.db.general.borderCorner == "angular") then
-            LibEvent:trigger("tooltip.style.border.size", tip, addon.db.general.borderSize)
-        end
+    local general = addon.db.general
+    LibEvent:trigger("tooltip.style.bgfile", tip, general.bgfile)
+    if (general.background) then
+        LibEvent:trigger("tooltip.style.background", tip, unpack(general.background))
+    end
+    LibEvent:trigger("tooltip.style.border.corner", tip, general.borderCorner)
+    if (general.borderCorner == "angular") then
+        LibEvent:trigger("tooltip.style.border.size", tip, general.borderSize)
     end
 
     if (tip and not (tip.IsForbidden and tip:IsForbidden())) then
         local isModifierDown = IsShiftKeyDown() or IsControlKeyDown() or IsAltKeyDown()
-        local general = addon and addon.db and addon.db.general
-        if (isModifierDown or (general and general.alwaysShowIdInfo)) then
-            local shouldShowSpellItem = true
-            if (not isModifierDown and general and general.alwaysShowIdInfo) then
-                local display = general.idInfoDisplay
-                if (type(display) == "table" and not (display.spellItem == nil and display.icon == nil) and display.spellItem ~= nil) then
-                    shouldShowSpellItem = display.spellItem and true or false
+        local showAllByModifier = addon.db.item.modifierShowAll
+        local showItemExpansion = addon.db.item.showItemExpansion
+        if (isModifierDown) then
+            if (not showAllByModifier) then
+                showItemExpansion = false
+            else
+                showItemExpansion = true
+            end
+        end
+        if (showItemExpansion) then
+            local itemLink = link or (tip and select(2, tip:GetItem()))
+            local _, _, _, _, _, _, _, _, _, _, _, _, _, _, expacId = GetItemInfo(itemLink)
+            local expansionName
+            if (type(expacId) == "number") then
+                expansionName = _G["EXPANSION_NAME" .. expacId]
+                if (type(expansionName) ~= "string" or expansionName == "") then
+                    expansionName = tostring(expacId)
                 end
             end
-            if (shouldShowSpellItem) then
-                local itemLink = link or (tip and select(2, tip:GetItem()))
-                local _, _, _, _, _, _, _, _, _, _, _, _, _, _, expacId = GetItemInfo(itemLink)
-                local expansionName
-                if (type(expacId) == "number") then
-                    expansionName = _G["EXPANSION_NAME" .. expacId]
-                    if (type(expansionName) ~= "string" or expansionName == "") then
-                        expansionName = tostring(expacId)
-                    end
+            local expansionLabel = L["id.expansion"] or "Expansion"
+            if (expansionName and not addon:FindLine(tip, expansionLabel)) then
+                local itemLabel = L["id.item"] or "Item ID"
+                if (not addon:FindLine(tip, itemLabel)) then
+                    tip:AddLine(" ")
                 end
-                local expansionLabel = L["id.expansion"] or "Expansion"
-                if (expansionName and not addon:FindLine(tip, expansionLabel)) then
-                    local itemLabel = L["id.item"] or "Item ID"
-                    if (not addon:FindLine(tip, itemLabel)) then
-                        tip:AddLine(" ")
-                    end
-                    tip:AddLine(format("%s: |cffffffff%s|r", expansionLabel, expansionName), 0, 1, 0.8)
-                    tip:Show()
-                end
+                tip:AddLine(format("%s: |cffffffff%s|r", expansionLabel, expansionName), 0, 1, 0.8)
+                tip:Show()
             end
         end
     end

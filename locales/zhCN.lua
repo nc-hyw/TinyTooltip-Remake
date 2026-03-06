@@ -41,7 +41,12 @@ local T = {
     ["quickfocus.help"]                      = "按住修饰键并点击目标以设置焦点，按住修饰键并点击空白处以取消焦点。(点击单位框架时该功能无效)",
     
     ["item.coloredItemBorder"]              = "物品边框染色",
+    ["item.modifierShowAll"]                = "按住任意修饰键显示所有信息",
     ["item.showItemIcon"]                   = "显示物品图标",
+    ["item.showItemId"]                     = "显示物品ID",
+    ["item.showItemMaxStack"]               = "显示最大堆叠数",
+    ["item.showItemIconId"]                 = "显示物品图标ID",
+    ["item.showItemExpansion"]              = "显示资料片",
     ["quest.coloredQuestBorder"]            = "任务边框染色",
     
     ["unit.player.anchor.position"]         = "框架锚点",
@@ -110,7 +115,10 @@ local T = {
     
     ["spell.background"]                    = "背景顔色",
     ["spell.borderColor"]                   = "边框颜色",
+    ["spell.modifierShowAll"]               = "按住任意修饰键显示所有信息",
     ["spell.showIcon"]                      = "法术图标",
+    ["spell.showSpellId"]                   = "显示法术ID",
+    ["spell.showSpellIconId"]               = "显示法术图标ID",
     ["Mythic+ Score"]                       = "史诗钥石评分",
     
     ["dropdown.inherit"]        = "|cffffee00继承全局|r",
@@ -180,6 +188,7 @@ local T = {
     ["menu.player"] = "玩家",
     ["menu.npc"] = "NPC",
     ["menu.statusbar"] = "状态条",
+    ["menu.item"] = "物品",
     ["menu.spell"] = "法术",
     ["menu.font"] = "字体",
     ["menu.variables"] = "变量",
