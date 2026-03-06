@@ -62,6 +62,10 @@ As I am interested in maintaining this project from now on and adding more featu
 ### 成就点数（Achievements Points）：
 - 现在你可以在鼠标提示（Tooltip）中查看玩家的成就点数。
 
+### 快速焦点：
+- 现在你可以按住修饰键的同时点击一个目标以将其设置为焦点
+
+
 ## 即将推出：
 - 以下功能将在未来实现（也许比你预期的要快）：
     最佳大秘境地下城

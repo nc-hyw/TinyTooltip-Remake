@@ -9,6 +9,9 @@ When anchor point selected to bottom and set to anchor to mouse, custom is not a
 it will causing jittering due to anchor competition with blizzard UI system
 
 Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.
+## [v1.4.1] - 2026-03-06
+- Fixed: Disabled aggresive setting clean function to solve some setting will be reset after reload
+
 
 ## [v1.4.0] - 2026-03-06
 New Feature: 
