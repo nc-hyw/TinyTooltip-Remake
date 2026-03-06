@@ -201,6 +201,12 @@ addon.bgs = {
 
 --配置 (对elements鍵的值进行合并校验,不含factionBig,npcTitle键)
 local function AutoValidateElements(src, dst)
+    for k in pairs(dst) do
+        if (not src[k]) then
+            dst[k] = nil
+        end
+    end
+
     local keys = {}
     local hasItemLevel = false
     local hasAchievementPoints = false
@@ -230,9 +236,10 @@ local function AutoValidateElements(src, dst)
     end
     for k, v in pairs(src) do
         if (type(k) ~= "number" and not dst[k]) then
-            dst[k] = v
+            dst[k] = (type(v) == "table") and CopyTable(v) or v
             if (k == "factionBig" or k == "npcTitle" or k == "itemLevel" or k == "achievementPoints") then
             elseif (not keys[k]) then
+                if (not dst[1]) then dst[1] = {} end
                 tinsert(dst[1], 1, k)
             end
         end
@@ -676,13 +683,23 @@ end
 
 -- 配置合併
 function addon:MergeVariable(src, dst)
-    dst.version = src.version
+    if (type(src) ~= "table") then return dst end
+    if (type(dst) ~= "table") then
+        return CopyTable(src)
+    end
+
+    for k in pairs(dst) do
+        if (src[k] == nil) then
+            dst[k] = nil
+        end
+    end
+
     for k, v in pairs(src) do
         if (dst[k] == nil) then
-            dst[k] = v
-        elseif (type(dst[k]) == "table" and k~="elements") then
+            dst[k] = (type(v) == "table") and CopyTable(v) or v
+        elseif (type(v) == "table" and type(dst[k]) == "table" and k~="elements") then
             self:MergeVariable(v, dst[k])
-        elseif (type(dst[k]) == "table" and k=="elements") then
+        elseif (type(v) == "table" and type(dst[k]) == "table" and k=="elements") then
             dst[k] = AutoValidateElements(v, dst[k])
         end
     end
