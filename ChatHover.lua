@@ -8,6 +8,8 @@ local supportedHyperlinkTypes = {
     currency = true,
     enchant = true,
     item = true,
+    journal = true,
+    mount = true,
     quest = true,
     spell = true,
 }
@@ -30,14 +32,15 @@ local function OnHyperlinkEnter(frame, link, text)
     -- Clear any previous tooltip state before showing chat-link tooltips.
     GameTooltip:Hide()
 
-    if (GameTooltip_SetDefaultAnchor) then
-        GameTooltip_SetDefaultAnchor(GameTooltip, frame)
-    else
-        GameTooltip:SetOwner(UIParent, "ANCHOR_CURSOR")
-    end
+    -- All chat-link tooltips should anchor at cursor.
+    GameTooltip._tinySkipCustomAnchor = true
+    GameTooltip:SetOwner(frame or UIParent, "ANCHOR_CURSOR")
 
     if (linkType == "battlepet" and BattlePetToolTip_ShowLink and BattlePetTooltip) then
         showingTooltip = BattlePetTooltip
+        if (BattlePetTooltip.SetOwner) then
+            pcall(BattlePetTooltip.SetOwner, BattlePetTooltip, frame or UIParent, "ANCHOR_CURSOR")
+        end
         BattlePetToolTip_ShowLink(text)
         return
     end
@@ -47,6 +50,7 @@ local function OnHyperlinkEnter(frame, link, text)
     if (ok) then
         GameTooltip:Show()
     else
+        GameTooltip._tinySkipCustomAnchor = nil
         showingTooltip = nil
     end
 end
@@ -55,6 +59,7 @@ local function OnHyperlinkLeave()
     if (showingTooltip and showingTooltip.Hide) then
         showingTooltip:Hide()
     end
+    GameTooltip._tinySkipCustomAnchor = nil
     showingTooltip = nil
 end
 
