@@ -201,28 +201,20 @@ addon.bgs = {
 
 --配置 (对elements鍵的值进行合并校验,不含factionBig,npcTitle键)
 local function AutoValidateElements(src, dst)
-    for k in pairs(dst) do
-        if (not src[k]) then
-            dst[k] = nil
-        end
-    end
-
     local keys = {}
     local hasItemLevel = false
     local hasAchievementPoints = false
     for k, v in ipairs(dst) do
         keys[k] = true
         for i = #v, 1, -1 do
-            if (not src[v[i]]) then
-                tremove(v, i)
-            elseif (v[i] == "itemLevel") then
+            if (v[i] == "itemLevel" and src.itemLevel) then
                 if (hasItemLevel) then
                     tremove(v, i)
                 else
                     hasItemLevel = true
                     keys[v[i]] = true
                 end
-            elseif (v[i] == "achievementPoints") then
+            elseif (v[i] == "achievementPoints" and src.achievementPoints) then
                 if (hasAchievementPoints) then
                     tremove(v, i)
                 else
@@ -686,12 +678,6 @@ function addon:MergeVariable(src, dst)
     if (type(src) ~= "table") then return dst end
     if (type(dst) ~= "table") then
         return CopyTable(src)
-    end
-
-    for k in pairs(dst) do
-        if (src[k] == nil) then
-            dst[k] = nil
-        end
     end
 
     for k, v in pairs(src) do
