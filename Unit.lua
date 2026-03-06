@@ -437,3 +437,54 @@ end
 
 addon.ColorUnitBorder = ColorBorder
 addon.ColorUnitBackground = ColorBackground
+
+-- Quick Focus
+local quickFocusBindingFrame = CreateFrame("Frame")
+local quickFocusActionButton = CreateFrame("Button", "TinyTooltipQuickFocusButton", UIParent, "SecureActionButtonTemplate")
+local quickFocusPendingUpdate
+
+quickFocusActionButton:RegisterForClicks("AnyDown")
+quickFocusActionButton:SetAttribute("type1", "macro")
+quickFocusActionButton:SetAttribute("macrotext1", "/focus [@mouseover,exists]\n/clearfocus [@mouseover,noexists]")
+
+local function ApplyQuickFocusBinding()
+    if (InCombatLockdown()) then
+        quickFocusPendingUpdate = true
+        return
+    end
+    quickFocusPendingUpdate = nil
+    ClearOverrideBindings(quickFocusBindingFrame)
+    local general = addon and addon.db and addon.db.general
+    local mod = general and general.quickFocusModKey or "none"
+    local binding
+    if (mod == "alt") then
+        binding = "ALT-BUTTON1"
+    elseif (mod == "ctrl") then
+        binding = "CTRL-BUTTON1"
+    elseif (mod == "shift") then
+        binding = "SHIFT-BUTTON1"
+    end
+    if (binding and SetOverrideBindingClick) then
+        SetOverrideBindingClick(quickFocusBindingFrame, true, binding, "TinyTooltipQuickFocusButton", "LeftButton")
+    end
+end
+
+quickFocusBindingFrame:RegisterEvent("PLAYER_LOGIN")
+quickFocusBindingFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+quickFocusBindingFrame:SetScript("OnEvent", function(_, event)
+    if (event == "PLAYER_LOGIN") then
+        ApplyQuickFocusBinding()
+    elseif (event == "PLAYER_REGEN_ENABLED" and quickFocusPendingUpdate) then
+        ApplyQuickFocusBinding()
+    end
+end)
+
+LibEvent:attachTrigger("tooltip:variables:loaded", function()
+    ApplyQuickFocusBinding()
+end)
+
+LibEvent:attachTrigger("tooltip:variable:changed", function(self, keystring)
+    if (keystring == "general.quickFocusModKey") then
+        ApplyQuickFocusBinding()
+    end
+end)

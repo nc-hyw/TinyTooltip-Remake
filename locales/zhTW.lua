@@ -35,6 +35,8 @@ local T = {
     ["general.skinMoreFrames"]              = "樣式應用于更多框架 |cffcccc33(重載生效)|r",
     ["general.SavedVariablesPerCharacter"]  = "為每個角色保存獨立配置",
     ["general.hideUnitFrameHint"]            = "隱藏頭像框右鍵設置提示",
+    ["general.quickFocusModKey"]             = "快速焦點修飾鍵",
+    ["quickfocus.help"]                      = "按住修飾鍵並點擊目標以設置焦點，按住修飾鍵並點擊空白處以取消焦點。(點擊單位框架時該功能無效)",
     
     ["item.coloredItemBorder"]              = "物品邊框染色",
     ["item.showItemIcon"]                   = "顯示物品圖標",
