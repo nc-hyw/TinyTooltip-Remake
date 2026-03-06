@@ -34,6 +34,7 @@ addon.db = {
         bodyFontFlag      = "default",
         SavedVariablesPerCharacter = false,
         hideUnitFrameHint = true,                  --隐藏头像框右键设置提示
+        quickFocusModKey = "none",                 --快速焦点修饰键 none|alt|ctrl|shift
     },
     unit = {
         player = {
