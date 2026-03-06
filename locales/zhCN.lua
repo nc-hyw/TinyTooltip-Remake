@@ -207,6 +207,7 @@ local T = {
     ["id.item"]                             = "物品ID",
     ["id.spell"]                            = "法术ID",
     ["id.icon"]                             = "图标ID",
+    ["id.expansion"]                        = "资料片",
     ["id.maxStack"]                         = "最大堆叠数",
     ["id.display.none"]                     = "无",
     ["id.display.both"]                     = "全部",

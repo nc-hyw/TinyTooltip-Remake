@@ -77,6 +77,7 @@ local T = {
     ["id.item"]                 = "Item ID",
     ["id.spell"]                = "Spell ID",
     ["id.icon"]                 = "Icon ID",
+    ["id.expansion"]            = "Expansion",
     ["id.maxStack"]             = "Max Stack Count",
     ["id.display.none"]         = "None",
     ["id.display.both"]         = "All",

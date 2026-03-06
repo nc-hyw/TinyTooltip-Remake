@@ -86,7 +86,8 @@ local function ShowItemInfo(tooltip, linkOrId)
     if (not linkOrId) then return end
     local _, itemId = ParseHyperLink(linkOrId)
     if (IsIdInfoDisplayEnabled("spellItem")) then
-        ShowId(tooltip, L["id.item"] or "Item ID", itemId)
+        local hasExpansionLine = addon:FindLine(tooltip, L["id.expansion"] or "Expansion")
+        ShowId(tooltip, L["id.item"] or "Item ID", itemId, hasExpansionLine and true or false)
     end
     local iconId = GetItemIconId(linkOrId)
     if (iconId and IsIdInfoDisplayEnabled("icon")) then

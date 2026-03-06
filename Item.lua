@@ -2,6 +2,7 @@
 local LibEvent = LibStub:GetLibrary("LibEvent.7000")
 
 local addon = TinyTooltip
+local L = addon.L or {}
 
 local function GetItemInfoFromLink(linkOrId)
     local name, link, quality, _, _, _, _, stackCount, _, texture = GetItemInfo(linkOrId)
@@ -65,6 +66,41 @@ LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
             LibEvent:trigger("tooltip.style.border.size", tip, addon.db.general.borderSize)
         end
     end
+
+    if (tip and not (tip.IsForbidden and tip:IsForbidden())) then
+        local isModifierDown = IsShiftKeyDown() or IsControlKeyDown() or IsAltKeyDown()
+        local general = addon and addon.db and addon.db.general
+        if (isModifierDown or (general and general.alwaysShowIdInfo)) then
+            local shouldShowSpellItem = true
+            if (not isModifierDown and general and general.alwaysShowIdInfo) then
+                local display = general.idInfoDisplay
+                if (type(display) == "table" and not (display.spellItem == nil and display.icon == nil) and display.spellItem ~= nil) then
+                    shouldShowSpellItem = display.spellItem and true or false
+                end
+            end
+            if (shouldShowSpellItem) then
+                local itemLink = link or (tip and select(2, tip:GetItem()))
+                local _, _, _, _, _, _, _, _, _, _, _, _, _, _, expacId = GetItemInfo(itemLink)
+                local expansionName
+                if (type(expacId) == "number") then
+                    expansionName = _G["EXPANSION_NAME" .. expacId]
+                    if (type(expansionName) ~= "string" or expansionName == "") then
+                        expansionName = tostring(expacId)
+                    end
+                end
+                local expansionLabel = L["id.expansion"] or "Expansion"
+                if (expansionName and not addon:FindLine(tip, expansionLabel)) then
+                    local itemLabel = L["id.item"] or "Item ID"
+                    if (not addon:FindLine(tip, itemLabel)) then
+                        tip:AddLine(" ")
+                    end
+                    tip:AddLine(format("%s: |cffffffff%s|r", expansionLabel, expansionName), 0, 1, 0.8)
+                    tip:Show()
+                end
+            end
+        end
+    end
+
     local itemInfo = GetItemInfoFromLink(link)
     local quality = (itemInfo and itemInfo.itemQuality) or 0
     local r, g, b = GetItemQualityColor(quality)
