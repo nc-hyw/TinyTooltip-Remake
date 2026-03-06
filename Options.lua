@@ -1507,13 +1507,19 @@ local options = {
         { keystring = "general.borderCorner",       type = "dropdown", dropdata = widgets.borderDropdata },
         { keystring = "general.bgfile",             type = "dropdown", dropdata = widgets.bgfileDropdata },
         { keystring = "general.anchor",             type = "anchor", dropdata = {"default","cursorRight","cursor","static"} },
-        { keystring = "item.coloredItemBorder",     type = "checkbox" },
-        { keystring = "item.showItemIcon",          type = "checkbox" },
         { keystring = "quest.coloredQuestBorder",   type = "checkbox" },
-        { keystring = "general.alwaysShowIdInfo",   type = "idinfo", modeKeystring = "general.idInfoDisplay", dropdata = {"spellItem", "icon"} },
         { keystring = "general.SavedVariablesPerCharacter",   type = "checkbox" },
         { keystring = "general.hideUnitFrameHint",  type = "checkbox" },
         { keystring = "general.quickFocusModKey",   type = "quickfocus", dropdata = {"none", "alt", "ctrl", "shift"} },
+    },
+    item = {
+        { keystring = "item.modifierShowAll",       type = "checkbox" },
+        { keystring = "item.coloredItemBorder",     type = "checkbox" },
+        { keystring = "item.showItemIcon",          type = "checkbox" },
+        { keystring = "item.showItemId",            type = "checkbox" },
+        { keystring = "item.showItemMaxStack",      type = "checkbox" },
+        { keystring = "item.showItemIconId",        type = "checkbox" },
+        { keystring = "item.showItemExpansion",     type = "checkbox" },
     },
     pc = {
         { keystring = "unit.player.showTarget",           type = "checkbox" },
@@ -1591,7 +1597,10 @@ local options = {
         { keystring = "general.statusbarColor",     type = "dropdown", dropdata = {"default","auto","smooth"} },
     },
     spell = {
+        { keystring = "spell.modifierShowAll",      type = "checkbox" },
+        { keystring = "spell.showSpellId",          type = "checkbox" },
         { keystring = "spell.showIcon",             type = "checkbox" },
+        { keystring = "spell.showSpellIconId",      type = "checkbox" },
         { keystring = "spell.background",           type = "colorpick", hasopacity = true },
         { keystring = "spell.borderColor",          type = "colorpick", hasopacity = true },
     },
@@ -1721,6 +1730,16 @@ frameStatusbar.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.stat
 frameStatusbar.parent = addonName
 frameStatusbar.name = L["menu.statusbar"]
 
+local frameItem = CreateFrame("Frame", nil, UIParent)
+frameItem.anchor = CreateFrame("Frame", nil, frameItem)
+frameItem.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
+frameItem.anchor:SetSize(SettingsPanel.Container:GetWidth() - LAYOUT.PANEL_PADDING, 1)
+frameItem.title = frameItem:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+frameItem.title:SetPoint("TOPLEFT", LAYOUT.TITLE_LEFT, LAYOUT.ANCHOR_TOP)
+frameItem.title:SetText(format("%s |cff33eeff%s|r", addonName, L["menu.item"]))
+frameItem.parent = addonName
+frameItem.name = L["menu.item"]
+
 local frameSpell = CreateFrame("Frame", nil, UIParent)
 frameSpell.anchor = CreateFrame("Frame", nil, frameSpell)
 frameSpell.anchor:SetPoint("TOPLEFT", LAYOUT.ANCHOR_OFFSET, LAYOUT.ANCHOR_TOP)
@@ -1809,6 +1828,26 @@ local function ResetStatusbarSection()
     RefreshOptions(frameStatusbar)
 end
 
+local function ResetItemSection()
+    for _, v in ipairs(options.item) do
+        local value = GetDefaultValue(v.keystring)
+        if (value ~= nil) then
+            SetVariable(v.keystring, value)
+        end
+    end
+    RefreshOptions(frameItem)
+end
+
+local function ResetSpellSection()
+    for _, v in ipairs(options.spell) do
+        local value = GetDefaultValue(v.keystring)
+        if (value ~= nil) then
+            SetVariable(v.keystring, value)
+        end
+    end
+    RefreshOptions(frameSpell)
+end
+
 local function ResetAllSettings()
     if (not addon.defaults) then return end
     TinyTooltipRemakeDB = CopyTable(addon.defaults)
@@ -1820,6 +1859,7 @@ local function ResetAllSettings()
     RefreshOptions(framePC)
     RefreshOptions(frameNPC)
     RefreshOptions(frameStatusbar)
+    RefreshOptions(frameItem)
     RefreshOptions(frameSpell)
     RefreshOptions(frameFont)
     LibEvent:trigger("tinytooltip:diy:player", "player", true)
@@ -1829,6 +1869,8 @@ frame.reset = CreateResetButton(frame, resetAllText, ResetAllSettings)
 framePC.reset = CreateResetButton(framePC, resetSectionText, function() ResetUnitSection("player", framePC) end)
 frameNPC.reset = CreateResetButton(frameNPC, resetSectionText, function() ResetUnitSection("npc", frameNPC) end)
 frameStatusbar.reset = CreateResetButton(frameStatusbar, resetSectionText, ResetStatusbarSection)
+frameItem.reset = CreateResetButton(frameItem, resetSectionText, ResetItemSection)
+frameSpell.reset = CreateResetButton(frameSpell, resetSectionText, ResetSpellSection)
 
 local function InitOptions(list, parent)
     local element, offsetX
@@ -1846,6 +1888,7 @@ end
 
 LibEvent:attachEvent("VARIABLES_LOADED", function()
     InitOptions(options.general, frame)
+    InitOptions(options.item, frameItem)
     InitOptions(options.pc, framePC)
     InitOptions(options.npc, frameNPC)
     InitOptions(options.statusbar, frameStatusbar)
@@ -1883,6 +1926,7 @@ RegisterAddOnCategory(frame, frameRoot)
 RegisterAddOnCategory(framePCScrollFrame, frameRoot)
 RegisterAddOnCategory(frameNPCScrollFrame, frameRoot)
 RegisterAddOnCategory(frameStatusbar, frameRoot)
+RegisterAddOnCategory(frameItem, frameRoot)
 RegisterAddOnCategory(frameSpell, frameRoot)
 RegisterAddOnCategory(frameFont, frameRoot)
 RegisterAddOnCategory(frameVariables, frameRoot)
@@ -1897,6 +1941,8 @@ function SlashCmdList.TinyTooltip(msg, editbox)
         OpenToCategory(frameNPCScrollFrame)
     elseif (msg == "player") then
         OpenToCategory(framePCScrollFrame)
+    elseif (msg == "item") then
+        OpenToCategory(frameItem)
     elseif (msg == "spell") then
         OpenToCategory(frameSpell)
     elseif (msg == "statusbar") then
