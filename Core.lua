@@ -1982,10 +1982,11 @@ end)
 
 LibEvent:attachTrigger("tooltip.statusbar.height", function(self, height)
     GameTooltipStatusBar:SetHeight(height or 12)
-    if (addon.db.general.statusbarHide) then
-        GameTooltipStatusBar:Hide()
-    elseif ((height or 12) > 0) then
+    local general = addon.db.general
+    if (GameTooltip and GameTooltip._tinyStatusBarUnitActive and not general.statusbarHide and (general.statusbarHeight or 12) > 0) then
         GameTooltipStatusBar:Show()
+    else
+        GameTooltipStatusBar:Hide()
     end
 end)
 
@@ -1998,12 +1999,31 @@ end)
 LibEvent:attachTrigger("tooltip.statusbar.visible", function(self, hide)
     if (hide) then
         GameTooltipStatusBar:Hide()
-    else
-        local height = addon.db.general.statusbarHeight or 12
-        if (height > 0) then
-            GameTooltipStatusBar:Show()
-        end
+        return
     end
+    local general = addon.db.general
+    if (GameTooltip and GameTooltip._tinyStatusBarUnitActive and not general.statusbarHide and (general.statusbarHeight or 12) > 0) then
+        GameTooltipStatusBar:Show()
+    else
+        GameTooltipStatusBar:Hide()
+    end
+end)
+
+LibEvent:attachTrigger("tooltip:unit", function(self, tip)
+    if (tip ~= GameTooltip) then return end
+    GameTooltip._tinyStatusBarUnitActive = true
+    local general = addon.db.general
+    if (not general.statusbarHide and (general.statusbarHeight or 12) > 0) then
+        GameTooltipStatusBar:Show()
+    else
+        GameTooltipStatusBar:Hide()
+    end
+end)
+
+LibEvent:attachTrigger("tooltip:item, tooltip:spell, tooltip:aura, tooltip:cleared, tooltip:hide", function(self, tip)
+    if (tip ~= GameTooltip) then return end
+    GameTooltip._tinyStatusBarUnitActive = false
+    GameTooltipStatusBar:Hide()
 end)
 
 LibEvent:attachTrigger("tooltip.statusbar.font", function(self, font, size, flag)
@@ -2101,10 +2121,8 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
                 else
                     link = select(2, GetItemInfo(info.tooltipData.id))
                 end
-                if (link) then
-                    LibEvent:trigger("tooltip:item", self, link)
-                    didTypedBackdropUpdate = true
-                end
+                LibEvent:trigger("tooltip:item", self, link)
+                didTypedBackdropUpdate = true
             --1 技能
             elseif (SafeEquals(flag, 1)) then
                 LibEvent:trigger("tooltip:spell", self, GetTooltipSpellId(self))
@@ -2166,7 +2184,6 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     tip:TinyHookScript("OnTooltipSetItem",
         function(self)
             local link = select(2, self:GetItem())
-            if (not link) then return end
             LibEvent:trigger("tooltip:item", self, link)
         end
     )
