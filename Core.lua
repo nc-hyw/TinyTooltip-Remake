@@ -1707,7 +1707,11 @@ UpdateStyleMaskVisibility = function(tip)
             end
         end
     end
-    mask:SetShown(show)
+    if (show) then
+        mask:Show()
+    else
+        mask:Hide()
+    end
 end
 
 local function ApplyBorderCorner(tip, corner)
