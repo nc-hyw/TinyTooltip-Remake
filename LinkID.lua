@@ -97,10 +97,7 @@ end
 local function ShowLinkIdInfo(tooltip, link)
     local itemLink = link
     if (not itemLink and tooltip and tooltip.GetItem) then
-        local ok, _, tipItemLink = pcall(tooltip.GetItem, tooltip)
-        if (ok and tipItemLink) then
-            itemLink = tipItemLink
-        end
+        _, _, itemLink = pcall(tooltip.GetItem, tooltip)
     end
     ShowItemInfo(tooltip, itemLink)
 end

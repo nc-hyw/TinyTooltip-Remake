@@ -79,10 +79,7 @@ LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
         if (showItemExpansion) then
             local itemLink = link
             if (not itemLink and tip and tip.GetItem) then
-                local ok, _, tipItemLink = pcall(tip.GetItem, tip)
-                if (ok and tipItemLink) then
-                    itemLink = tipItemLink
-                end
+                _, _, itemLink = pcall(tip.GetItem, tip)
             end
             local expacId
             if (itemLink) then
