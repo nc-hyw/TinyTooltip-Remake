@@ -95,7 +95,11 @@ local function ShowItemInfo(tooltip, linkOrId)
 end
 
 local function ShowLinkIdInfo(tooltip, link)
-    ShowItemInfo(tooltip, link or select(2,tooltip:GetItem()))
+    local itemLink = link
+    if (not itemLink and tooltip and tooltip.GetItem) then
+        _, _, itemLink = pcall(tooltip.GetItem, tooltip)
+    end
+    ShowItemInfo(tooltip, itemLink)
 end
 
 local function GetSpellIdFromTooltip(tip)

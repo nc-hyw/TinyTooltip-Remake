@@ -10,6 +10,9 @@ it will causing jittering due to anchor competition with blizzard UI system
 
 Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.
 
+## [v1.4.3] - 2026-03-14
+- Fixed lua errors when item link is nil
+- Fixed 'bad self' error in dungeon Murder Row
 
 ## [v1.4.2] - 2026-03-12
 - Fixed an issue that status bar sometimes will showing on item/spell tooltip
