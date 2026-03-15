@@ -12,6 +12,11 @@ local UIDropDownMenu_SetSelectedValue = LibDropdown.SetSelectedValue
 local UIDropDownMenuTemplate = "UIDropDownMenuTemplate"
 
 local addonName = ...
+if (type(addonName) ~= "string" or addonName == "") then
+    addonName = "TinyTooltip-Remake"
+end
+local addonIconPath = ("Interface\\AddOns\\%s\\icon\\"):format(addonName)
+local achievementPointsIconTag = (type(CreateAtlasMarkup) == "function" and CreateAtlasMarkup("storyheader-cheevoicon", 14, 14)) or "|A:storyheader-cheevoicon:14:14|a"
 local addon = TinyTooltip
 local CopyTable = CopyTable
 local LAYOUT
@@ -272,6 +277,9 @@ local function RefreshWidget(widget, config)
         end
     elseif (t == "element") then
         widget.checkbox:SetChecked(GetVariable(config.keystring..".enable"))
+        if (widget.iconCheckbox) then
+            widget.iconCheckbox:SetChecked(GetVariable(config.keystring..".icon"))
+        end
         if (widget.colorpick) then
             local color = GetVariable(config.keystring..".color")
             RefreshColorPick(widget.colorpick, color)
@@ -1233,6 +1241,25 @@ function widgets:element(parent, config)
     frame:SetBackdropBorderColor(0.6, 0.6, 0.6, 0.6)
     frame.checkbox = self:checkbox(frame, {keystring=config.keystring..".enable"}, L[config.keystring])
     frame.checkbox:SetPoint("LEFT", 5, 0)
+    if (config.iconToggle) then
+        frame.iconCheckbox = self:checkbox(frame, {keystring=config.keystring..".icon"}, L["unit.player.elements.icon"] or "Icon")
+        if (frame.checkbox and frame.checkbox.Text) then
+            frame.iconCheckbox:SetPoint("LEFT", frame.checkbox.Text, "RIGHT", 8, 0)
+        else
+            frame.iconCheckbox:SetPoint("LEFT", 300, 0)
+        end
+        frame.iconCheckbox.tooltipText = L[config.keystring..".icon"] or (L["unit.player.elements.icon"] or "Show icon")
+        frame.iconCheckbox:HookScript("OnEnter", function(self)
+            if (self.tooltipText and self.tooltipText ~= "") then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText(self.tooltipText, 1, 1, 1)
+                GameTooltip:Show()
+            end
+        end)
+        frame.iconCheckbox:HookScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+    end
     if (config.color) then
         local colorDropdata = config.numeric and self.numericColorDropdata or self.colorDropdata
         frame.colorDropdata = colorDropdata
@@ -1547,18 +1574,18 @@ local options = {
         { keystring = "unit.player.elements.guildRank",   type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.guildRealm",  type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.levelValue",  type = "element", color = true, wildcard = true, filter = true, numeric = true, },
-        { keystring = "unit.player.elements.itemLevel",   type = "element", color = true, wildcard = true, filter = true, numeric = true, },
-        { keystring = "unit.player.elements.achievementPoints", type = "element", color = true, wildcard = true, filter = true, numeric = true, },
+        { keystring = "unit.player.elements.itemLevel",   type = "element", color = true, wildcard = true, filter = true, numeric = true, iconToggle = true, },
+        { keystring = "unit.player.elements.achievementPoints", type = "element", color = true, wildcard = true, filter = true, numeric = true, iconToggle = true, },
         { keystring = "unit.player.elements.factionName", type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.gender",      type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.raceName",    type = "element", color = true, wildcard = true, filter = true, },
-        { keystring = "unit.player.elements.className",   type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.className",   type = "element", color = true, wildcard = true, filter = true, iconToggle = true, },
         { keystring = "unit.player.elements.isPlayer",    type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.role",        type = "element", color = true, wildcard = true, filter = true, },
         { keystring = "unit.player.elements.moveSpeed",   type = "element", color = true, wildcard = true, filter = true, numeric = true, },
-        { keystring = "unit.player.elements.mplusScore",  type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.mplusScore",  type = "element", color = true, wildcard = true, filter = true, iconToggle = true, },
         { keystring = "unit.player.elements.zone",        type = "element", color = true, wildcard = true, filter = true, },
-        { keystring = "unit.player.elements.mount",       type = "element", color = true, wildcard = true, filter = true, },
+        { keystring = "unit.player.elements.mount",       type = "element", color = true, wildcard = true, filter = true, iconToggle = true, },
     },
     npc = {
         { keystring = "unit.npc.showTarget",            type = "checkbox" },
@@ -2046,7 +2073,9 @@ end
 
 local function OnEnter(self)
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetText(L[self.key])
+    local localizedKey = "unit.player.elements." .. tostring(self.key or "")
+    local text = rawget(L, localizedKey) or rawget(L, self.key) or tostring(self.key or "")
+    GameTooltip:SetText(text)
     GameTooltip:Show()
 end
 
@@ -2139,6 +2168,7 @@ local placeholder = {
     raidIcon   = ICON_LIST[8] .. "0|t",
     mount      = L["mount"] or "mount",
     achievementPoints = 12345,
+    zone       = L["unit.player.elements.zone"] or "Zone",
 }
 setmetatable(placeholder, {__index = function(_, k) return k end})
 
@@ -2175,7 +2205,11 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
                     else
                         valuePart = tostring(ilvl)
                     end
-                    value = format("|cffffd100%s:|r %s", label, valuePart)
+                    if (config.icon) then
+                        value = ("|T%sitem_level.blp:14:14:0:0|t|cffffd200:|r "):format(addonIconPath) .. valuePart
+                    else
+                        value = format("|cffffd100%s:|r %s", label, valuePart)
+                    end
                     handled = true
                 elseif (e == "achievementPoints") then
                     local label = (L and L.Achievement) or "Achievement"
@@ -2186,7 +2220,55 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
                     else
                         valuePart = tostring(points)
                     end
-                    value = format("|cffffd100%s:|r %s", label, valuePart)
+                    if (config.icon) then
+                        value = achievementPointsIconTag .. "|cffffd200:|r " .. valuePart
+                    else
+                        value = format("|cffffd100%s:|r %s", label, valuePart)
+                    end
+                    handled = true
+                elseif (e == "className" and config.icon) then
+                    local classValue = value
+                    if (config.color and config.wildcard) then
+                        classValue = addon:FormatData(classValue, config, raw, classValue)
+                    end
+                    local specIcon
+                    if (GetSpecialization and GetSpecializationInfo) then
+                        local specIndex = GetSpecialization()
+                        if (type(specIndex) == "number" and specIndex > 0) then
+                            local okSpec, _, _, _, icon = pcall(GetSpecializationInfo, specIndex)
+                            if (okSpec and icon) then
+                                specIcon = ("|T%s:14:14:0:0|t"):format(icon)
+                            end
+                        end
+                    end
+                    specIcon = specIcon or raw.classIcon
+                    if (specIcon and specIcon ~= "") then
+                        value = specIcon
+                    else
+                        value = classValue
+                    end
+                    handled = true
+                elseif (e == "mount" and config.icon) then
+                    local mountValue = value
+                    if (config.color and config.wildcard) then
+                        mountValue = addon:FormatData(mountValue, config, raw, mountValue)
+                    end
+                    value = ("|T%smount.tga:14:14:0:0|t|cffffd200:|r "):format(addonIconPath) .. mountValue
+                    handled = true
+                elseif (e == "mplusScore" and config.icon) then
+                    local mplusValue = raw.mplusScoreValue or value
+                    if (type(mplusValue) ~= "string") then
+                        mplusValue = tostring(mplusValue or "")
+                    elseif (not raw.mplusScoreValue) then
+                        local parsed = mplusValue:match(":%s*(.+)$")
+                        if (parsed and parsed ~= "") then
+                            mplusValue = parsed
+                        end
+                    end
+                    if (config.color and config.wildcard) then
+                        mplusValue = addon:FormatData(mplusValue, config, raw, mplusValue)
+                    end
+                    value = ("|T%smplus.tga:14:14:0:0|t|cffffd200:|r "):format(addonIconPath) .. mplusValue
                     handled = true
                 end
                 if (not handled and config.color and config.wildcard) then
