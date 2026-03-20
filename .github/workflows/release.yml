@@ -25,6 +25,7 @@ jobs:
             *.lua \
             locales \
             libs \
+            icon \
             texture \
             dist/TinyTooltip-Remake/
           cd dist
