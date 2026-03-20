@@ -262,6 +262,10 @@ local function RefreshWidget(widget, config)
         if (widget._updateQuickFocusLayout) then
             widget:_updateQuickFocusLayout()
         end
+    elseif (t == "combatmod") then
+        if (widget._updateCombatModifierLayout) then
+            widget:_updateCombatModifierLayout()
+        end
     elseif (t == "dropdownslider") then
         RefreshDropdown(widget.dropdown, GetVariable(config.keystring..".colorfunc"))
         local v = GetVariable(config.keystring..".alpha") or 0
@@ -643,6 +647,53 @@ function widgets:quickfocus(parent, config)
     frame:HookScript("OnShow", UpdatePanelLayout)
     frame._updateQuickFocusLayout = UpdatePanelLayout
     UpdatePanelLayout()
+    return frame
+end
+
+function widgets:combatmod(parent, config)
+    local frame = CreateFrame("Frame", nil, parent)
+    local parentWidth = parent and parent.anchor and parent.anchor:GetWidth()
+    frame:SetSize(parentWidth or 400, LAYOUT.ROW_HEIGHT)
+
+    frame.dropdown = self:dropdown(frame, {keystring = config.keystring, dropdata = config.dropdata}, L[config.labelKeystring] or L[config.keystring])
+    frame.dropdown:SetPoint("LEFT", 0, 0)
+
+    local function SetDropdownEnabled(enabled)
+        if (UIDropDownMenu_EnableDropDown and UIDropDownMenu_DisableDropDown) then
+            if (enabled) then
+                UIDropDownMenu_EnableDropDown(frame.dropdown)
+            else
+                UIDropDownMenu_DisableDropDown(frame.dropdown)
+            end
+        end
+        local button = frame.dropdown:GetName() and _G[frame.dropdown:GetName() .. "Button"]
+        if (button) then
+            button:SetEnabled(enabled)
+        end
+        frame.dropdown:SetAlpha(1)
+    end
+
+    local function UpdateEnabledState()
+        local hideInCombat = GetVariable(config.enableKeystring)
+        local canToggle = hideInCombat and true or false
+        SetDropdownEnabled(canToggle)
+    end
+
+    local function RefreshState()
+        RefreshDropdown(frame.dropdown, GetVariable(config.keystring))
+        UpdateEnabledState()
+    end
+
+    frame:HookScript("OnShow", RefreshState)
+    frame._updateCombatModifierLayout = RefreshState
+
+    LibEvent:attachTrigger("tooltip:variable:changed", function(self, keystring)
+        if (keystring == config.enableKeystring or keystring == config.keystring) then
+            RefreshState()
+        end
+    end)
+
+    RefreshState()
     return frame
 end
 
@@ -1375,7 +1426,11 @@ function widgets:anchor(parent, config)
         end
         local summary
         if (#selections == 0) then
-            summary = L["anchor.none"] or "None"
+            if (config.keystring == "unit.player.anchor" or config.keystring == "unit.npc.anchor") then
+                summary = L["dropdown.global"] or "Global Setting"
+            else
+                summary = L["anchor.none"] or "None"
+            end
         else
             summary = table.concat(selections, ", ")
         end
@@ -1499,6 +1554,7 @@ LAYOUT = {
     OFFSET_X = {
         checkbox = 0, colorpick = 5, slider = 15,
         dropdown = -15, dropdownslider = -15, anchor = -15,
+        combatmod = -15,
         idinfo = -15,
         quickfocus = -15,
         element = 0,
@@ -1534,7 +1590,9 @@ local options = {
         { keystring = "general.borderCorner",       type = "dropdown", dropdata = widgets.borderDropdata },
         { keystring = "general.bgfile",             type = "dropdown", dropdata = widgets.bgfileDropdata },
         { keystring = "general.anchor",             type = "anchor", dropdata = {"default","cursorRight","cursor","static"} },
+        { keystring = "general.anchor.modifierShowInCombatKey", type = "combatmod", labelKeystring = "general.anchor.modifierShowInCombat", enableKeystring = "general.anchor.hiddenInCombat", dropdata = {"none", "alt", "ctrl", "shift"} },
         { keystring = "quest.coloredQuestBorder",   type = "checkbox" },
+        { keystring = "quest.showQuestId",          type = "checkbox" },
         { keystring = "general.SavedVariablesPerCharacter",   type = "checkbox" },
         { keystring = "general.hideUnitFrameHint",  type = "checkbox" },
         { keystring = "general.quickFocusModKey",   type = "quickfocus", dropdata = {"none", "alt", "ctrl", "shift"} },
@@ -1547,6 +1605,9 @@ local options = {
         { keystring = "item.showItemMaxStack",      type = "checkbox" },
         { keystring = "item.showItemIconId",        type = "checkbox" },
         { keystring = "item.showItemExpansion",     type = "checkbox" },
+        { keystring = "item.showItemBonusId",       type = "checkbox" },
+        { keystring = "item.showItemEnhancementId", type = "checkbox" },
+        { keystring = "item.showItemGemId",         type = "checkbox" },
     },
     pc = {
         { keystring = "unit.player.showTarget",           type = "checkbox" },
@@ -1556,6 +1617,7 @@ local options = {
         { keystring = "unit.player.coloredBorder",        type = "dropdown", dropdata = widgets.colorDropdata },
         { keystring = "unit.player.background",           type = "dropdownslider", dropdata = widgets.colorDropdata, min = 0, max = 1, step = 0.01 },
         { keystring = "unit.player.anchor",               type = "anchor", dropdata = {"inherit", "default","cursorRight","cursor","static"} },
+        { keystring = "unit.player.anchor.modifierShowInCombatKey", type = "combatmod", labelKeystring = "general.anchor.modifierShowInCombat", enableKeystring = "unit.player.anchor.hiddenInCombat", dropdata = {"none", "global", "alt", "ctrl", "shift"} },
         { keystring = "unit.player.elements.factionBig",  type = "element", filter = false,},
         { keystring = "unit.player.elements.raidIcon",    type = "element", filter = true, },
         { keystring = "unit.player.elements.roleIcon",    type = "element", filter = true, },
@@ -1595,6 +1657,7 @@ local options = {
         { keystring = "unit.npc.coloredBorder",         type = "dropdown", dropdata = widgets.colorDropdata },
         { keystring = "unit.npc.background",            type = "dropdownslider", dropdata = widgets.colorDropdata, min = 0, max = 1, step = 0.01 },
         { keystring = "unit.npc.anchor",                type = "anchor", dropdata = {"inherit","default","cursorRight","cursor","static"} },
+        { keystring = "unit.npc.anchor.modifierShowInCombatKey", type = "combatmod", labelKeystring = "general.anchor.modifierShowInCombat", enableKeystring = "unit.npc.anchor.hiddenInCombat", dropdata = {"none", "global", "alt", "ctrl", "shift"} },
         { keystring = "unit.npc.elements.factionBig",   type = "element", filter = false,},
         { keystring = "unit.npc.elements.raidIcon",     type = "element", filter = true, },
         { keystring = "unit.npc.elements.classIcon",    type = "element", filter = true, },
@@ -2337,3 +2400,4 @@ LibEvent:attachTrigger("tooltip:variable:changed", function(self, keystring, val
         LibEvent:trigger("TINYTOOLTIP_GENERAL_INIT")
     end
 end)
+

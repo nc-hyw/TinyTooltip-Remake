@@ -10,6 +10,8 @@ local T = {
     ["general.alwaysShowIdInfo.hint"] = "關閉後按住ALT/SHIFT顯示",
     ["general.alwaysShowIdInfo.short"] = "始終顯示ID信息",
     ["general.anchor.hiddenInCombat"] = "戰鬥時隱藏",
+    ["general.anchor.modifierShowInCombat"] = "隱藏時按住修飾鍵顯示",
+    ["general.anchor.modifierShowInCombatKey"] = "修飾鍵",
     ["general.anchor.position"] = "框架錨點",
     ["general.anchor.returnInCombat"] = "戰鬥時固定",
     ["general.anchor.returnOnUnitFrame"] = "UnitFrame上固定",
@@ -46,10 +48,14 @@ local T = {
     ["item.showItemExpansion"] = "顯示物品資料片",
     ["item.showItemIcon"] = "顯示物品圖標",
     ["item.showItemIconId"] = "顯示物品圖示ID",
+    ["item.showItemBonusId"] = "顯示附加屬性ID",
+    ["item.showItemEnhancementId"] = "顯示附魔ID",
+    ["item.showItemGemId"] = "顯示寶石ID",
     ["item.showItemId"] = "顯示物品ID",
     ["item.showItemMaxStack"] = "顯示最大堆疊數",
 
     ["quest.coloredQuestBorder"] = "任務邊框染色",
+    ["quest.showQuestId"] = "顯示任務ID",
 
     ["unit.player.anchor.hiddenInCombat"] = "戰鬥時隱藏",
     ["unit.player.anchor.position"] = "框架錨點",
@@ -142,6 +148,7 @@ local T = {
     ["dropdown.default"] = "|cffaaaaaa系統默認|r",
     ["dropdown.faction"] = "陣營染色",
     ["dropdown.gradual"] = "漸變",
+    ["dropdown.global"] = "全域設定",
     ["dropdown.inarena"] = "競技場",
     ["dropdown.incombat"] = "戰鬥中",
     ["dropdown.inherit"] = "|cffffee00繼承全局|r",
@@ -228,7 +235,11 @@ local T = {
     ["id.expansion"] = "資料片",
     ["id.icon"] = "圖示ID",
     ["id.item"] = "物品ID",
+    ["id.bonus"] = "附加屬性ID",
+    ["id.enhancement"] = "附魔ID",
+    ["id.gem"] = "寶石ID",
     ["id.maxStack"] = "最大堆疊數",
+    ["id.quest"] = "任務ID",
     ["id.spell"] = "法術ID",
 
     ["<Drag element to customize the style>"] = "<拖曳元素以自訂樣式>",
@@ -236,3 +247,4 @@ local T = {
 for k, v in pairs(T) do
     L[k] = v
 end
+

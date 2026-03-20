@@ -22,7 +22,7 @@ addon.db = {
         statusbarHide     = false,                  --隱藏狀態條
         statusbarColor    = "auto",                 --HP顔色 default|auto|smooth
         statusbarTexture  = "Interface\\AddOns\\TinyTooltip-Remake\\texture\\StatusBar", --HP材質
-        anchor            = { position = "cursorRight", hiddenInCombat = false, returnInCombat = true, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", }, --鼠標位置 default|cursor|static|cursorRight
+        anchor            = { position = "cursorRight", hiddenInCombat = false, modifierShowInCombatKey = "none", returnInCombat = true, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", }, --鼠標位置 default|cursor|static|cursorRight
         alwaysShowIdInfo  = true,
         skinMoreFrames    = true,
         headerFont        = "default",
@@ -39,7 +39,7 @@ addon.db = {
         player = {
             coloredBorder = "class",                --玩家邊框顔色 default|class|level|reaction|itemQuality|selection|faction|HEX
             background = { colorfunc = "class", alpha = 0.9, },
-            anchor = { position = "inherit", hiddenInCombat = false, returnInCombat = false, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", },
+            anchor = { position = "inherit", hiddenInCombat = false, modifierShowInCombatKey = "global", returnInCombat = false, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", },
             showTarget = true,                      --顯示目標
             showTargetBy = true,                    --顯示被關注
             showModel = true,                       --顯示模型
@@ -92,7 +92,7 @@ addon.db = {
             showTargetBy = true,
             grayForDead = false,
             showModel = true,
-            anchor = { position = "inherit", hiddenInCombat = false, returnInCombat = false, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", },
+            anchor = { position = "inherit", hiddenInCombat = false, modifierShowInCombatKey = "global", returnInCombat = false, returnOnUnitFrame = false, cp = "BOTTOM", p = "BOTTOMRIGHT", },
             elements = {
                 factionBig   = { enable = false, filter = "none" },
                 raidIcon     = { enable = true,  filter = "none" },
@@ -117,6 +117,9 @@ addon.db = {
         coloredItemBorder = true,  --邊框按品質染色
         showItemIcon = true,       --物品圖標
         showItemId = true,
+        showItemBonusId = false,
+        showItemEnhancementId = false,
+        showItemGemId = false,
         showItemMaxStack = true,
         showItemIconId = true,
         showItemExpansion = true,
@@ -131,6 +134,7 @@ addon.db = {
     },
     quest = {
         coloredQuestBorder = true,  --任務按等差染色
+        showQuestId = true,
     },
     variables = {}, --用户配置数据
 }

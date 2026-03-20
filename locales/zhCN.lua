@@ -10,6 +10,8 @@ local T = {
     ["general.alwaysShowIdInfo.hint"] = "关闭后按住ALT/SHIFT显示",
     ["general.alwaysShowIdInfo.short"] = "始终显示ID信息",
     ["general.anchor.hiddenInCombat"] = "战斗时隐藏",
+    ["general.anchor.modifierShowInCombat"] = "隐藏时按住修饰键显示",
+    ["general.anchor.modifierShowInCombatKey"] = "修饰键",
     ["general.anchor.position"] = "框架锚点",
     ["general.anchor.returnInCombat"] = "战斗时固定至默认位置",
     ["general.anchor.returnOnUnitFrame"] = "单位框体时固定至默认位置",
@@ -46,10 +48,14 @@ local T = {
     ["item.showItemExpansion"] = "显示资料片",
     ["item.showItemIcon"] = "显示物品图标",
     ["item.showItemIconId"] = "显示物品图标ID",
+    ["item.showItemBonusId"] = "显示附加属性ID",
+    ["item.showItemEnhancementId"] = "显示附魔ID",
+    ["item.showItemGemId"] = "显示宝石ID",
     ["item.showItemId"] = "显示物品ID",
     ["item.showItemMaxStack"] = "显示最大堆叠数",
 
     ["quest.coloredQuestBorder"] = "任务边框染色",
+    ["quest.showQuestId"] = "显示任务ID",
 
     ["unit.player.anchor.hiddenInCombat"] = "战斗时隐藏",
     ["unit.player.anchor.position"] = "框架锚点",
@@ -142,6 +148,7 @@ local T = {
     ["dropdown.default"] = "|cffaaaaaa系统默认|r",
     ["dropdown.faction"] = "阵营染色",
     ["dropdown.gradual"] = "渐变",
+    ["dropdown.global"] = "全局设置",
     ["dropdown.inarena"] = "竞技场",
     ["dropdown.incombat"] = "战斗中",
     ["dropdown.inherit"] = "|cffffee00继承全局|r",
@@ -226,7 +233,11 @@ local T = {
     ["id.expansion"] = "资料片",
     ["id.icon"] = "图标ID",
     ["id.item"] = "物品ID",
+    ["id.bonus"] = "附加属性ID",
+    ["id.enhancement"] = "附魔ID",
+    ["id.gem"] = "宝石ID",
     ["id.maxStack"] = "最大堆叠数",
+    ["id.quest"] = "任务ID",
     ["id.spell"] = "法术ID",
 
     ["<Drag element to customize the style>"] = "<拖动元素以自定义样式>",
@@ -234,3 +245,4 @@ local T = {
 for k, v in pairs(T) do
     L[k] = v
 end
+
