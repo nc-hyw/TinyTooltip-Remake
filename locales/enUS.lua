@@ -7,6 +7,8 @@ local T = {
     ["general.alwaysShowIdInfo"] = "Always Show ID Info",
     ["general.alwaysShowIdInfo.hint"] = "If disabled, hold SHIFT/ALT to display.",
     ["general.alwaysShowIdInfo.short"] = "Always Show ID Info",
+    ["general.anchor.modifierShowInCombat"] = "Hold Modifier to Show While Hidden",
+    ["general.anchor.modifierShowInCombatKey"] = "Modifier Key",
     ["general.hideUnitFrameHint"] = "Hide Unit Frame Right-Click Setup Hint",
     ["general.idInfoMode.icon"] = "Show Icon ID",
     ["general.idInfoMode.spellItem"] = "Show Spell/Item ID",
@@ -24,8 +26,12 @@ local T = {
     ["item.showItemExpansion"] = "Show Item Expansion",
     ["item.showItemIcon"] = "Show Item Icon",
     ["item.showItemIconId"] = "Show Item Icon ID",
+    ["item.showItemBonusId"] = "Show Bonus ID",
+    ["item.showItemEnhancementId"] = "Show Enhancement ID",
+    ["item.showItemGemId"] = "Show Gem ID",
     ["item.showItemId"] = "Show Item ID",
     ["item.showItemMaxStack"] = "Show Max Stack Count",
+    ["quest.showQuestId"] = "Show Quest ID",
 
     ["unit.player.elements.achievementPoints"] = "Achievement Points",
     ["unit.player.elements.achievementPoints.icon"] = "Use achievement icon",
@@ -46,6 +52,7 @@ local T = {
     ["dropdown.ctrl"] = "Ctrl",
     ["dropdown.cursor"] = "|cff33ccffcursor|r",
     ["dropdown.default"] = "|cffaaaaaadefault|r",
+    ["dropdown.global"] = "Global Setting",
     ["dropdown.inherit"] = "|cffffee00inherit|r",
     ["dropdown.itemLevel"] = "ItemLevel (Blizzard)",
     ["dropdown.none"] = "|cffaaaaaanone|r",
@@ -105,9 +112,14 @@ local T = {
     ["id.expansion"] = "Expansion",
     ["id.icon"] = "Icon ID",
     ["id.item"] = "Item ID",
+    ["id.bonus"] = "Bonus ID",
+    ["id.enhancement"] = "Enhancement ID",
+    ["id.gem"] = "Gem ID",
     ["id.maxStack"] = "Max Stack Count",
+    ["id.quest"] = "Quest ID",
     ["id.spell"] = "Spell ID",
 }   
 for k, v in pairs(T) do
     L[k] = v
 end
+
