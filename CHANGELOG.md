@@ -10,6 +10,18 @@ it will causing jittering due to anchor competition with blizzard UI system
 
 Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.
 
+## [v1.6.0] - 2026-03-20
+New Feature:
+  - Added option for display Quest ID display in general
+  - Added option to using mod key to show player/npc tooltip during combat when 'hide' in combat was set  
+      This option can be set globally and in player/npc setting for different tooltip and can use different mod key just in case that  suits your need
+  - Added option to show BonusID, EnhancementId and GemID    
+      **Note**: This intend to be experimental feature for purpose of data mining, even though the data is striped from Blizzard Item link but I do noticed that for some non-equippable item the link comes back with a bonus ID, therefore, turn this own and trust the data at your own risk and turn it off if you encounter into problems.
+
+Fix:
+  - Included missing icon directory into released zip file so that icon can be displayed correctly
+
+
 ## [v1.5.0] - 2026-03-15
 - Now you have the option to show Specialization, Mount, M+ Score, Achivements, Item Level with icon instead of just txt
   To use your dessired icon for Item Level, M+ Score and Mount, copy and paste your customized icon into icon directory in this addon and rename it accordingly. 
