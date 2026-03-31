@@ -90,11 +90,11 @@ function TinyTooltipRemake_About_OnLoad(self)
     end
 
     if self.NoticeText then
-        self.NoticeText:SetText(GetText("about.notice.title") or "Notice")
+        self.NoticeText:SetText(GetText("about.announcement.title") or "Announcement")
     end
     if self.Notice then
         if self.Notice.SetJustifyH then self.Notice:SetJustifyH("LEFT") end
-        self.Notice:SetText(GetText("about.notice.content") or "")
+        self.Notice:SetText(GetText("about.announcement.content") or "")
     end
 
     if self.CreditsText then
@@ -105,6 +105,54 @@ function TinyTooltipRemake_About_OnLoad(self)
         if self.Credits.SetJustifyH then self.Credits:SetJustifyH("LEFT") end
         self.Credits:SetText(GetText("about.credits.content") or "")
     end
+
+    local function GetRegionHeight(region)
+        if (not region) then return 0 end
+        local height = region.GetStringHeight and region:GetStringHeight() or (region.GetHeight and region:GetHeight()) or 0
+        if (type(height) ~= "number" or height < 0) then
+            return 0
+        end
+        return height
+    end
+
+    local function UpdateAboutPageLayout()
+        if (self._aboutLayoutBusy) then return end
+
+        local width = (self.GetWidth and self:GetWidth() or 0) - 34
+        if (width <= 0) then return end
+
+        self._aboutLayoutBusy = true
+        if (self.Tagline) then self.Tagline:SetWidth(width) end
+        if (self.HelpURL) then self.HelpURL:SetWidth(width) end
+        if (self.Notice) then self.Notice:SetWidth(width) end
+        if (self.Credits) then self.Credits:SetWidth(width) end
+
+        local height = 16
+        height = height + GetRegionHeight(self.Title)
+        height = height + 12 + GetRegionHeight(self.Tagline)
+        height = height + 12 + max(GetRegionHeight(self.VersionText), GetRegionHeight(self.Version))
+        height = height + 8 + max(GetRegionHeight(self.AuthorText), GetRegionHeight(self.Author))
+        height = height + 24 + GetRegionHeight(self.HelpText)
+        height = height + 8 + GetRegionHeight(self.HelpURL)
+        height = height + 24 + GetRegionHeight(self.NoticeText)
+        height = height + 8 + GetRegionHeight(self.Notice)
+        height = height + 24 + GetRegionHeight(self.CreditsText)
+        height = height + 8 + GetRegionHeight(self.Credits)
+        height = height + 20
+
+        if (abs((self.GetHeight and self:GetHeight() or 0) - height) > 0.5) then
+            self:SetHeight(height)
+        end
+        self._aboutLayoutBusy = nil
+    end
+
+    if (not self._aboutLayoutInitialized) then
+        self._aboutLayoutInitialized = true
+        self._updateAboutPageLayout = UpdateAboutPageLayout
+        self:HookScript("OnShow", UpdateAboutPageLayout)
+        self:HookScript("OnSizeChanged", UpdateAboutPageLayout)
+    end
+    UpdateAboutPageLayout()
 end
 
 
@@ -227,7 +275,13 @@ end
 local function RefreshDropdown(dropdown, value)
     UIDropDownMenu_SetSelectedValue(dropdown, value)
     if (value ~= nil) then
-        local text = L["dropdown."..tostring(value)] or tostring(value)
+        local text
+        if (dropdown and dropdown.localePrefix) then
+            text = rawget(L, dropdown.localePrefix .. tostring(value))
+        end
+        if (not text) then
+            text = L["dropdown."..tostring(value)] or tostring(value)
+        end
         UIDropDownMenu_SetText(dropdown, text)
         if (dropdown.selectedFunc) then
             dropdown.selectedFunc(dropdown, value, text)
@@ -553,8 +607,9 @@ function widgets:quickfocus(parent, config)
     frame.optionPanel:SetFrameLevel(frame:GetFrameLevel() + 10)
     frame.optionPanel:Hide()
 
-    local helpText = L["quickfocus.help"] or "Hold the modifier key and click a target to set focus. Hold the modifier key and click empty space to clear focus."
+    local helpText = rawget(L, "quickfocus.help") or "Hold the modifier key and click a target to set focus. Hold the modifier key and click empty space to clear focus."
     local function ShowHelpTooltip(owner)
+        if (not helpText or helpText == "") then return end
         GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
         GameTooltip:SetText(helpText, 0.9, 0.9, 0.9, 1, true)
         GameTooltip:Show()
@@ -910,6 +965,7 @@ function widgets:dropdown(parent, config, labelText)
     local frame = CreateFrame("Frame", tostring(config), parent, UIDropDownMenuTemplate)
     frame.keystring = config.keystring
     frame.dropdata = config.dropdata
+    frame.localePrefix = config.localePrefix
     if (frame.Text) then frame.Text:SetWidth(90) end
     frame.Label = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 	frame.Label:SetPoint("LEFT", _G[frame:GetName().."Button"], "RIGHT", 6, 0)
@@ -919,7 +975,7 @@ function widgets:dropdown(parent, config, labelText)
         local info
         for _, v in ipairs(self.dropdata) do
             info = UIDropDownMenu_CreateInfo()
-            info.text  = L["dropdown."..v]
+            info.text  = rawget(L, (self.localePrefix or "") .. v) or L["dropdown."..v] or tostring(v)
             info.value = v
             info.arg1  = self
             info.checked = selectedValue == v
@@ -948,7 +1004,7 @@ function widgets:dropdown(parent, config, labelText)
         end
     end
     UIDropDownMenu_SetSelectedValue(frame, GetVariable(config.keystring))
-    frame.Label:SetText(labelText or L[config.keystring])
+    frame.Label:SetText(labelText or rawget(L, config.labelKeystring or config.keystring) or L[config.keystring])
     return frame
 end
 
@@ -1599,6 +1655,7 @@ local options = {
         { keystring = "general.bgfile",             type = "dropdown", dropdata = widgets.bgfileDropdata },
         { keystring = "general.anchor",             type = "anchor", dropdata = {"default","cursorRight","cursor","static"} },
         { keystring = "general.anchor.modifierShowInCombatKey", type = "combatmod", labelKeystring = "general.anchor.modifierShowInCombat", enableKeystring = "general.anchor.hiddenInCombat", dropdata = {"none", "alt", "ctrl", "shift"} },
+        { keystring = "general.announcementMode",   type = "dropdown", labelKeystring = "general.annoucements", localePrefix = "general.annoucements.dropdown.", dropdata = {"noticeNever", "noticeSnooze", "noticeAlways"} },
         { keystring = "quest.coloredQuestBorder",   type = "checkbox" },
         { keystring = "quest.showQuestId",          type = "checkbox" },
         { keystring = "general.SavedVariablesPerCharacter",   type = "checkbox" },
@@ -1727,16 +1784,36 @@ frameRoot.title:SetText(addonName)
 -- About / Help page 
 
 do
-    -- 1) 创建 XML 模板实例，挂到 frameRoot 上
-    local about = CreateFrame("Frame", nil, frameRoot, "TinyTooltipRemakeAboutTemplate")
+    local aboutScroll = CreateFrame("ScrollFrame", nil, frameRoot, "UIPanelScrollFrameTemplate")
+    aboutScroll:SetPoint("TOPLEFT", frameRoot, "TOPLEFT", 0, 0)
+    aboutScroll:SetPoint("BOTTOMRIGHT", frameRoot, "BOTTOMRIGHT", -28, 0)
+    aboutScroll.ScrollBar:Hide()
+    aboutScroll.ScrollBar:ClearAllPoints()
+    aboutScroll.ScrollBar:SetPoint("TOPLEFT", aboutScroll, "TOPRIGHT", -20, -22)
+    aboutScroll.ScrollBar:SetPoint("BOTTOMLEFT", aboutScroll, "BOTTOMRIGHT", -20, 26)
+    aboutScroll:HookScript("OnScrollRangeChanged", function(self, xrange, yrange)
+        self.ScrollBar:SetShown(floor(yrange) ~= 0)
+    end)
 
-    -- 2) 覆盖整个页面区域
-    about:SetPoint("TOPLEFT", frameRoot, "TOPLEFT", 0, 0)
-    about:SetPoint("BOTTOMRIGHT", frameRoot, "BOTTOMRIGHT", 0, 0)
-    -- 3) 把需要的数据塞给它，OnLoad 会用到
+    local about = CreateFrame("Frame", nil, aboutScroll, "TinyTooltipRemakeAboutTemplate")
+    about:SetPoint("TOPLEFT", aboutScroll, "TOPLEFT", 0, 0)
+    about:SetSize(max((aboutScroll.GetWidth and aboutScroll:GetWidth() or 1) - 28, 1), 1)
+    aboutScroll:SetScrollChild(about)
+
     about.addonName = addonName
     about.L = L
     TinyTooltipRemake_About_OnLoad(about)
+
+    local function UpdateAboutWidth()
+        local width = max((aboutScroll.GetWidth and aboutScroll:GetWidth() or 1) - 28, 1)
+        about:SetWidth(width)
+        if (about._updateAboutPageLayout) then
+            about:_updateAboutPageLayout()
+        end
+    end
+    aboutScroll:HookScript("OnSizeChanged", UpdateAboutWidth)
+    about:HookScript("OnShow", UpdateAboutWidth)
+    UpdateAboutWidth()
 
     if frameRoot.title then
         frameRoot.title:Hide()
