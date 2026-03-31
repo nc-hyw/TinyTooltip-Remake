@@ -10,6 +10,10 @@ it will causing jittering due to anchor competition with blizzard UI system
 
 Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.  
 
+## [v1.6.2] - 2026-03-31
+- Added an option to toggle announcement display
+- Update announcement content
+
 ## [v1.6.1] - 2026-03-26
 - Fix an issue where target will appear outside of tooltip bound
 - Fix an issue quality border colour will rasie lua error due to blizzard rencent introduced bugs
