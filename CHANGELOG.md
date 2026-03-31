@@ -8,7 +8,13 @@ Due to how TinyTooltip was disgned, gem and slot icon on item display may not be
 When anchor point selected to bottom and set to anchor to mouse, custom is not allowed as 
 it will causing jittering due to anchor competition with blizzard UI system
 
-Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.
+Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.  
+
+## [v1.6.1] - 2026-03-26
+- Fix an issue where target will appear outside of tooltip bound
+- Fix an issue quality border colour will rasie lua error due to blizzard rencent introduced bugs
+- Added a notification
+
 
 ## [v1.6.0] - 2026-03-20
 New Feature:
