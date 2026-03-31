@@ -6,7 +6,7 @@ if (GetLocale() ~= "zhTW") then return end
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "暴雪近期改動引入了滑鼠提示相關問題，可能導致大量 Lua 錯誤。為暫時避開此問題，請在設定頁面取消勾選「顯示物品圖示」與「顯示法術圖示」。完整公告可在關於頁面查看。",
+    ["about.announcement.chat"] = "暴雪已修復導致物品與法術提示出現 Lua 報錯的問題，同時也在綜合設定頁面新增了一個選項，用來控制是否顯示最新公告。您可在設定頁面查看完整資訊。",
     ["about.announcement.chatKey"] = "announcement_2026_03_31_tooltip_bug",
     ["about.announcement.content"] = "根據測試，暴雪已經解決了物品與法術提示變成秘密值，進而在勾選顯示物品/法術圖示時出現大量錯誤的問題，您現在可以重新開啟這 2 個選項。"
     .. "此外，1.6.2 版本中已在綜合頁面新增一個選項，用來控制登入時是否顯示公告訊息。\n"

@@ -4,7 +4,7 @@ local addon = TinyTooltip or select(2, ...)
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "Recent Blizzard changes introduced tooltip bugs that can trigger many Lua errors. To reduce this issue, disable 'Show Item Icon' and 'Show Spell Icon' in the settings page. The full announcement is available on the About page.",
+    ["about.announcement.chat"] = "Blizzard has fixed the issue that caused item and spell tooltips to trigger Lua errors. A new option has also been added on the General settings page to control whether the latest announcement is shown. You can read the full details on the settings page.",
     ["about.announcement.chatKey"] = "announcement_2026_03_31_tooltip_bug",
     ["about.announcement.content"] = "Based on testing, Blizzard has fixed the issue where item and spell tooltips could become secret values, which caused many errors when 'Show Item Icon' or 'Show Spell Icon' was enabled. You can now turn these two options back on."
     .. "In addition, version 1.6.2 adds a new option on the General page to control whether announcements are shown at login.\n"
