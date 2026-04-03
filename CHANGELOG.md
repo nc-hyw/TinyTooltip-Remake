@@ -10,6 +10,9 @@ it will causing jittering due to anchor competition with blizzard UI system
 
 Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.  
 
+## [v1.6.3] -2026-04-04
+- Korean support added(translate by chatGPT) and other local improvements
+
 ## [v1.6.2] - 2026-03-31
 - Added an option to toggle announcement display
 - Update announcement content
