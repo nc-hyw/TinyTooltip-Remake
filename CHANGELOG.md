@@ -10,6 +10,11 @@ it will causing jittering due to anchor competition with blizzard UI system
 
 Quick Focus is not working when clicking Unit Frame, as Unit Frame click event is protected.  
 
+## [v1.6.4] -2026-04-24
+- Fixed an issue caused by GetUnitSpeed() now return  secrete values
+- Fixed an issue caused by GetUnit() wrongly return secrete values
+- Fixed an issue related to SetFont()
+
 ## [v1.6.3] -2026-04-04
 - Korean support added(translate by chatGPT) and other local improvements
 
