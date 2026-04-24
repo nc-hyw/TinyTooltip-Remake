@@ -967,16 +967,17 @@ end
 -- 移動速度
 function addon:GetUnitSpeed(unit)
     local _, speed, flightSpeed, swimSpeed = GetUnitSpeed(unit)
-    if (not speed or speed == 0) then return end
-    speed = speed/BASE_MOVEMENT_SPEED*100
-    swimSpeed = swimSpeed/BASE_MOVEMENT_SPEED*100
-	flightSpeed = flightSpeed/BASE_MOVEMENT_SPEED*100
 	if (UnitIsOtherPlayersPet(unit)) then
     elseif (IsSwimming(unit)) then
 		speed = swimSpeed
 	elseif (IsFlying(unit)) then
 		speed = flightSpeed
 	end
+    if (speed and issecretvalue(speed)) then
+        return
+    end
+    if (not speed or speed == 0) then return end
+    speed = speed/BASE_MOVEMENT_SPEED*100
     return speed+0.5
 end
 
@@ -2202,7 +2203,10 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
             --2 角色
             elseif (SafeEquals(flag, 2)) then
                 if (not self.GetUnit) then return end
-                local unit = select(2, self:GetUnit())
+                local okUnit, _, unit = pcall(self.GetUnit, self)
+                if (not okUnit) then
+                    unit = nil
+                end
                 if (unit) then
                     LibEvent:trigger("tooltip:unit", self, unit, guid, flag)
                     didTypedBackdropUpdate = true
@@ -2248,7 +2252,10 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     )
     tip:TinyHookScript("OnTooltipSetUnit",
         function(self)
-            local unit = select(2, self:GetUnit())
+            local okUnit, _, unit = pcall(self.GetUnit, self)
+            if (not okUnit) then
+                unit = nil
+            end
             if (not unit) then return end
             LibEvent:trigger("tooltip:unit", self, unit)
         end
