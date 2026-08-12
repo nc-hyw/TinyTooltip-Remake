@@ -6,12 +6,9 @@ if (GetLocale() ~= "zhCN") then return end
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "移动速度在12.05中在副本内的战斗中被设为了秘密值，因此当处于该场景时不可见，更多更新信息请在公告页面查阅。",
-    ["about.announcement.chatKey"] = "announcement_2026_04_24_tooltip_bug",
-    ["about.announcement.content"] = "在12.05中当位于副本内且进入战斗时获取移动速度会返回秘密值，因此该功能在该场景下不可用\n"
-    .."位于野外或不处于战斗状态时不受影响。同时暴雪修正了在单位框架时依然可以获取敌方目标的问题，现在针对副本内敌对NPC已无法获取目标。"
-    .."同时，现在调用GameTooltip:GetUnit() 函数会错误地返回秘密值，该行为已被确认为暴雪方面的bug，针对该问题本次更新暂时进行了修复,"
-    .."但这个bug是否会造成其余更多影响暂时未知，如有请在CurseForge或Github进行报告并提供尽可能详细地说明。",
+    ["about.announcement.chat"] = "12.1本插件会正常更新，如遇错误影响正常游玩请暂时关闭插件并等待更新，更多更新信息请在公告页面查阅。",
+    ["about.announcement.chatKey"] = "announcement_2026_08_12_tooltip_info",
+    ["about.announcement.content"] = "12.1本插件会正常更新，如果大量报错影响正常游戏请暂时关闭插件并等待更新。反馈依旧可通过NGA论坛和Github提交。",
     ["about.announcement.title"] = "公告",
     ["about.author.label"] = "作者",
     ["about.author.name"] = "星野绫 - 罗宁 CN",

@@ -6,12 +6,11 @@ if (GetLocale() ~= "zhTW") then return end
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "移動速度在 12.0.5 中於副本戰鬥內被設為秘密值，因此在該場景下不會顯示。更多更新資訊請在公告頁面查看。",
-    ["about.announcement.chatKey"] = "announcement_2026_04_24_tooltip_bug",
-    ["about.announcement.content"] = "在 12.0.5 中，當位於副本內且進入戰鬥時，取得移動速度會返回秘密值，因此該功能在此場景下不可用。\n"
-    .. "位於野外或不處於戰鬥狀態時不受影響。同時暴雪修正了在單位框架時仍可取得敵方目標的問題，現在針對副本內敵對 NPC 已無法取得目標。"
-    .. "同時，現在呼叫 GameTooltip:GetUnit() 函式會錯誤地返回秘密值，該行為已被確認為暴雪方面的 bug，針對此問題本次更新暫時進行了修復，"
-    .. "但這個 bug 是否會造成其他更多影響暫時未知，如有請在 CurseForge 或 Github 回報並提供盡可能詳細的說明。",
+    ["about.announcement.chat"] = "12.1 本插件會正常更新，如遇錯誤影響正常遊玩，請暫時停用插件並等待更新。更多更新資訊請在公告頁面查閱。",
+    ["about.announcement.chatKey"] = "announcement_2026_08_12_tooltip_info",
+    ["about.announcement.content"] = "本插件在 12.1 會正常更新。但由於我所在的伺服器比美服晚兩天取得更新，"
+    .. "所有修正與更新會在本週末發布。如果錯誤影響正常遊玩，請暫時停用本插件並等待更新。"
+    .. "感謝您的支持與理解。",
     ["about.announcement.title"] = "公告",
     ["about.author.label"] = "作者",
     ["about.author.name"] = "星野綾 - 羅寧 CN",

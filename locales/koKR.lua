@@ -6,12 +6,11 @@ if (GetLocale() ~= "koKR") then return end
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "12.0.5에서 인스턴스 전투 중 unit speed가 비밀 값으로 지정되어 해당 상황에서는 표시되지 않습니다. 자세한 업데이트 내용은 공지 페이지에서 확인할 수 있습니다.",
-    ["about.announcement.chatKey"] = "announcement_2026_04_24_tooltip_bug",
-    ["about.announcement.content"] = "12.0.5에서 인스턴스 내부 전투 중 unit speed를 가져오면 비밀 값이 반환되므로, 이 기능은 해당 상황에서 사용할 수 없습니다.\n"
-    .."야외 또는 비전투 상태에서는 영향을 받지 않습니다. 또한 블리자드는 유닛 프레임에서 적대 대상의 대상을 계속 가져올 수 있던 문제를 수정했으며, 이제 인스턴스 내부의 적대 NPC 대상은 가져올 수 없습니다."
-    .."동시에 GameTooltip:GetUnit() 호출이 잘못해서 비밀 값을 반환하는 문제가 있으며, 이 동작은 블리자드 측 버그로 확인되었습니다. 이번 업데이트에서는 해당 문제에 대한 임시 수정을 적용했습니다."
-    .."이 버그가 다른 추가 문제를 일으킬지는 아직 알 수 없습니다. 문제가 발생하면 CurseForge 또는 Github에 가능한 한 자세한 설명과 함께 제보해 주세요.",
+    ["about.announcement.chat"] = "12.1에서도 이 애드온은 정상적으로 업데이트될 예정입니다. 오류로 인해 정상적인 게임 플레이가 어려운 경우 애드온을 잠시 비활성화하고 업데이트를 기다려 주세요. 자세한 업데이트 정보는 공지 페이지에서 확인할 수 있습니다.",
+    ["about.announcement.chatKey"] = "announcement_2026_08_12_tooltip_info",
+    ["about.announcement.content"] = "이 애드온은 12.1에서도 정상적으로 업데이트될 예정입니다. 다만 제가 이용하는 서버에는 미국 서버보다 이틀 늦게 패치가 적용되므로, "
+    .. "모든 수정 및 업데이트는 이번 주말에 배포될 예정입니다. 오류로 인해 정상적인 게임 플레이가 어려운 경우 이 애드온을 잠시 비활성화하고 "
+    .. "업데이트를 기다려 주세요. 여러분의 성원과 이해에 감사드립니다.",
     ["about.announcement.title"] = "공지",
     ["about.author.label"] = "제작자",
     ["about.author.name"] = "HoshinoAya - Rhonin CN",
