@@ -49,7 +49,7 @@ local function GetItemMaxStack(linkOrId)
 end
 
 local function ShowSpellInfo(tooltip, spellId)
-    if (not spellId) then return end
+    if (issecretvalue(spellId) or not spellId) then return end
     local isModifierDown = IsShiftKeyDown() or IsControlKeyDown() or IsAltKeyDown()
     local showAllByModifier = addon.db.spell.modifierShowAll
     local showSpellId = addon.db.spell.showSpellId ~= false
@@ -174,30 +174,10 @@ end
 local function GetSpellIdFromTooltip(tip)
     if (not tip or not tip.GetSpell) then return end
     local ok, _, spellId = pcall(tip.GetSpell, tip)
-    if (ok and type(spellId) == "number") then
+    if (ok and not issecretvalue(spellId) and type(spellId) == "number") then
         return spellId
     end
 end
-
-local function GetAuraSpellId(unit, index, filter)
-    if (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex) then
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, index, filter)
-        if (aura and aura.spellId) then
-            return aura.spellId
-        end
-    end
-end
-
-local function GetAuraSpellIdByInstance(unit, auraInstanceID)
-    if (C_UnitAuras and C_UnitAuras.GetAuraDataByAuraInstanceID) then
-        local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
-        if (aura and aura.spellId) then
-            return aura.spellId
-        end
-    end
-end
-
-
 
 LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
     ShowLinkIdInfo(tip, link)
@@ -208,42 +188,28 @@ LibEvent:attachTrigger("tooltip:spell", function(self, tip, spellId)
 end)
 
 LibEvent:attachTrigger("tooltip:aura", function(self, tip, args)
-    local spellId = (args and args[2] and args[2].intVal) or GetSpellIdFromTooltip(tip)
+    local spellId = args and args[2] and args[2].intVal
+    if (issecretvalue(spellId)) then
+        spellId = nil
+    end
+    spellId = spellId or GetSpellIdFromTooltip(tip)
     ShowSpellInfo(tip, spellId)
 end)
 
-local function HookAuraSetter(fnName, resolver)
+local function HookAuraSetter(fnName)
     if (GameTooltip and GameTooltip[fnName]) then
-        hooksecurefunc(GameTooltip, fnName, function(tip, ...)
-            local spellId = resolver(...)
-            ShowSpellInfo(tip, spellId)
+        hooksecurefunc(GameTooltip, fnName, function(tip)
+            ShowSpellInfo(tip, GetSpellIdFromTooltip(tip))
         end)
     end
 end
 
-HookAuraSetter("SetUnitAura", function(unit, index, filter)
-    return GetAuraSpellId(unit, index, filter)
-end)
-
-HookAuraSetter("SetUnitBuff", function(unit, index, filter)
-    return GetAuraSpellId(unit, index, filter)
-end)
-
-HookAuraSetter("SetUnitDebuff", function(unit, index, filter)
-    return GetAuraSpellId(unit, index, filter)
-end)
-
-HookAuraSetter("SetUnitAuraByAuraInstanceID", function(unit, auraInstanceID)
-    return GetAuraSpellIdByInstance(unit, auraInstanceID)
-end)
-
-HookAuraSetter("SetUnitBuffByAuraInstanceID", function(unit, auraInstanceID)
-    return GetAuraSpellIdByInstance(unit, auraInstanceID)
-end)
-
-HookAuraSetter("SetUnitDebuffByAuraInstanceID", function(unit, auraInstanceID)
-    return GetAuraSpellIdByInstance(unit, auraInstanceID)
-end)
+HookAuraSetter("SetUnitAura")
+HookAuraSetter("SetUnitBuff")
+HookAuraSetter("SetUnitDebuff")
+HookAuraSetter("SetUnitAuraByAuraInstanceID")
+HookAuraSetter("SetUnitBuffByAuraInstanceID")
+HookAuraSetter("SetUnitDebuffByAuraInstanceID")
 
 -- Quest
 if (QuestMapLogTitleButton_OnEnter) then

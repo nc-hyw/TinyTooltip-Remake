@@ -45,45 +45,21 @@ end
 
 local function FindMountAura(unit)
     if (not C_MountJournal or not C_MountJournal.GetMountFromSpell) then return end
-    if (AuraUtil and AuraUtil.ForEachAura) then
-        local auraName, auraSpellID, mountID
-        local ok = pcall(AuraUtil.ForEachAura, unit, "HELPFUL", nil, function(aura)
-            if (type(aura) ~= "table" or not aura.spellId) then return end
-            local mount = C_MountJournal.GetMountFromSpell(aura.spellId)
-            if (mount) then
-                auraName = aura.name
-                auraSpellID = aura.spellId
-                mountID = mount
-                return true
-            end
-        end)
-        if (not ok) then
-            auraName, auraSpellID, mountID = nil, nil, nil
+    if (not AuraUtil or not AuraUtil.ForEachAura) then return end
+
+    local auraName, auraSpellID, mountID
+    local ok = pcall(AuraUtil.ForEachAura, unit, "HELPFUL", nil, function(aura)
+        if (type(aura) ~= "table" or not aura.spellId) then return end
+        local mount = C_MountJournal.GetMountFromSpell(aura.spellId)
+        if (mount) then
+            auraName = aura.name
+            auraSpellID = aura.spellId
+            mountID = mount
+            return true
         end
-        if (auraSpellID) then
-            return auraName, auraSpellID, mountID
-        end
-    end
-    if (UnitAura) then
-        for i = 1, 40 do
-            local name, _, _, _, _, _, _, _, _, spellID = UnitAura(unit, i, "HELPFUL")
-            if (not name) then break end
-            local mountID = C_MountJournal.GetMountFromSpell(spellID)
-            if (mountID) then
-                return name, spellID, mountID
-            end
-        end
-        return
-    end
-    if (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex) then
-        for i = 1, 40 do
-            local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-            if (not aura) then break end
-            local mountID = C_MountJournal.GetMountFromSpell(aura.spellId)
-            if (mountID) then
-                return aura.name, aura.spellId, mountID
-            end
-        end
+    end)
+    if (ok and auraSpellID) then
+        return auraName, auraSpellID, mountID
     end
 end
 

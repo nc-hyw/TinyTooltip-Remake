@@ -58,10 +58,17 @@ local function ColorStatusBar(self, value)
     if (addon.db.general.statusbarColor == "auto") then
         local unit = GetStatusbarUnit()
         local r, g, b
-        if (UnitIsPlayer(unit)) then
-            r, g, b = GetClassColor(select(2,UnitClass(unit)))
-        else
-            r, g, b = GameTooltip_UnitColor(unit)
+        local isPlayer = UnitIsPlayer(unit)
+        if (not issecretvalue(isPlayer) and isPlayer) then
+            local class = select(2, UnitClass(unit))
+            if (not issecretvalue(class) and class) then
+                r, g, b = GetClassColor(class)
+            end
+        end
+        if (not r) then
+            r, g, b = UnitSelectionColor(unit)
+        end
+        if (not issecretvalue(r) and not issecretvalue(g) and not issecretvalue(b)) then
             if (g == 0.6) then g = 0.9 end
             if (r==1 and g==1 and b==1) then r, g, b = 0, 0.9, 0.1 end
         end

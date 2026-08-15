@@ -60,14 +60,16 @@ local function GetTargetString(unit)
         local okName, name = pcall(UnitName, unit)
         if (not okName or type(name) ~= "string") then return end
         local icon = addon:GetRaidIcon(unit) or ""
-        local r, g, b = GameTooltip_UnitColor(unit)
+        local r, g, b = UnitSelectionColor(unit)
         if SafeIsUnit(unit, "player") then
             return format("|cffff3333>>%s<<|r", strupper(YOU))
         end
         if SafeIsPlayer(unit) then
             local class = select(2, UnitClass(unit))
-            local colorCode = select(4, GetClassColor(class))
-            return format("%s|c%s%s|r", icon, colorCode or "ffffffff", name)
+            if (not issecretvalue(class) and class) then
+                local colorCode = select(4, GetClassColor(class))
+                return format("%s|c%s%s|r", icon, colorCode or "ffffffff", name)
+            end
         end
         if (r and g and b) then
             return format("%s|cff%s[%s]|r", icon, addon:GetHexColor(r, g, b), name)
@@ -82,12 +84,15 @@ local function GetTargetString(unit)
         return format("|cffff3333>>%s<<|r", strupper(YOU))
     elseif SafeIsPlayer(unit) then
         local class = select(2, UnitClass(unit))
-        local colorCode = select(4, GetClassColor(class))
-        return format("%s|c%s%s|r", icon, colorCode, name)
+        if (not issecretvalue(class) and class) then
+            local colorCode = select(4, GetClassColor(class))
+            return format("%s|c%s%s|r", icon, colorCode, name)
+        end
+        return format("%s|cff%s%s|r", icon, addon:GetHexColor(UnitSelectionColor(unit)), name)
     elseif SafeBool(UnitIsOtherPlayersPet, unit) then
-        return format("%s|cff%s<%s>|r", icon, addon:GetHexColor(GameTooltip_UnitColor(unit)), name)
+        return format("%s|cff%s<%s>|r", icon, addon:GetHexColor(UnitSelectionColor(unit)), name)
     else
-        return format("%s|cff%s[%s]|r", icon, addon:GetHexColor(GameTooltip_UnitColor(unit)), name)
+        return format("%s|cff%s[%s]|r", icon, addon:GetHexColor(UnitSelectionColor(unit)), name)
     end
 end
 
@@ -309,7 +314,12 @@ local function GetTargetByString(mouseover, num, tip)
                     first = false
                 end
                 roleIcon  = addon:GetRoleIcon(prefix..i) or ""
-                colorCode = select(4,GetClassColor(select(2,UnitClass(prefix..i))))
+                local class = select(2, UnitClass(prefix..i))
+                if (not issecretvalue(class) and class) then
+                    colorCode = select(4, GetClassColor(class))
+                else
+                    colorCode = addon:GetHexColor(UnitSelectionColor(prefix..i))
+                end
                 name      = UnitName(prefix..i)
                 tip:AddLine("   " .. roleIcon .. " |c" .. colorCode .. name .. "|r")
             end
