@@ -45,4 +45,7 @@ luac.out
 # Upstream All The Things database cache
 db_att/
 
+# Local ATT design notes
+tools/att/DESIGN.md
+
 AGENTS.md
