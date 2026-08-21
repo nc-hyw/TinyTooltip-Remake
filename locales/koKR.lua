@@ -6,11 +6,14 @@ if (GetLocale() ~= "koKR") then return end
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "12.1에서도 이 애드온은 정상적으로 업데이트될 예정입니다. 오류로 인해 정상적인 게임 플레이가 어려운 경우 애드온을 잠시 비활성화하고 업데이트를 기다려 주세요. 자세한 업데이트 정보는 공지 페이지에서 확인할 수 있습니다.",
-    ["about.announcement.chatKey"] = "announcement_2026_08_12_tooltip_info",
-    ["about.announcement.content"] = "이 애드온은 12.1에서도 정상적으로 업데이트될 예정입니다. 다만 제가 이용하는 서버에는 미국 서버보다 이틀 늦게 패치가 적용되므로, "
-    .. "모든 수정 및 업데이트는 이번 주말에 배포될 예정입니다. 오류로 인해 정상적인 게임 플레이가 어려운 경우 이 애드온을 잠시 비활성화하고 "
-    .. "업데이트를 기다려 주세요. 여러분의 성원과 이해에 감사드립니다.",
+    ["about.announcement.chat"] = "1.6.7 버전에서는 여러 문제를 수정하고 LiteMount의 탈것 표시 및 획득률 기능과의 호환성을 개선했습니다. 자세한 내용은 공지를 확인해 주세요.",
+    ["about.announcement.chatKey"] = "announcement_2026_08_21_tooltip_info",
+    ["about.announcement.content"] = "TinyTooltip-Remake와 All The Things에서 아이템 아이콘 표시를 동시에 활성화하면 장비 비교 시 많은 오류가 발생할 수 있는 충돌이 확인되었습니다. "
+    .. "툴팁은 모든 애드온이 수정할 수 있는 공용 UI 자원입니다. ATT를 함께 사용하는 경우 두 애드온 중 하나에서 아이템 아이콘 표시 기능을 꺼 주세요. "
+    .. "또한 LiteMount의 탈것 표시 및 획득률 기능과의 호환성을 개선했으며, 이제 탈것 정보와 함께 탈것 아이콘도 표시됩니다. "
+    .. "DialogueUI 및 LiteMount와의 호환성을 위해 TinyTooltip-Remake는 두 애드온을 선택적 의존성으로 지정하여 TinyTooltip-Remake보다 먼저 로드되도록 했습니다. 두 애드온을 설치하지 않아도 TinyTooltip-Remake를 정상적으로 사용할 수 있습니다. "
+    .. "DialogueUICompat.lua의 debugstack() 오류는 아직 재현하지 못했으며, 인스턴스 전투 중 DialogueUI의 보상 창을 확인할 때 발생하는 것으로 추정됩니다. "
+    .. "이번 수정은 추정 원인을 바탕으로 했으므로 실제 효과는 아직 확인되지 않았으며 DialogueUI와 함께 사용할 때 크기 조절 문제가 발생할 수 있습니다. 문제가 발생하면 UI를 다시 불러온 후 가능한 경우 재현 방법과 함께 보고해 주세요.",
     ["about.announcement.title"] = "공지",
     ["about.author.label"] = "제작자",
     ["about.author.name"] = "HoshinoAya - Rhonin CN",
