@@ -1,8 +1,9 @@
-## Interface: 120000 , 120001, 120005, 110002
+## Interface: 120100
 ## Title: TinyTooltip-Remake
 ## Notes: A powerful tooltip enhancement addon based on TinyTooltip.
 ## Author: 星野绫-罗宁 CN
-## Version: 1.6.4
+## Version: 1.6.6
+## OptionalDeps: DialogueUI, LiteMount
 ## SavedVariables: TinyTooltipRemakeDB 
 ## SavedVariablesPerCharacter: TinyTooltipRemakeCharacterDB
 

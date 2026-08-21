@@ -6,12 +6,11 @@ local addon = TinyTooltip or select(2, ...)
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "In 12.0.5, unit speed is a secret value during combat inside instances, so it will not be shown in that situation. You can read more update details on the announcement page.",
-    ["about.announcement.chatKey"] = "announcement_2026_04_24_tooltip_bug",
-    ["about.announcement.content"] = "In 12.0.5, reading unit speed while you are in combat inside an instance returns a secret value, so this feature is unavailable in that situation.\n"
-    .. "Outdoor gameplay and non-combat situations are not affected. Blizzard also fixed the issue where enemy targets could still be read from unit frames, so targets for hostile NPCs inside instances can no longer be retrieved."
-    .. "At the same time, calling GameTooltip:GetUnit() can now incorrectly return a secret value. This behavior has been confirmed as a Blizzard-side bug, and this update includes a temporary fix for it."
-    .. "It is not yet clear whether this bug may cause other issues. If you encounter any, please report them on CurseForge or Github and include as much detail as possible.",
+    ["about.announcement.chat"] = "This addon will continue to receive updates for 12.1. If errors prevent normal gameplay, please temporarily disable the addon and wait for an update. More information is available on the announcement page.",
+    ["about.announcement.chatKey"] = "announcement_2026_08_12_tooltip_info",
+    ["about.announcement.content"] = "This addon will continue to receive updates for 12.1. However, since my server receives the patch two days later than the US servers, "
+    .. "all fixes and updates will be released this weekend. If errors prevent you from playing the game normally, please temporarily disable this addon "
+    .. "and wait for updates. Thank you for your support and understanding.",
     ["about.announcement.title"] = "Announcement",
     ["about.author.label"] = "Author",
     ["about.author.name"] = "HoshinoAya - Rhonin CN",

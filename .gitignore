@@ -42,4 +42,7 @@ luac.out
 #vscode
 .vscode/
 
+# Upstream All The Things database cache
+db_att/
+
 AGENTS.md

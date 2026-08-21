@@ -1200,6 +1200,9 @@ function addon:GetUnitData(unit, elements, raw)
                     end
                     if (config and config.icon) then
                         label = mountCollectionIconTag .. "|cffffd200:|r"
+                        if (raw.mountIcon) then
+                            label = ("%s |T%s:16:16:0:0|t"):format(label, raw.mountIcon)
+                        end
                     end
                     local statusText
                     if (raw.mountCollected == true) then
@@ -2213,7 +2216,6 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
                 end
             --7 BUFF|DEBUFF
             elseif (isAura) then
-                LibEvent:trigger("tooltip:aura", self, info.tooltipData.args)
                 didTypedBackdropUpdate = true
             --25 宏命令
             elseif (isMacro) then
@@ -2308,6 +2310,16 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     end
     addon.tooltips[#addon.tooltips+1] = tip
 end)
+
+if (TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall and Enum and Enum.TooltipDataType and Enum.TooltipDataType.UnitAura) then
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, function(tip, data)
+        local spellId = data and data.id
+        if (issecretvalue(spellId) or type(spellId) ~= "number") then
+            spellId = nil
+        end
+        LibEvent:trigger("tooltip:aura", tip, spellId)
+    end)
+end
 
 if (SharedTooltip_SetBackdropStyle) then
     hooksecurefunc("SharedTooltip_SetBackdropStyle", function(self, style, embedded)

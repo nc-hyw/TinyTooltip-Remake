@@ -2258,7 +2258,21 @@ LibEvent:attachTrigger("tinytooltip:diy:player", function(self, unit, skipDisabl
                     if (config.color and config.wildcard) then
                         mountValue = addon:FormatData(mountValue, config, raw, mountValue)
                     end
-                    value = ("|T%smount.tga:14:14:0:0|t|cffffd200:|r "):format(addonIconPath) .. mountValue
+                    local mountIcon
+                    if (C_MountJournal and C_MountJournal.GetMountFromSpell and AuraUtil and AuraUtil.ForEachAura) then
+                        pcall(AuraUtil.ForEachAura, unit, "HELPFUL", nil, function(aura)
+                            if (type(aura) ~= "table" or not aura.spellId) then return end
+                            if (C_MountJournal.GetMountFromSpell(aura.spellId)) then
+                                mountIcon = aura.icon
+                                return true
+                            end
+                        end, true)
+                    end
+                    if (mountIcon) then
+                        value = ("|T%smount.tga:14:14:0:0|t|cffffd200:|r |T%s:16:16:0:0|t %s"):format(addonIconPath, mountIcon, mountValue)
+                    else
+                        value = ("|T%smount.tga:14:14:0:0|t|cffffd200:|r %s"):format(addonIconPath, mountValue)
+                    end
                     handled = true
                 elseif (e == "mplusScore" and config.icon) then
                     local mplusValue = raw.mplusScoreValue or value

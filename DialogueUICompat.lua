@@ -96,7 +96,7 @@ end
 local function IsDialogueStack()
     if not debugstack then return false end
     local ok, stack = pcall(debugstack, 2, 6, 2)
-    if not ok or type(stack) ~= "string" then return false end
+    if not ok or type(stack) ~= "string" or issecretvalue(stack) then return false end
     return stack:find("DialogueUI/Code/Dialogue/RewardTooltipCode.lua", 1, true) ~= nil
 end
 
@@ -158,9 +158,7 @@ LibEvent:attachTrigger("tooltip:show", function(self, frame)
     AdjustScaleIfDialogue(frame)
 end)
 
-local f = CreateFrame("Frame")
-f:RegisterEvent("ADDON_LOADED")
-f:SetScript("OnEvent", function(_, _, name)
+LibEvent:attachEvent("ADDON_LOADED", function(_, name)
     if name ~= "DialogueUI" then return end
     -- Debug("ADDON_LOADED DialogueUI")
     HookTooltipScaleDetect()
