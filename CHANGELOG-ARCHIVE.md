@@ -1,5 +1,10 @@
 # Changelog Archive
 
+## [v1.6.6] - 2026-08-15
+- Fixed Lua errors caused by mount detection attempting to access secret aura data in restricted content
+- Fixed Lua errors caused by using secret class identifiers for target and Targeted By colours
+- Fixed Lua errors caused by automatic status bar and target colours testing secret unit values
+- Fixed Lua errors caused by spell ID display attempting to resolve secret nameplate aura instance IDs
 
 ## [v1.6.4] -2026-04-24
 - Fixed an issue caused by GetUnitSpeed() now return  secrete values

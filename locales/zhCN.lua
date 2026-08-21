@@ -6,9 +6,14 @@ if (GetLocale() ~= "zhCN") then return end
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "12.1本插件会正常更新，如遇错误影响正常游玩请暂时关闭插件并等待更新，更多更新信息请在公告页面查阅。",
-    ["about.announcement.chatKey"] = "announcement_2026_08_12_tooltip_info",
-    ["about.announcement.content"] = "12.1本插件会正常更新，如果大量报错影响正常游戏请暂时关闭插件并等待更新。反馈依旧可通过NGA论坛和Github提交。",
+    ["about.announcement.chat"] = "1.6.7版本修复了若干问题，并对LiteMount的坐骑显示和获取百分比功能进行了兼容性更新。更多内容请查阅公告详情。",
+    ["about.announcement.chatKey"] = "announcement_2026_08_21_tooltip_info",
+    ["about.announcement.content"] = "目前已知TinyTooltip-Remake可能会和All The Things的物品图标显示功能产生冲突，导致比较装备时产生大量报错。"
+    .. "鼠标提示是公共资源，任何插件均可对其进行修改；同时开启两个插件的物品图标显示功能可能导致报错。如果你同时使用ATT，请关闭其中一个插件的物品图标显示功能。"
+    .. "此外，本插件针对LiteMount的坐骑显示和获取百分比功能进行了兼容性更新，现在显示坐骑信息时也会显示坐骑图标。"
+    .. "为了兼容DialogueUI和LiteMount，TinyTooltip-Remake已将这两个插件列为可选依赖项，以确保它们先于本插件加载。你不需要安装这两个插件，也依然可以正常使用本插件。"
+    .. "对于DialogueUICompat.lua中的debugstack()报错，由于我暂时无法复现，推测该错误是在副本战斗中查看DialogueUI的战利品框时触发。"
+    .. "本次修复仅依据上述推测，实际效果尚未确认，也可能导致与DialogueUI同时使用时出现缩放问题。如果出现此问题，请重载界面并提交报告；如有可能，请同时提供复现方法。",
     ["about.announcement.title"] = "公告",
     ["about.author.label"] = "作者",
     ["about.author.name"] = "星野绫 - 罗宁 CN",
