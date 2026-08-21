@@ -187,29 +187,9 @@ LibEvent:attachTrigger("tooltip:spell", function(self, tip, spellId)
     ShowSpellInfo(tip, spellId or GetSpellIdFromTooltip(tip))
 end)
 
-LibEvent:attachTrigger("tooltip:aura", function(self, tip, args)
-    local spellId = args and args[2] and args[2].intVal
-    if (issecretvalue(spellId)) then
-        spellId = nil
-    end
-    spellId = spellId or GetSpellIdFromTooltip(tip)
+LibEvent:attachTrigger("tooltip:aura", function(self, tip, spellId)
     ShowSpellInfo(tip, spellId)
 end)
-
-local function HookAuraSetter(fnName)
-    if (GameTooltip and GameTooltip[fnName]) then
-        hooksecurefunc(GameTooltip, fnName, function(tip)
-            ShowSpellInfo(tip, GetSpellIdFromTooltip(tip))
-        end)
-    end
-end
-
-HookAuraSetter("SetUnitAura")
-HookAuraSetter("SetUnitBuff")
-HookAuraSetter("SetUnitDebuff")
-HookAuraSetter("SetUnitAuraByAuraInstanceID")
-HookAuraSetter("SetUnitBuffByAuraInstanceID")
-HookAuraSetter("SetUnitDebuffByAuraInstanceID")
 
 -- Quest
 if (QuestMapLogTitleButton_OnEnter) then
