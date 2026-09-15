@@ -6,14 +6,9 @@ if (GetLocale() ~= "zhTW") then return end
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "1.6.7版本修正了若干問題，並針對LiteMount的坐騎顯示和取得百分比功能改善了相容性。更多內容請參閱公告詳情。",
-    ["about.announcement.chatKey"] = "announcement_2026_08_21_tooltip_info",
-    ["about.announcement.content"] = "目前已知TinyTooltip-Remake可能會與All The Things的物品圖示顯示功能發生衝突，導致比較裝備時產生大量錯誤。"
-    .. "滑鼠提示是共用資源，任何插件都可以對其進行修改；同時開啟兩個插件的物品圖示顯示功能可能導致錯誤。如果你同時使用ATT，請關閉其中一個插件的物品圖示顯示功能。"
-    .. "此外，本插件針對LiteMount的坐騎顯示和取得百分比功能改善了相容性，現在顯示坐騎資訊時也會顯示坐騎圖示。"
-    .. "為了相容DialogueUI和LiteMount，TinyTooltip-Remake已將這兩個插件列為選用依賴項，以確保它們先於本插件載入。你不需要安裝這兩個插件，也依然可以正常使用本插件。"
-    .. "對於DialogueUICompat.lua中的debugstack()錯誤，由於我暫時無法重現，推測該錯誤是在副本戰鬥中查看DialogueUI的獎勵框架時觸發。"
-    .. "本次修正僅依據上述推測，實際效果尚未確認，也可能導致與DialogueUI同時使用時出現縮放問題。如果出現此問題，請重新載入介面並提交報告；如有可能，請同時提供重現方式。",
+    ["about.announcement.chat"] = "修正了部分副本場景下偶發回報OnShow()錯誤的問題。",
+    ["about.announcement.chatKey"] = "announcement_2026_09_15_onshow_error",
+    ["about.announcement.content"] = "修正了部分副本場景下偶發回報OnShow()錯誤的問題。",
     ["about.announcement.title"] = "公告",
     ["about.author.label"] = "作者",
     ["about.author.name"] = "星野綾 - 羅寧 CN",

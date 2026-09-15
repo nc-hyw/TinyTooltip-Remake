@@ -1767,8 +1767,11 @@ local function EnsureStyleMask(tip)
 end
 
 UpdateStyleMaskVisibility = function(tip)
+    if (not tip) then return end
+    if (tip.IsForbidden and tip:IsForbidden()) then return end
     local mask = EnsureStyleMask(tip)
     if (not mask) then return end
+    if (mask.IsForbidden and mask:IsForbidden()) then return end
     local show = (tip and tip._tinyMaskEnabled) and true or false
     if (show) then
         local _, _, _, a = GetStyleBackdropColor(tip)
@@ -1870,6 +1873,7 @@ end
 
 local function ApplyNativeBackdrop(tip)
     if (not tip) then return false end
+    if (tip.IsForbidden and tip:IsForbidden()) then return false end
     EnsureNativeStyleData(tip)
     SyncGlobalBackgroundFile(tip)
     local hasBackdropSupport = EnsureBackdropSupport(tip)
@@ -2158,10 +2162,14 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
 
     tip.TinyHookScript = addon.TinyHookScript
     tip:HookScript("OnShow", function(self)
+        if (self.IsForbidden and self:IsForbidden()) then return end
         ApplyNativeBackdrop(self)
         LibEvent:trigger("tooltip:show", self)
     end)
-    tip:HookScript("OnHide", function(self) LibEvent:trigger("tooltip:hide", self) end)
+    tip:HookScript("OnHide", function(self)
+        if (self.IsForbidden and self:IsForbidden()) then return end
+        LibEvent:trigger("tooltip:hide", self)
+    end)
 
     -- for 10.0
     if (tip.ProcessInfo) then

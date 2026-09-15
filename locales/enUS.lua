@@ -6,14 +6,9 @@ local addon = TinyTooltip or select(2, ...)
 addon.L = addon.L or {}
 local L = addon.L
 local T = {
-    ["about.announcement.chat"] = "Version 1.6.7 fixes several issues and improves compatibility with LiteMount's mount display and acquisition percentage. See the announcement for details.",
-    ["about.announcement.chatKey"] = "announcement_2026_08_21_tooltip_info",
-    ["about.announcement.content"] = "A known conflict may occur between TinyTooltip-Remake and All The Things when item icon display is enabled in both addons, causing many errors while comparing items. "
-    .. "Tooltips are a shared UI resource that any addon can modify. If you use ATT, please disable item icon display in one of the two addons. "
-    .. "This release also improves compatibility with LiteMount's mount display and acquisition percentage and now shows the mount icon alongside mount information. "
-    .. "To support DialogueUI and LiteMount, TinyTooltip-Remake now lists both addons as optional dependencies so they load before TinyTooltip-Remake. You do not need to install either addon to use TinyTooltip-Remake normally. "
-    .. "The debugstack() error in DialogueUICompat.lua could not be reproduced and is suspected to occur when viewing DialogueUI's reward frame when loot during combat inside an instance. "
-    .. "The fix is based on this suspected cause, so its effectiveness is not yet confirmed and it may cause scaling issues when used with DialogueUI. If this happens, reload the UI and submit a report, including reproduction steps if possible.",
+    ["about.announcement.chat"] = "Fixed an intermittent OnShow() error reported in some instance scenarios.",
+    ["about.announcement.chatKey"] = "announcement_2026_09_15_onshow_error",
+    ["about.announcement.content"] = "Fixed an intermittent OnShow() error reported in some instance scenarios.",
     ["about.announcement.title"] = "Announcement",
     ["about.author.label"] = "Author",
     ["about.author.name"] = "HoshinoAya - Rhonin CN",
