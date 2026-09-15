@@ -20,6 +20,7 @@ it will causing jittering due to anchor competition with blizzard UI system
 - Declared DialogueUI and LiteMount as optional dependencies so their addon files load before TinyTooltip when enabled. ( You don't need to install these two addons to use TinyTooltip-Remake)
 
 ## Fixed
+- Fixed an intermittent `OnShow()` error reported in some instance scenarios.
 - Fixed issues that causing errors for aura hover over in 12.1
 - Fixed issues that aura spell ID is not showing
 
