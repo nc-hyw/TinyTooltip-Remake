@@ -1752,7 +1752,11 @@ end
 
 local function EnsureStyleMask(tip)
     if (not tip) then return end
-    if (tip._tinyMask) then return tip._tinyMask end
+    if (tip:IsForbidden()) then return end
+    if (tip._tinyMask) then
+        if (tip._tinyMask:IsForbidden()) then return end
+        return tip._tinyMask
+    end
     local mask = tip:CreateTexture(nil, "OVERLAY")
     mask:SetTexture("Interface\\Tooltips\\UI-Tooltip-Background")
     mask:SetPoint("TOPLEFT", 3, -3)
@@ -1767,11 +1771,8 @@ local function EnsureStyleMask(tip)
 end
 
 UpdateStyleMaskVisibility = function(tip)
-    if (not tip) then return end
-    if (tip.IsForbidden and tip:IsForbidden()) then return end
     local mask = EnsureStyleMask(tip)
     if (not mask) then return end
-    if (mask.IsForbidden and mask:IsForbidden()) then return end
     local show = (tip and tip._tinyMaskEnabled) and true or false
     if (show) then
         local _, _, _, a = GetStyleBackdropColor(tip)
@@ -1792,6 +1793,8 @@ UpdateStyleMaskVisibility = function(tip)
 end
 
 local function ApplyBorderCorner(tip, corner)
+    if (not tip) then return end
+    if (tip:IsForbidden()) then return end
     EnsureNativeStyleData(tip)
     local backdrop = GetStyleBackdrop(tip)
     if (not backdrop) then return end
@@ -2149,6 +2152,7 @@ end)
 
 LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     if (not tip or tip._tinyNativeStyle) then return end
+    if (tip:IsForbidden()) then return end
     EnsureNativeStyleData(tip)
     EnsureBackdropSupport(tip)
     tip._tinyNativeStyle = true
@@ -2174,6 +2178,7 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
     -- for 10.0
     if (tip.ProcessInfo) then
         hooksecurefunc(tip, "ProcessInfo", function(self, info)
+            if (self:IsForbidden()) then return end
             if (not info or not info.tooltipData) then return end
             local flag = info.tooltipData.type
             local guid = info.tooltipData.guid
