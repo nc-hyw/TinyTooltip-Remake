@@ -4,6 +4,34 @@ local LibEvent = LibStub:GetLibrary("LibEvent.7000")
 local addon = TinyTooltip
 local L = addon.L or {}
 
+LibEvent:attachTrigger("tooltip:variables:loaded", function()
+    local sourceSeparator
+    hooksecurefunc("BattlePetTooltipTemplate_SetBattlePet", function(tooltip)
+        if (tooltip == BattlePetTooltip and sourceSeparator) then
+            sourceSeparator:SetTextScale(1)
+            sourceSeparator = nil
+        end
+    end)
+    hooksecurefunc("BattlePetToolTip_Show", function(speciesID)
+        if (not addon.db.item.showBattlePetSource) then return end
+        if (not speciesID or speciesID <= 0) then return end
+        local petInfo = C_PetJournal.GetPetInfoTableBySpeciesID(speciesID)
+        if (not petInfo or petInfo.sourceText == "") then return end
+
+        BattlePetTooltip:AddLine(L["item.battlePetSourceHeader"], 0, 1, 0.8)
+        local headerWidth = BattlePetTooltip.textLineAnchor:GetUnboundedStringWidth()
+        BattlePetTooltip:AddLine(petInfo.sourceText, 1, 1, 1, true)
+        BattlePetTooltip:AddLine("-", 0, 1, 0.8)
+        local separator = BattlePetTooltip.textLineAnchor
+        local oldHeight = separator:GetHeight()
+        local dashWidth = separator:GetUnboundedStringWidth()
+        separator:SetText(string.rep("-", math.ceil(headerWidth / dashWidth)))
+        separator:SetTextScale(headerWidth / separator:GetUnboundedStringWidth())
+        BattlePetTooltip:SetHeight(BattlePetTooltip:GetHeight() + separator:GetHeight() - oldHeight)
+        sourceSeparator = separator
+    end)
+end)
+
 local function GetItemInfoFromLink(linkOrId)
     if (linkOrId == nil or linkOrId == "") then
         return nil

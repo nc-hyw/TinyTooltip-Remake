@@ -124,6 +124,7 @@ addon.db = {
         showItemMaxStack = true,
         showItemIconId = true,
         showItemExpansion = true,
+        showBattlePetSource = false,
     },
     spell = {
         borderColor = {0.6, 0.6, 0.6, 0.8},
