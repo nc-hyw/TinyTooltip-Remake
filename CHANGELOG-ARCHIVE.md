@@ -1,5 +1,20 @@
 # Changelog Archive
 
+## [v1.6.9]
+- Fixed an error when viewing patrons' auras in Murder Row.
+
+## [v1.6.8] - 2026-09-15
+- Fixed an intermittent `OnShow()` error reported in some instance scenarios.
+
+## [v1.6.7] - 2026-08-21
+
+- Added LiteMount compatibility so mount rarity percentages and mount display won't affecting TinyToolti-Remake while still displaying rarity percetages
+- Added mount icon display
+- Added the active summoned mount icon to player tooltips and the mount-option preview.
+- Declared DialogueUI and LiteMount as optional dependencies so their addon files load before TinyTooltip when enabled. ( You don't need to install these two addons to use TinyTooltip-Remake)
+- Fixed issues that causing errors for aura hover over in 12.1
+- Fixed issues that aura spell ID is not showing
+
 ## [v1.6.6] - 2026-08-15
 - Fixed Lua errors caused by mount detection attempting to access secret aura data in restricted content
 - Fixed Lua errors caused by using secret class identifiers for target and Targeted By colours
