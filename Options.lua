@@ -1520,6 +1520,7 @@ local options = {
         { keystring = "item.showItemMaxStack",      type = "checkbox" },
         { keystring = "item.showItemIconId",        type = "checkbox" },
         { keystring = "item.showItemExpansion",     type = "checkbox" },
+        { keystring = "item.showBattlePetSource",    type = "checkbox" },
         { keystring = "item.showItemBonusId",       type = "checkbox" },
         { keystring = "item.showItemEnhancementId", type = "checkbox" },
         { keystring = "item.showItemGemId",         type = "checkbox" },
