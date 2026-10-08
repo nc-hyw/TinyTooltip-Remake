@@ -42,7 +42,7 @@ local function ItemIcon(tip, itemInfo)
     if (addon.db.item.showItemIcon) then
         local texture = itemInfo and itemInfo.itemTexture
         local text = addon:GetLine(tip,1):GetText()
-        if (texture and not strfind(text, "^|T")) then
+        if (texture and not issecretvalue(text) and not strfind(text, "^|T")) then
             addon:GetLine(tip,1):SetFormattedText("|T%s:16:16:0:0:32:32:2:30:2:30|t %s", texture, text)
         end
     end
