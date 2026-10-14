@@ -36,7 +36,7 @@ local function GetItemInfoFromLink(linkOrId)
     if (linkOrId == nil or linkOrId == "") then
         return nil
     end
-    local name, link, quality, _, _, _, _, stackCount, _, texture = GetItemInfo(linkOrId)
+    local name, link, quality, _, _, _, _, stackCount, _, texture = C_Item.GetItemInfo(linkOrId)
     if (not name) then return nil end
     return {
         itemLink = link,
@@ -111,7 +111,7 @@ LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
             end
             local expacId
             if (itemLink) then
-                _, _, _, _, _, _, _, _, _, _, _, _, _, _, expacId = GetItemInfo(itemLink)
+                _, _, _, _, _, _, _, _, _, _, _, _, _, _, expacId = C_Item.GetItemInfo(itemLink)
             end
             local expansionName
             if (type(expacId) == "number") then
@@ -134,7 +134,7 @@ LibEvent:attachTrigger("tooltip:item", function(self, tip, link)
 
     local itemInfo = GetItemInfoFromLink(link)
     local quality = (itemInfo and itemInfo.itemQuality) or 0
-    local r, g, b = GetItemQualityColor(quality)
+    local r, g, b = C_Item.GetItemQualityColor(quality)
     local tr, tg, tb = GetTooltipTitleColor(tip)
     if (tr and tg and tb) then
         r, g, b = tr, tg, tb

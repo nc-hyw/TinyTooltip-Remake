@@ -79,7 +79,7 @@ local function ResolveMacroPayload(tooltip, macroId)
     if (type(macroId) == "number" and type(GetMacroItem) == "function") then
         local okItem, macroItem = pcall(GetMacroItem, macroId)
         if (okItem and macroItem) then
-            local okInfo, _, itemLink = pcall(GetItemInfo, macroItem)
+            local okInfo, _, itemLink = pcall(C_Item.GetItemInfo, macroItem)
             if (okInfo and type(itemLink) == "string" and itemLink ~= "") then
                 return nil, itemLink
             end
@@ -119,7 +119,7 @@ local function ResolveActionPayload(tooltip, actionSlot)
                 return spellId
             end
         elseif (okAction and actionType == "item" and actionId) then
-            local okInfo, _, itemLink = pcall(GetItemInfo, actionId)
+            local okInfo, _, itemLink = pcall(C_Item.GetItemInfo, actionId)
             if (okInfo and type(itemLink) == "string" and itemLink ~= "") then
                 return nil, itemLink
             end
@@ -2208,7 +2208,7 @@ LibEvent:attachTrigger("tooltip.style.init", function(self, tip)
                 if (self.GetItem) then
                     link = select(2, self:GetItem())
                 else
-                    link = select(2, GetItemInfo(info.tooltipData.id))
+                    link = select(2, C_Item.GetItemInfo(info.tooltipData.id))
                 end
                 LibEvent:trigger("tooltip:item", self, link)
                 didTypedBackdropUpdate = true

@@ -34,7 +34,7 @@ end
 
 local function GetItemIconId(linkOrId)
     if (not linkOrId) then return end
-    local _, _, _, _, _, _, _, maxStack, _, icon = GetItemInfo(linkOrId)
+    local _, _, _, _, _, _, _, maxStack, _, icon = C_Item.GetItemInfo(linkOrId)
     if (type(icon) == "number") then
         return icon
     end
@@ -42,7 +42,7 @@ end
 
 local function GetItemMaxStack(linkOrId)
     if (not linkOrId) then return end
-    local _, _, _, _, _, _, _, maxStack = GetItemInfo(linkOrId)
+    local _, _, _, _, _, _, _, maxStack = C_Item.GetItemInfo(linkOrId)
     if (type(maxStack) == "number" and maxStack > 0) then
         return maxStack
     end
@@ -87,7 +87,7 @@ local function ShowItemInfo(tooltip, linkOrId)
         showItemIconId = true
     end
     local _, itemId = ParseHyperLink(linkOrId)
-    local isEquippable = IsEquippableItem and IsEquippableItem(linkOrId)
+    local isEquippable = C_Item.IsEquippableItem(linkOrId)
     local itemEnhancementId = L["id.na"]
     local itemBonusId = L["id.na"]
     local itemGemId = L["id.na"]
