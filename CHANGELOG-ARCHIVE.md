@@ -1,5 +1,9 @@
 # Changelog Archive
 
+## [v1.6.10]
+- Added source information for caged battle pets. Disabled by default; enable "Show Battle Pet Source" under Items in the settings.
+- Fixed a secret value error that could occur when displaying bag items.
+
 ## [v1.6.9]
 - Fixed an error when viewing patrons' auras in Murder Row.
 
