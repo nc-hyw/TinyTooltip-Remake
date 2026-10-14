@@ -1,3 +1,2 @@
-- Updated the TOC to support World of Warcraft 12.1.5.
-- Updated the Russian (ruRU) localization. Translation by ZamestoTV.
+- Updated compatibility with the API changes in 12.1.5.
 
